@@ -1,6 +1,67 @@
-# AI-Native Game Production Toolkit
+# AI-Native Game Production Skills
 
-A repository-ready skill pack for turning a game idea into runtime-validated game art assets.
+Composable agent skills for game specification, art direction, asset planning, generation, normalization, quality control, and runtime visual validation.
+
+## Install
+
+### Option 1 — `npx` package installer
+
+Install all skills into the current project:
+
+```bash
+npx game-production-skills install
+```
+
+Install selected skills only:
+
+```bash
+npx game-production-skills install game-spec-builder art-style-builder
+```
+
+Replace already-installed copies:
+
+```bash
+npx game-production-skills install --force
+```
+
+By default skills are installed to:
+
+```text
+.agents/skills/
+```
+
+A custom output directory is also supported:
+
+```bash
+npx game-production-skills install --output .agents/skills
+```
+
+### Option 2 — standard Agent Skills CLI
+
+Because this repository exposes each skill under `skills/<skill-name>/SKILL.md`, it can also be consumed directly through the public Agent Skills CLI:
+
+```bash
+npx skills add rolot789/tokencat --all
+```
+
+Install a specific skill:
+
+```bash
+npx skills add rolot789/tokencat --skill game-spec-builder
+```
+
+### Option 3 — npm dependency
+
+```bash
+npm install --save-dev game-production-skills
+npx game-production-skills install
+```
+
+## List available skills
+
+```bash
+npx game-production-skills list
+```
 
 ## Pipeline
 
@@ -51,29 +112,30 @@ RUNTIME_APPROVED / SHIPPABLE
 | Runtime QC | `runtime-visual-validator` | Scene-level visual validation using real runtime evidence |
 | Orchestration | `game-art-production-orchestrator` | Pipeline state, handoffs, gates, failure routing, invalidation |
 
-## Install into a repository
+## Development
+
+Validate the repository:
 
 ```bash
-python scripts/install_toolkit.py /path/to/your/repo
-```
-
-This installs skills under:
-
-```text
-<repo>/.agents/skills/
-```
-
-Then bootstrap production folders:
-
-```bash
-python scripts/bootstrap_project.py /path/to/your/repo --name "My Game"
-```
-
-## Validate the toolkit
-
-```bash
+python -m pip install pyyaml
 python scripts/doctor.py .
+npm run check
+npm run pack:check
 ```
+
+Contribution conventions are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes should go through pull requests and use Conventional Commits. Squash merge is preferred for `main`.
+
+## npm publishing
+
+The repository includes `.github/workflows/publish-npm.yml`.
+
+A GitHub Release triggers:
+
+```bash
+npm publish --access public --provenance
+```
+
+The repository owner must configure npm publishing authorization before the first release. The current workflow supports an `NPM_TOKEN` repository secret; npm Trusted Publishing can replace the token flow later.
 
 ## Production state
 
@@ -107,3 +169,7 @@ PLANNED
 8. Runtime validation reports
 
 Downstream stages do not silently rewrite upstream decisions.
+
+## License
+
+MIT

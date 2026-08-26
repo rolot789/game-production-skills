@@ -1,0 +1,46 @@
+{
+  "name": "game-production-skills",
+  "version": "0.1.0",
+  "description": "Composable AI-native game production skills for game specification, art direction, asset production, QC, and runtime validation.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "game-production-skills": "bin/game-production-skills.js"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    "contracts/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "ai",
+    "agent-skills",
+    "codex",
+    "game-development",
+    "game-art",
+    "game-design",
+    "skills"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rolot789/tokencat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rolot789/tokencat/issues"
+  },
+  "homepage": "https://github.com/rolot789/tokencat#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "check": "node bin/game-production-skills.js list",
+    "pack:check": "npm pack --dry-run"
+  }
+}
