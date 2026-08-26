@@ -63,64 +63,25 @@ npx skills add rolot789/game-production-skills --skill game-spec-builder
 
 ## Pipeline
 
-```mermaid
-flowchart TD
-    A[Game Idea / Existing Design] --> B[game-spec-builder]
-    B --> C[LOCKED GameSpec]
-    C --> D[art-style-builder]
-    D --> E[LOCKED ArtStyle + Approved Style Anchors]
-    E --> F[game-asset-planner]
-    F --> G[Asset Manifest + Asset Specs]
-    G --> H[game-asset-generator]
-    H --> I[Generated Candidates + Provenance]
-    I --> J[game-asset-normalizer]
-    J --> K[Engine-ready Runtime Candidates]
-    K --> L[game-asset-qc]
-    L --> M[QC-approved Assets]
-    M --> N[runtime-visual-validator]
-    N --> O[RUNTIME_APPROVED / SHIPPABLE]
-
-    P[game-art-production-orchestrator] -. gates / handoffs / invalidation .-> B
-    P -.-> D
-    P -.-> F
-    P -.-> H
-    P -.-> J
-    P -.-> L
-    P -.-> N
+```text
+Game Idea
+   ↓
+game-spec-builder
+   ↓
+art-style-builder
+   ↓
+game-asset-planner
+   ↓
+game-asset-generator
+   ↓
+game-asset-normalizer
+   ↓
+game-asset-qc
+   ↓
+runtime-visual-validator
 ```
 
-## Asset Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> PLANNED
-    PLANNED --> READY_FOR_GENERATION
-    READY_FOR_GENERATION --> GENERATED
-    GENERATED --> NORMALIZED
-    NORMALIZED --> QC_APPROVED
-    QC_APPROVED --> RUNTIME_APPROVED
-    RUNTIME_APPROVED --> SHIPPABLE
-    SHIPPABLE --> [*]
-
-    READY_FOR_GENERATION --> GENERATION_REWORK
-    GENERATION_REWORK --> READY_FOR_GENERATION
-
-    GENERATED --> NORMALIZATION_BLOCKED
-    NORMALIZATION_BLOCKED --> GENERATED
-
-    NORMALIZED --> QC_REWORK
-    QC_REWORK --> READY_FOR_GENERATION
-
-    QC_APPROVED --> RUNTIME_REWORK
-    RUNTIME_REWORK --> READY_FOR_GENERATION
-
-    PLANNED --> INVALIDATED
-    READY_FOR_GENERATION --> INVALIDATED
-    GENERATED --> INVALIDATED
-    NORMALIZED --> INVALIDATED
-    QC_APPROVED --> INVALIDATED
-    RUNTIME_APPROVED --> INVALIDATED
-```
+`game-art-production-orchestrator` coordinates the full pipeline.
 
 ## License
 
