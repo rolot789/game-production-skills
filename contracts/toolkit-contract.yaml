@@ -1,7 +1,7 @@
 version: 1
 toolkit:
-  id: game-production-toolkit
-  name: AI-Native Game Production Toolkit
+  id: game-production-skills
+  name: AI-Native Game Production Skills
   scope: game specification, art direction, game asset production, asset QC, runtime
     visual validation
 stage_order:
