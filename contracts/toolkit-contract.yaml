@@ -1,0 +1,134 @@
+version: 1
+toolkit:
+  id: game-production-toolkit
+  name: AI-Native Game Production Toolkit
+  scope: game specification, art direction, game asset production, asset QC, runtime
+    visual validation
+stage_order:
+- game_spec
+- art_style
+- asset_planning
+- generation
+- normalization
+- asset_qc
+- runtime_validation
+stages:
+  game_spec:
+    skill: game-spec-builder
+    entry:
+    - game idea, partial spec, or existing design notes
+    required_exit_gate: ART_HANDOFF_READY
+    preferred_production_gate: ASSET_PLANNING_READY
+    outputs:
+    - GameSpec.md
+    - game-spec.yaml
+    - requirement-state.yaml
+    - decision-log.md
+  art_style:
+    skill: art-style-builder
+    entry:
+    - game-spec.yaml
+    - visual intent and/or references
+    required_exit_gate: ASSET_GENERATION_READY
+    outputs:
+    - ArtStyle.md
+    - art-style.yaml
+    - style-anchor-manifest.yaml
+    - calibration-plan.yaml
+  asset_planning:
+    skill: game-asset-planner
+    entry:
+    - game-spec.yaml
+    - art-style.yaml
+    - style-anchor-manifest.yaml
+    outputs:
+    - asset-manifest.yaml
+    - specs/<asset-id>.yaml
+  generation:
+    skill: game-asset-generator
+    entry:
+    - asset-manifest.yaml
+    - specs/<asset-id>.yaml
+    - approved style anchors
+    outputs:
+    - generation/<asset-id>/job.yaml
+    - generation/<asset-id>/records/*.yaml
+    - generation/<asset-id>/candidates/*
+  normalization:
+    skill: game-asset-normalizer
+    entry:
+    - selected generation candidate
+    - asset spec
+    - normalization policy
+    outputs:
+    - normalized/<asset-id>/runtime/*
+    - normalized/<asset-id>/normalization-record.yaml
+  asset_qc:
+    skill: game-asset-qc
+    entry:
+    - normalized runtime asset
+    - normalization record
+    - asset spec
+    - art style
+    allowed_exit_status:
+    - approved
+    - approved_with_minor_findings
+    outputs:
+    - qc/<asset-id>/qc-report.yaml
+  runtime_validation:
+    skill: runtime-visual-validator
+    entry:
+    - playable build
+    - QC-approved asset
+    - runtime validation plan
+    allowed_exit_status:
+    - runtime_approved
+    - runtime_approved_with_minor_findings
+    outputs:
+    - runtime-validation/<asset-id>/runtime-report.yaml
+orchestrator:
+  skill: game-art-production-orchestrator
+  state_file: .pipeline/game-art-production-state.yaml
+requirement_states:
+- UNSEEN
+- UNRESOLVED
+- INFERRED
+- PROPOSED
+- CONFIRMED
+- CONFLICT
+- LOCKED
+- NOT_APPLICABLE
+pipeline_stage_states:
+- NOT_STARTED
+- IN_PROGRESS
+- READY
+- BLOCKED
+- FAILED
+- INVALIDATED
+- COMPLETE
+asset_lifecycle:
+- PLANNED
+- READY_FOR_GENERATION
+- GENERATED
+- NORMALIZED
+- QC_APPROVED
+- RUNTIME_APPROVED
+- SHIPPABLE
+- GENERATION_REWORK
+- NORMALIZATION_BLOCKED
+- QC_REWORK
+- RUNTIME_REWORK
+- INVALIDATED
+severity:
+- BLOCKER
+- MAJOR
+- MINOR
+- NOTE
+principles:
+- Locked upstream artifacts are immutable until explicitly revised.
+- Inferred decisions are never equivalent to confirmed decisions.
+- Do not bypass readiness gates by guessing downstream requirements.
+- Assets are specification + references + provenance + runtime metadata + QC, not
+  files alone.
+- Invalidate only dependency-affected descendants when upstream sources change.
+- Runtime approval is distinct from isolated asset QC approval.

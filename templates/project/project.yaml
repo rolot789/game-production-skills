@@ -1,0 +1,16 @@
+version: 1
+
+project:
+  id: null
+  name: null
+
+paths:
+  game_spec: spec/game-spec.yaml
+  art_style: art/art-style.yaml
+  style_anchors: art/style-anchor-manifest.yaml
+  asset_manifest: assets/asset-manifest.yaml
+  asset_specs: assets/specs/
+  generation: generation/
+  normalized: normalized/
+  qc: qc/
+  runtime_validation: runtime-validation/

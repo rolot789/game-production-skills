@@ -1,0 +1,46 @@
+version: 1
+project:
+  id: null
+  name: null
+target:
+  milestone: P0 gameplay assets runtime-approved
+stages:
+  game_spec:
+    skill: game-spec-builder
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+  art_style:
+    skill: art-style-builder
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+  asset_planning:
+    skill: game-asset-planner
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+  generation:
+    skill: game-asset-generator
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+  normalization:
+    skill: game-asset-normalizer
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+  asset_qc:
+    skill: game-asset-qc
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+  runtime_validation:
+    skill: runtime-visual-validator
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
+assets: {}
+handoffs: []
+blockers: []
+invalidations: []

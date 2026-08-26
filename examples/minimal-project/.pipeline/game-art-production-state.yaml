@@ -1,0 +1,46 @@
+assets: {}
+blockers: []
+handoffs: []
+invalidations: []
+project:
+  id: minimal-puzzle
+  name: Minimal Puzzle
+stages:
+  art_style:
+    artifacts: []
+    readiness: null
+    skill: art-style-builder
+    status: NOT_STARTED
+  asset_planning:
+    artifacts: []
+    readiness: null
+    skill: game-asset-planner
+    status: NOT_STARTED
+  asset_qc:
+    artifacts: []
+    readiness: null
+    skill: game-asset-qc
+    status: NOT_STARTED
+  game_spec:
+    artifacts: []
+    readiness: null
+    skill: game-spec-builder
+    status: NOT_STARTED
+  generation:
+    artifacts: []
+    readiness: null
+    skill: game-asset-generator
+    status: NOT_STARTED
+  normalization:
+    artifacts: []
+    readiness: null
+    skill: game-asset-normalizer
+    status: NOT_STARTED
+  runtime_validation:
+    artifacts: []
+    readiness: null
+    skill: runtime-visual-validator
+    status: NOT_STARTED
+target:
+  milestone: First P0 family runtime-approved
+version: 1
