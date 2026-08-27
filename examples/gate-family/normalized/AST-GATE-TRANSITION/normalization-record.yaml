@@ -63,7 +63,7 @@ operations:
 - op: export
   detail:
     format: PNG
-    path: /home/user/game-production-skills/examples/gate-family/normalized/AST-GATE-TRANSITION/runtime/AST-GATE-TRANSITION.png
+    path: normalized/AST-GATE-TRANSITION/runtime/AST-GATE-TRANSITION.png
 family_lineage:
   family_id: FAM-GATE
   canonical_parent: AST-GATE-CLOSED

@@ -93,6 +93,19 @@ def main() -> None:
     spec_path = Path(args.spec).resolve()
     out_dir = Path(args.out).resolve()
 
+    def rel(path: Path) -> str:
+        """Record paths relative to the project root.
+
+        An absolute path would make the record machine-dependent: the same
+        candidate normalized on two machines would produce records that differ
+        without any input differing, which defeats the point of a reproducible
+        lineage document.
+        """
+        try:
+            return str(path.relative_to(root))
+        except ValueError:
+            return str(path)
+
     spec = load_spec(spec_path)
     asset_id = spec.get("asset_id") or spec_path.stem
     norm = spec.get("normalization") or {}
@@ -243,13 +256,7 @@ def main() -> None:
     runtime_dir.mkdir(parents=True, exist_ok=True)
     output_path = runtime_dir / f"{asset_id}.png"
     canvas.save(output_path, format="PNG", optimize=True)
-    operations.append({"op": "export", "detail": {"format": "PNG", "path": str(output_path)}})
-
-    def rel(path: Path) -> str:
-        try:
-            return str(path.relative_to(root))
-        except ValueError:
-            return str(path)
+    operations.append({"op": "export", "detail": {"format": "PNG", "path": rel(output_path)}})
 
     record = {
         "schema_version": 3,
