@@ -81,13 +81,21 @@ stages:
     entry:
     - normalized runtime asset
     - normalization record
-    - asset spec
-    - art style
+    - specs/<asset-id>.yaml
+    - generation/<asset-id>/generation-contract.yaml
+    - selected candidate generation record
+    - art-style.yaml
+    - style-anchor-manifest.yaml
+    - style-constraint-ledger.yaml when present
+    - canonical family parent and sibling variants when applicable
     allowed_exit_status:
     - approved
     - approved_with_minor_findings
+    - rework_required
+    - blocked
     outputs:
     - qc/<asset-id>/qc-report.yaml
+    - qc/<family-id>/family-qc-summary.yaml when family/batch QC is used
   runtime_validation:
     skill: runtime-visual-validator
     entry:
@@ -147,3 +155,4 @@ principles:
 - Runtime approval is distinct from isolated asset QC approval.
 - Search-derived references become production authorities only through explicit scoped approval.
 - Regeneration preserves passing dimensions and changes only the smallest failing surface whenever possible.
+- Asset QC evaluates explicit production contracts and routes failures to root owners without redesigning or modifying assets.
