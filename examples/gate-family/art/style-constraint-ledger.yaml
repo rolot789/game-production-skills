@@ -1,0 +1,57 @@
+version: v1
+
+# Negative constraints are persistent, observable, and scoped, and each one
+# carries a positive counterpart. "Avoid X" alone under-specifies generation;
+# "avoid X, do Y instead" is executable.
+
+constraints:
+  NEG-LIGHTING-001:
+    category: lighting
+    type: HARD_FORBIDDEN
+    avoid: directional shading, rim light, bloom, or any glow the flat lighting model does not support
+    positive_counterpart: keep every surface flat; separate forms by value contrast at their edges
+    scope:
+      global: true
+    origin:
+      type: USER_EXPLICIT
+    status: LOCKED
+    verification:
+      visual_review: true
+      target_scale_required: true
+
+  NEG-TEXTURE-002:
+    category: texture
+    type: BOUNDED
+    avoid: grain strong enough to compete with the silhouette at 64 px
+    positive_counterpart: keep per-pixel value jitter within +/- 8 of the base value
+    scope:
+      categories: [interactive_object, environment]
+    origin:
+      type: USER_CALIBRATION_FEEDBACK
+    status: LOCKED
+    verification:
+      check_at_target_scale: true
+
+  NEG-DETAIL-003:
+    category: detail_density
+    type: SOFT_AVOID
+    avoid: ornament that disappears below 4 px at the intended display size
+    positive_counterpart: spend detail only on cues that survive downscale, such as bolt placement
+    scope:
+      categories: [interactive_object]
+    origin:
+      type: RUNTIME_READABILITY_FINDING
+    status: CONFIRMED
+
+  NEG-STATE-004:
+    category: state_encoding
+    type: HARD_FORBIDDEN
+    avoid: encoding a decision-critical gate state through hue alone
+    positive_counterpart: change the panel silhouette between states; hue may reinforce but never carry the distinction
+    scope:
+      family: FAM-GATE
+    origin:
+      type: GAME_SPEC_DERIVED
+    status: LOCKED
+    verification:
+      color_vision_simulation_required: true

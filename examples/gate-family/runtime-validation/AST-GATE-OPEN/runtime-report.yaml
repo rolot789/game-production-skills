@@ -1,0 +1,47 @@
+schema_version: 3
+asset_id: AST-GATE-OPEN
+status: runtime_approved
+build:
+  id: example-build-0001
+  executable: true
+integrated_lineage:
+  normalized_output:
+    path: normalized/AST-GATE-OPEN/runtime/AST-GATE-OPEN.png
+    version: v1
+    content_hash: f99f385bb8578a47132870166286448555465e59e2d740f1e973b9f320c7a403
+  qc_report:
+    path: qc/AST-GATE-OPEN/qc-report.yaml
+    version: v1
+    content_hash: 44a916d2663d223cc5079704f7ef42285bce915e947d887fcf496ed01ed36f6b
+  integration_plan:
+    path: engine-integration/web-main/integration-plan.yaml
+contexts:
+- id: CTX-CORRIDOR-MIN
+  scene: corridor-01
+  viewport: 1280x720
+  camera: fixed-top-down
+  states:
+  - closed
+  - transition
+  - open
+  level: 2
+  result: PASS
+  capture_ids:
+  - CAP-001
+- id: CTX-CHAMBER-DENSE
+  scene: chamber-03
+  viewport: 1920x1080
+  camera: fixed-top-down
+  states:
+  - closed
+  - open
+  level: 3
+  result: PASS
+  capture_ids:
+  - CAP-002
+findings: []
+untested:
+- context: ultrawide 21:9 viewport
+  reason: not a declared target
+  risk: low
+rework_handoff: null

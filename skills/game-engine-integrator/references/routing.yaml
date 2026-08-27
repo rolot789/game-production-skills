@@ -1,0 +1,282 @@
+# GENERATED MIRROR - DO NOT EDIT
+# source: contracts/routing.yaml
+# regenerate: python3 scripts/sync_contracts.py
+version: 3
+name: failure-routing
+
+# ---------------------------------------------------------------------------
+# SINGLE SOURCE OF TRUTH for failure routing.
+#
+# Before this file existed the routing table was restated independently in
+# ARCHITECTURE.md, the orchestrator SKILL.md, and three reference policies.
+# They drifted. Skill documents may now explain *how* to apply routing, and may
+# quote an individual row for illustration, but the authoritative mapping from
+# symptom class to root owner, invalidation scope, and revalidation scope is
+# here and only here.
+#
+# Consistency between this file and every skill document is enforced by
+# scripts/validate_contracts.py.
+# ---------------------------------------------------------------------------
+
+owners:
+  game-spec-builder:
+    layer: specification
+    owns: gameplay, state, screen, and interaction meaning
+  art-style-builder:
+    layer: visual authority
+    owns: locked style rules, scoped anchors, category overrides, constraint ledger
+  game-asset-planner:
+    layer: decomposition
+    owns: MRAU decomposition, family topology, variant matrix, representation strategy, runtime requirements
+  game-asset-generator:
+    layer: visual production
+    owns: candidate visual content against a valid generation contract
+  game-asset-normalizer:
+    layer: mechanical preparation
+    owns: canvas, trim, padding, scale, alpha, anchor, pivot, export, hashing
+  game-asset-qc:
+    layer: isolated verification
+    owns: contract verification, evidence quality, finding classification
+  game-engine-integrator:
+    layer: engine packaging
+    owns: atlas packing, import settings, performance budgets
+  runtime-visual-validator:
+    layer: contextual verification
+    owns: runtime evidence planning, coverage, attribution
+  runtime_integration:
+    layer: implementation
+    owns: z-order, layout, camera, transforms, shaders, blend, masks, lighting, post-processing, animation wiring
+
+# ---------------------------------------------------------------------------
+# Symptom classes.
+#
+# `root_owner` is who must act. `symptom_stages` are where the defect is
+# commonly first observed - never a routing input on its own.
+# ---------------------------------------------------------------------------
+symptom_classes:
+
+  - id: SEMANTIC_UNDEFINED
+    description: expected gameplay, state, or screen meaning is undefined or contradictory
+    symptom_stages: [asset_planning, asset_qc, runtime_validation]
+    root_owner: game-spec-builder
+    invalidation_scope: CATEGORY_SYSTEMIC
+    revalidation_scope: [asset_planning, generation, normalization, asset_qc, runtime_validation]
+    default_status: blocked
+
+  - id: STYLE_AUTHORITY_CONFLICT
+    description: two locked anchors govern the same dimension incompatibly, a category override is missing, or a negative constraint contradicts a locked positive rule
+    symptom_stages: [generation, asset_qc, runtime_validation]
+    root_owner: art-style-builder
+    invalidation_scope: CATEGORY_SYSTEMIC
+    revalidation_scope: [generation, normalization, asset_qc, runtime_validation]
+    default_status: blocked
+
+  - id: DECOMPOSITION_DEFECT
+    description: wrong MRAU split, missing state or orientation variant, wrong family relation, contradictory runtime footprint
+    symptom_stages: [generation, normalization, asset_qc, runtime_validation]
+    root_owner: game-asset-planner
+    invalidation_scope: FAMILY_SYSTEMIC
+    revalidation_scope: [generation, normalization, asset_qc, runtime_validation]
+    default_status: rework_required
+
+  - id: REPRESENTATION_STRATEGY_DEFECT
+    description: selected representation cannot satisfy locked style or runtime truth
+    symptom_stages: [generation, asset_qc]
+    root_owner: game-asset-planner
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [generation, normalization, asset_qc]
+    default_status: rework_required
+
+  - id: CONTENT_ERROR
+    description: wrong object, missing required component, or invented semantics in the generated candidate
+    symptom_stages: [generation, asset_qc]
+    root_owner: game-asset-generator
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [normalization, asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+
+  - id: IDENTITY_DRIFT
+    description: identity, proportion, or signature geometry changed away from the anchor or canonical parent
+    symptom_stages: [generation, asset_qc, runtime_validation]
+    root_owner: game-asset-generator
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [normalization, asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+
+  - id: STYLE_DIMENSION_DRIFT
+    description: one or more style dimensions moved away from approved anchors
+    symptom_stages: [generation, asset_qc, runtime_validation]
+    root_owner: game-asset-generator
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [normalization, asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+
+  - id: NEGATIVE_CONSTRAINT_VIOLATION
+    description: candidate exhibits HARD_FORBIDDEN, exceeds BOUNDED, or inherits an ANTI_REFERENCE dimension
+    symptom_stages: [generation, asset_qc]
+    root_owner: game-asset-generator
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [normalization, asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+
+  - id: FAMILY_DRIFT
+    description: a family member no longer belongs visually to the approved family
+    symptom_stages: [generation, asset_qc, runtime_validation]
+    root_owner: game-asset-generator
+    invalidation_scope: LOCAL_DERIVATIVE
+    revalidation_scope: [normalization, asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+    note: escalate to FAMILY_SYSTEMIC only after a shared cause is demonstrated on a second member
+
+  - id: STATE_READABILITY_FAILURE
+    description: the state exists but is visually ambiguous relative to its siblings
+    symptom_stages: [asset_qc, runtime_validation]
+    root_owner: game-asset-generator
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+    note: if the state-encoding rule itself is undefined, reroute to DECOMPOSITION_DEFECT or STYLE_AUTHORITY_CONFLICT
+
+  - id: MECHANICAL_PROCESSING_DEFECT
+    description: clipping, wrong canvas, unintended trim, alpha halo, scale or export mismatch, anchor or pivot offset introduced during processing
+    symptom_stages: [asset_qc, engine_integration, runtime_validation]
+    root_owner: game-asset-normalizer
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [asset_qc, engine_integration, affected_runtime_contexts]
+    default_status: rework_required
+
+  - id: FAMILY_ALIGNMENT_DEFECT
+    description: family members were normalized against inconsistent canvas, scale, or baseline so state switching jumps
+    symptom_stages: [asset_qc, runtime_validation]
+    root_owner: game-asset-normalizer
+    invalidation_scope: FAMILY_SYSTEMIC
+    revalidation_scope: [asset_qc, engine_integration, affected_runtime_contexts]
+    default_status: rework_required
+
+  - id: QC_CLASSIFICATION_DEFECT
+    description: isolated QC classification, applicability resolution, or evidence coverage was wrong
+    symptom_stages: [runtime_validation]
+    root_owner: game-asset-qc
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [asset_qc]
+    default_status: rework_required
+    note: QC never edits assets; route the visual rework to its producing owner and record qc_escape separately
+
+  - id: BUDGET_VIOLATION
+    description: atlas, memory, draw-call, or file-size budget exceeded for the declared engine target
+    symptom_stages: [engine_integration, runtime_validation]
+    root_owner: game-engine-integrator
+    invalidation_scope: CATEGORY_SYSTEMIC
+    revalidation_scope: [engine_integration, affected_runtime_contexts]
+    default_status: integration_rework_required
+    note: if the budget cannot be met without changing asset content, reroute to DECOMPOSITION_DEFECT or REPRESENTATION_STRATEGY_DEFECT
+
+  - id: IMPORT_SETTING_DEFECT
+    description: wrong pivot mapping, filter mode, compression, or pixels-per-unit in the engine import contract
+    symptom_stages: [engine_integration, runtime_validation]
+    root_owner: game-engine-integrator
+    invalidation_scope: LOCAL_ASSET
+    revalidation_scope: [engine_integration, affected_runtime_contexts]
+    default_status: integration_rework_required
+
+  - id: INTEGRATION_LOCAL
+    description: one runtime context applies valid assets incorrectly
+    symptom_stages: [runtime_validation]
+    root_owner: runtime_integration
+    invalidation_scope: SCENE_LOCAL
+    revalidation_scope: [affected_runtime_contexts]
+    default_status: runtime_rework_required
+
+  - id: INTEGRATION_SYSTEMIC
+    description: a shared runtime rule breaks multiple contexts
+    symptom_stages: [runtime_validation]
+    root_owner: runtime_integration
+    invalidation_scope: RUNTIME_SYSTEMIC
+    revalidation_scope: [affected_runtime_contexts]
+    default_status: runtime_rework_required
+
+  - id: CONTEXT_SENSITIVE_ASSET_FAILURE
+    description: the asset passes isolated inspection but fails a required context, and ordinary runtime treatment cannot fix it without violating a locked requirement
+    symptom_stages: [runtime_validation]
+    root_owner: null
+    root_owner_candidates: [art-style-builder, game-asset-planner, game-asset-generator]
+    invalidation_scope: CATEGORY_SYSTEMIC
+    revalidation_scope: [generation, normalization, asset_qc, affected_runtime_contexts]
+    default_status: runtime_blocked
+    note: never route automatically; determine which upstream contract is deficient first
+
+  - id: VALIDATION_COVERAGE_DEFECT
+    description: the runtime validation plan, evidence coverage, comparison logic, or attribution is defective
+    symptom_stages: [runtime_validation]
+    root_owner: runtime-visual-validator
+    invalidation_scope: SCENE_LOCAL
+    revalidation_scope: [affected_runtime_contexts]
+    default_status: partial_validation_only
+
+  - id: ACCESSIBILITY_FAILURE
+    description: a declared accessibility check fails at intended runtime size or against a required background
+    symptom_stages: [asset_qc, runtime_validation]
+    root_owner: null
+    root_owner_candidates: [art-style-builder, game-asset-planner, game-asset-generator]
+    invalidation_scope: CATEGORY_SYSTEMIC
+    revalidation_scope: [generation, normalization, asset_qc, affected_runtime_contexts]
+    default_status: rework_required
+    note: >-
+      A hue-only state distinction is a planner or art-style defect, not a
+      generator defect. Route to the generator only when a valid non-color
+      channel was specified and the candidate failed to implement it.
+
+# ---------------------------------------------------------------------------
+# Decision procedure. Apply in order; stop at the first row that resolves.
+# ---------------------------------------------------------------------------
+decision_procedure:
+  - step: 1
+    ask: Is the expected player-visible behavior defined and internally consistent?
+    if_no: SEMANTIC_UNDEFINED or STYLE_AUTHORITY_CONFLICT or DECOMPOSITION_DEFECT by requirement type
+  - step: 2
+    ask: Did the defect exist in the generated candidate before normalization?
+    if_yes: a game-asset-generator class
+  - step: 3
+    ask: Was the candidate correct and processing introduced the defect?
+    if_yes: a game-asset-normalizer class
+  - step: 4
+    ask: Was the normalized asset correct and engine packaging introduced the defect?
+    if_yes: a game-engine-integrator class
+  - step: 5
+    ask: Does the same asset work correctly in another valid runtime context?
+    if_yes: INTEGRATION_LOCAL
+  - step: 6
+    ask: Does the failure correlate with a shared runtime rule across contexts?
+    if_yes: INTEGRATION_SYSTEMIC
+  - step: 7
+    ask: Would fixing runtime integration require violating locked asset or style behavior?
+    if_yes: CONTEXT_SENSITIVE_ASSET_FAILURE
+  - step: 8
+    ask: Is the requirement now rejected by the user rather than incorrectly implemented?
+    if_yes: STYLE_AUTHORITY_CONFLICT or SEMANTIC_UNDEFINED; never blame the generator
+
+multi_owner:
+  rule: >-
+    One symptom may have contributing causes in more than one stage. Record a
+    primary_owner that must act first and an optional secondary_owner that acts
+    after. Never send the same ambiguous ticket to every stage.
+  fields: [primary_owner, secondary_owner, order_reason]
+
+systemic_escalation:
+  rule: >-
+    Do not label a failure systemic from one observation. Form a shared-cause
+    hypothesis, test one representative dependent subject, and expand the
+    invalidation scope only if the same cause reproduces.
+  escalation_map:
+    LOCAL_DERIVATIVE: FAMILY_SYSTEMIC
+    LOCAL_ASSET: FAMILY_SYSTEMIC
+    FAMILY_SYSTEMIC: CATEGORY_SYSTEMIC
+    CATEGORY_SYSTEMIC: GLOBAL_SYSTEMIC
+    SCENE_LOCAL: RUNTIME_SYSTEMIC
+
+qc_escape:
+  rule: >-
+    When runtime evidence reveals a defect that isolated QC should have caught,
+    route the visual rework to its producing owner and record the QC escape
+    separately. QC is the process owner, never the content rework owner.
+  fields: [qc_escape, missed_qc_dimension]

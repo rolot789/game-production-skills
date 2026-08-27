@@ -1,0 +1,165 @@
+version: 3
+project:
+  id: gate-family
+  name: Gate Family
+  pipeline_status: IN_PROGRESS
+profile: full
+target:
+  milestone: gate family runtime-approved
+authoritative: &id001
+  game_spec:
+    path: spec/game-spec.yaml
+    version: v1
+    content_hash: 27cbc927c75d77294df970b9a63de1dfa3444f9e9a12ae6239009854899a624a
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12
+  style_anchor_manifest:
+    path: art/style-anchor-manifest.yaml
+    version: v1
+    content_hash: 6590153dab194b3a55a6bb75602da4d0f926571798be484261a446949c211713
+  style_constraint_ledger:
+    path: art/style-constraint-ledger.yaml
+    version: v1
+    content_hash: f27ea763c352faaf3707df7e6607a2721376b8f06caf7d27d76d82fddb508aea
+stages:
+  game_spec:
+    skill: game-spec-builder
+    status: COMPLETE
+    readiness: PRODUCTION_READY
+    artifacts:
+    - spec/game-spec.yaml
+  art_style:
+    skill: art-style-builder
+    status: COMPLETE
+    readiness: ASSET_GENERATION_READY
+    artifacts:
+    - art/art-style.yaml
+  asset_planning:
+    skill: game-asset-planner
+    status: COMPLETE
+    readiness: null
+    artifacts:
+    - assets/asset-manifest.yaml
+  generation:
+    skill: game-asset-generator
+    status: COMPLETE
+    readiness: null
+    artifacts: []
+  normalization:
+    skill: game-asset-normalizer
+    status: COMPLETE
+    readiness: null
+    artifacts: []
+  asset_qc:
+    skill: game-asset-qc
+    status: COMPLETE
+    readiness: null
+    artifacts:
+    - qc/FAM-GATE/family-qc-summary.yaml
+  engine_integration:
+    skill: game-engine-integrator
+    status: COMPLETE
+    readiness: null
+    artifacts:
+    - engine-integration/web-main/budget-report.yaml
+  runtime_validation:
+    skill: runtime-visual-validator
+    status: COMPLETE
+    readiness: null
+    artifacts: []
+assets:
+  AST-GATE-CLOSED:
+    lifecycle: RUNTIME_APPROVED
+    family_id: FAM-GATE
+    priority: P0
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-CLOSED.yaml
+        version: v1
+        content_hash: 6b71f7a335e3cb0656137793e8be0b0be338c86478e5cbb8baeae9f54473a334
+      generation_candidate:
+        id: v1-c1
+        content_hash: 8bb8d6ae32dcc729af0c5ef444b9bc229db2f6620b9091bb384914202e79c155
+      normalization_output:
+        version: v1
+        content_hash: 00b392e4898137ed16f77013583506f8ab2ea9f48c3e04d555de63bb5b98543e
+      qc_report:
+        path: qc/AST-GATE-CLOSED/qc-report.yaml
+        version: v1
+        content_hash: 7095acc3bc21b45ad8b47ccb0b4d4a17231373f989a43a13c26ab71140f09c51
+      runtime_report:
+        path: runtime-validation/AST-GATE-CLOSED/runtime-report.yaml
+        version: v1
+        content_hash: eeeb8031825f3ad0ed4d730ab810741ab83da433c753a99ad39636e06bbca3d7
+    root_owner: null
+    next_skill: null
+    next_action: eligible for SHIPPABLE once the milestone requires it
+  AST-GATE-TRANSITION:
+    lifecycle: RUNTIME_APPROVED
+    family_id: FAM-GATE
+    priority: P0
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-TRANSITION.yaml
+        version: v1
+        content_hash: b737ec48a484717de563620230f4dd2020bf39dea67723f4fedb8fa35047e1f5
+      generation_candidate:
+        id: v1-c1
+        content_hash: 56aaa107556067e82524a11e17534dbf07093136894e03d6c7edbf36a9e5ce65
+      normalization_output:
+        version: v1
+        content_hash: 8a77e22e0cb95352193bf45e0ba97ba84f63a5ab65be3614f35ff9d64bec5112
+      qc_report:
+        path: qc/AST-GATE-TRANSITION/qc-report.yaml
+        version: v1
+        content_hash: 6c300d80d077c21e3b246b1a9e3096778825d807dce7b9f869521807fd10add0
+      runtime_report:
+        path: runtime-validation/AST-GATE-TRANSITION/runtime-report.yaml
+        version: v1
+        content_hash: 370647738b7c011faffce3d1169c37584dc48857d503b718e77ed3fe3d90d72a
+    root_owner: null
+    next_skill: null
+    next_action: eligible for SHIPPABLE once the milestone requires it
+  AST-GATE-OPEN:
+    lifecycle: RUNTIME_APPROVED
+    family_id: FAM-GATE
+    priority: P0
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-OPEN.yaml
+        version: v1
+        content_hash: 2161f05bc789763b88753cde30d32d6a4cdeaf866c8159ec275c07aae48f6c4d
+      generation_candidate:
+        id: v1-c1
+        content_hash: 61a56dbca5ef13c1127efda00c717cb8101f019eb9997530794cb87720a1f907
+      normalization_output:
+        version: v1
+        content_hash: f99f385bb8578a47132870166286448555465e59e2d740f1e973b9f320c7a403
+      qc_report:
+        path: qc/AST-GATE-OPEN/qc-report.yaml
+        version: v1
+        content_hash: 44a916d2663d223cc5079704f7ef42285bce915e947d887fcf496ed01ed36f6b
+      runtime_report:
+        path: runtime-validation/AST-GATE-OPEN/runtime-report.yaml
+        version: v1
+        content_hash: 5b665fec5dcdfaeee818c46f6d304f060c19e091d6fc2ab6f49f2cf18deb174d
+    root_owner: null
+    next_skill: null
+    next_action: eligible for SHIPPABLE once the milestone requires it
+families:
+  FAM-GATE:
+    canonical_asset: AST-GATE-CLOSED
+    canonical_status: RUNTIME_APPROVED
+    systemic_blocker: null
+    derivatives:
+      AST-GATE-TRANSITION: RUNTIME_APPROVED
+      AST-GATE-OPEN: RUNTIME_APPROVED
+active_versions: *id001
+handoffs:
+- HND-0001
+blockers: []
+invalidations:
+- INV-0001
+rework_queue: []

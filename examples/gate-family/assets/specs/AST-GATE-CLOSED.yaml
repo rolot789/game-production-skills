@@ -1,0 +1,105 @@
+schema_version: 3
+version: v1
+asset_id: AST-GATE-CLOSED
+family_id: FAM-GATE
+category: interactive_object
+purpose: traversal blocked
+priority: P0
+source_versions:
+  game_spec:
+    path: spec/game-spec.yaml
+    version: v1
+    content_hash: 27cbc927c75d77294df970b9a63de1dfa3444f9e9a12ae6239009854899a624a
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12
+  style_anchor_manifest:
+    path: art/style-anchor-manifest.yaml
+    version: v1
+    content_hash: 6590153dab194b3a55a6bb75602da4d0f926571798be484261a446949c211713
+  style_constraint_ledger:
+    path: art/style-constraint-ledger.yaml
+    version: v1
+    content_hash: f27ea763c352faaf3707df7e6607a2721376b8f06caf7d27d76d82fddb508aea
+style_authority:
+  anchor_ids:
+  - ANCH-GATE-GEOMETRY-001
+  - ANCH-PALETTE-001
+  constraint_ids:
+  - NEG-LIGHTING-001
+  - NEG-TEXTURE-002
+  - NEG-DETAIL-003
+  - NEG-STATE-004
+  category_overrides:
+  - interactive_object.state_encoding
+  - interactive_object.detail_density
+state:
+  id: closed
+  gameplay_meaning: traversal blocked
+  encoding_channels:
+  - shape
+  - value
+orientation:
+  id: null
+family:
+  canonical_parent: null
+  derivation_role: canonical_parent
+  shared_geometry_group: GEO-GATE-FRAME
+  shared_anchor_group: ANCHORGRP-GATE
+  must_preserve:
+  - outer_frame_geometry
+  - frame_thickness
+  - top_down_projection
+  - palette_family
+  - footprint
+  must_change: []
+  may_vary:
+  - bolt_row_count
+  must_not_introduce:
+  - new_ornament
+  - directional_shading
+production:
+  strategy: generated_raster
+  derivation_mode: independent
+  strategy_rationale: 'canonical parent: full frame plus full panel exposes every
+    identity-bearing feature. runtime_primitive was rejected because NEG-TEXTURE-002
+    requires authored value grain that a flat fill cannot produce.'
+normalization:
+  canvas_policy: fixed
+  scale_policy: family_shared
+  anchor_policy: content_bottom_center
+  pivot_policy: bottom_center
+  target_canvas:
+    width: 256
+    height: 256
+  padding: 8
+  trim: true
+  resample: lanczos
+runtime:
+  footprint: 1x1 tile
+  intended_display_size:
+    width: 64
+    height: 64
+  background_policy: transparent
+  readability_requirements:
+  - frame silhouette recognizable at 64 px
+  state_readability_requirements:
+  - panel height difference decodable at 64 px against both declared backgrounds
+  backgrounds_encountered:
+  - '#1B1F24'
+  - '#3A4149'
+accessibility:
+  gameplay_critical: true
+  required_checks:
+  - A11Y_CONTRAST
+  - A11Y_COLOR_VISION
+  - A11Y_NON_COLOR_CHANNEL
+qc_requirements:
+- compare all three states side by side at 64 px
+- verify colour-vision separation against siblings
+dependencies:
+  upstream:
+  - spec/game-spec.yaml
+  - art/art-style.yaml
+  downstream_hints: []

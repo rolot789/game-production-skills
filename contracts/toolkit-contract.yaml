@@ -1,14 +1,34 @@
-version: 2
+version: 3
 
 toolkit:
   id: game-production-skills
   name: AI-Native Game Production Skills
-  scope: game specification, art direction, game asset production, asset QC, runtime visual validation
+  scope: game specification, art direction, game asset production, asset QC, engine integration, runtime visual validation
+
+# ---------------------------------------------------------------------------
+# Single sources of truth
+#
+# This file is the registry for stage order, enums, lifecycle transitions, and
+# lineage rules. It does NOT restate failure routing or handoff field shapes.
+# Those live in exactly one place each:
+# ---------------------------------------------------------------------------
+single_sources:
+  failure_routing: contracts/routing.yaml
+  rework_handoff: contracts/rework-handoff-contract.yaml
+  artifact_schemas: contracts/schemas/
+  profiles: contracts/profiles/
+  lineage: this file, section `lineage`
+
+# Contract files are mirrored into skill directories at build time so an
+# installed skill can resolve them without the repository. See
+# contracts/mirror-manifest.yaml and scripts/sync_contracts.py.
+mirror_manifest: contracts/mirror-manifest.yaml
 
 path_resolution:
   project_registry: project.yaml
   mode: canonical_registry_when_present
   rule: paths shown in stage contracts are logical patterns; when project.yaml exists, resolve them through project.yaml.paths
+  applies_to_all_stages: true
   required_project_path_keys:
     - game_spec
     - art_style
@@ -19,6 +39,7 @@ path_resolution:
     - generation
     - normalized
     - qc
+    - engine_integration
     - runtime_validation
     - pipeline_state
     - handoffs
@@ -26,6 +47,7 @@ path_resolution:
     - rework_queue
 
 rework_handoff_contract: contracts/rework-handoff-contract.yaml
+routing_contract: contracts/routing.yaml
 
 stage_order:
   - game_spec
@@ -34,6 +56,7 @@ stage_order:
   - generation
   - normalization
   - asset_qc
+  - engine_integration
   - runtime_validation
 
 stages:
@@ -79,8 +102,8 @@ stages:
       - asset-manifest.yaml
       - specs/<asset-id>.yaml
     lineage_requirements:
-      - GameSpec version/hash when available
-      - ArtStyle version/hash when available
+      - GameSpec version and content_hash
+      - ArtStyle version and content_hash
       - approved anchor IDs relevant to each AssetSpec
       - applicable style constraint IDs
       - canonical family parent/topology when applicable
@@ -104,11 +127,12 @@ stages:
       - generation/<asset-id>/records/*.yaml
       - generation/<asset-id>/candidates/*
       - generation/<asset-id>/candidate-index.yaml
+    budget_contract: generation_budget
 
   normalization:
     skill: game-asset-normalizer
     entry:
-      - selected generation candidate with identity/hash/version when available
+      - selected generation candidate with identity, content_hash, and version
       - specs/<asset-id>.yaml
       - normalization policy
       - project.yaml when present
@@ -118,11 +142,12 @@ stages:
       - normalized/<asset-id>/normalization-record.yaml
       - normalized/<asset-id>/geometry-report.yaml
       - normalized/<asset-id>/preview/* when produced
+    deterministic_tool: skills/game-asset-normalizer/scripts/normalize.py
     lineage_requirements:
-      - exact effective generation candidate identity
-      - AssetSpec version/hash when available
+      - exact effective generation candidate identity and content_hash
+      - AssetSpec version and content_hash
       - normalization policy version/ID
-      - output identity/hash when supported
+      - output content_hash
 
   asset_qc:
     skill: game-asset-qc
@@ -137,6 +162,7 @@ stages:
       - style-constraint-ledger.yaml when present
       - canonical family parent and sibling variants when applicable
       - project.yaml when present
+    deterministic_tool: skills/game-asset-qc/scripts/technical_check.py
     allowed_exit_status:
       - approved
       - approved_with_minor_findings
@@ -150,12 +176,39 @@ stages:
       - qc/<family-id>/family-qc-summary.yaml when family/batch QC is used
     rework_output: canonical rework handoff contract
 
+  engine_integration:
+    skill: game-engine-integrator
+    entry:
+      - QC-approved normalized runtime assets
+      - qc/<asset-id>/qc-report.yaml
+      - specs/<asset-id>.yaml
+      - normalized/<asset-id>/normalization-record.yaml
+      - engine target declaration from project.yaml
+      - performance budget declaration
+      - project.yaml when present
+    deterministic_tool: skills/game-engine-integrator/scripts/budget_check.py
+    allowed_exit_status:
+      - integration_ready
+      - integration_ready_with_minor_findings
+      - integration_rework_required
+      - integration_blocked
+    promotion_status:
+      - integration_ready
+      - integration_ready_with_minor_findings
+    outputs:
+      - engine-integration/<target-id>/integration-plan.yaml
+      - engine-integration/<target-id>/import-settings.yaml
+      - engine-integration/<target-id>/budget-report.yaml
+      - engine-integration/<atlas-id>/atlas-manifest.yaml when atlases are produced
+    rework_output: canonical rework handoff contract
+
   runtime_validation:
     skill: runtime-visual-validator
     entry:
       - executable playable build or preview
       - QC-approved runtime asset/version
       - qc/<asset-id>/qc-report.yaml
+      - engine-integration/<target-id>/integration-plan.yaml when engine integration is used
       - specs/<asset-id>.yaml
       - normalized/<asset-id>/normalization-record.yaml
       - runtime validation plan or sufficient information to compile one
@@ -188,7 +241,7 @@ stages:
 orchestrator:
   skill: game-art-production-orchestrator
   state_file: .pipeline/game-art-production-state.yaml
-  state_version: 2
+  state_version: 3
   optional_state_artifacts:
     - .pipeline/handoffs/*
     - .pipeline/invalidation-ledger.yaml
@@ -197,9 +250,10 @@ orchestrator:
     - resolve logical artifact paths through project.yaml when present
     - route the next specialist without duplicating specialist work
     - validate readiness and promotion gates
+    - reject asset lifecycle transitions not present in `lifecycle_transitions`
     - preserve authoritative artifact/version lineage
     - normalize specialist-local rework aliases into canonical change_scope and preserve_scope
-    - route failures to root owners rather than symptom locations
+    - route failures to root owners using contracts/routing.yaml
     - invalidate only dependency-affected descendants
     - preserve search/reference corpus across art-style loops
     - prevent discovery-only references from becoming production authority
@@ -254,19 +308,157 @@ asset_lifecycle:
   - GENERATED
   - NORMALIZED
   - QC_APPROVED
+  - INTEGRATION_READY
   - RUNTIME_APPROVED
   - SHIPPABLE
   - GENERATION_REWORK
   - NORMALIZATION_BLOCKED
   - QC_REWORK
+  - INTEGRATION_REWORK
   - RUNTIME_REWORK
   - INVALIDATED
+
+# ---------------------------------------------------------------------------
+# Legal asset lifecycle transitions.
+#
+# The orchestrator MUST reject any transition that is not listed here. A state
+# with an empty `to` list is terminal for the current lineage.
+#
+# `condition` names the evidence that authorizes the transition. Absent that
+# evidence the transition is illegal even if the target state is listed.
+# ---------------------------------------------------------------------------
+lifecycle_transitions:
+  PLANNED:
+    - to: READY_FOR_GENERATION
+      condition: AssetSpec complete and required upstream gates passed
+    - to: INVALIDATED
+      condition: upstream authority changed
+  READY_FOR_GENERATION:
+    - to: GENERATED
+      condition: selected candidate exists with truthful provenance
+    - to: GENERATION_REWORK
+      condition: generation screening rejected every candidate
+    - to: INVALIDATED
+      condition: upstream authority changed
+  GENERATED:
+    - to: NORMALIZED
+      condition: normalization record binds the exact candidate content_hash
+    - to: NORMALIZATION_BLOCKED
+      condition: candidate identity or policy cannot be resolved
+    - to: GENERATION_REWORK
+      condition: post-selection defect attributed to generation
+    - to: INVALIDATED
+      condition: upstream authority changed
+  NORMALIZED:
+    - to: QC_APPROVED
+      condition: qc-report status in stages.asset_qc.promotion_status for this exact output_hash
+    - to: QC_REWORK
+      condition: qc-report status rework_required
+    - to: NORMALIZATION_BLOCKED
+      condition: qc-report status blocked with normalizer root owner
+    - to: GENERATION_REWORK
+      condition: qc-report routes root ownership to generation
+    - to: INVALIDATED
+      condition: upstream authority changed
+  QC_APPROVED:
+    - to: INTEGRATION_READY
+      condition: budget-report status in stages.engine_integration.promotion_status
+    - to: INTEGRATION_REWORK
+      condition: engine integration reports integration_rework_required
+    - to: RUNTIME_APPROVED
+      condition: runtime report promotes AND profile does not require engine_integration
+    - to: RUNTIME_REWORK
+      condition: runtime report requires rework
+    - to: INVALIDATED
+      condition: upstream authority changed
+  INTEGRATION_READY:
+    - to: RUNTIME_APPROVED
+      condition: runtime report status in stages.runtime_validation.promotion_status for this lineage
+    - to: RUNTIME_REWORK
+      condition: runtime report requires rework
+    - to: INTEGRATION_REWORK
+      condition: budget or import-setting defect found downstream
+    - to: INVALIDATED
+      condition: upstream authority changed
+  RUNTIME_APPROVED:
+    - to: SHIPPABLE
+      condition: coherent active lineage across every stage the active profile requires
+    - to: RUNTIME_REWORK
+      condition: regression found in a previously approved context
+    - to: INVALIDATED
+      condition: upstream authority changed
+  SHIPPABLE:
+    - to: INVALIDATED
+      condition: upstream authority changed
+    - to: RUNTIME_REWORK
+      condition: regression found after shipping decision
+  GENERATION_REWORK:
+    - to: GENERATED
+      condition: new candidate satisfies change_scope without violating preserve_scope
+    - to: READY_FOR_GENERATION
+      condition: rework escalated and generation contract recompiled
+    - to: INVALIDATED
+      condition: rework escalated upstream and the AssetSpec changed
+  NORMALIZATION_BLOCKED:
+    - to: NORMALIZED
+      condition: blocking input resolved and normalization completed
+    - to: GENERATION_REWORK
+      condition: block root-owned by generation
+    - to: PLANNED
+      condition: block root-owned by planner and the AssetSpec was revised
+    - to: INVALIDATED
+      condition: upstream authority changed
+  QC_REWORK:
+    - to: NORMALIZED
+      condition: normalizer-owned fix produced a new normalized output
+    - to: GENERATION_REWORK
+      condition: QC routed root ownership to generation
+    - to: PLANNED
+      condition: QC routed root ownership to planner
+    - to: INVALIDATED
+      condition: upstream authority changed
+  INTEGRATION_REWORK:
+    - to: INTEGRATION_READY
+      condition: integration fix passes the budget report
+    - to: NORMALIZED
+      condition: integration routed root ownership to the normalizer
+    - to: PLANNED
+      condition: integration routed root ownership to the planner
+    - to: INVALIDATED
+      condition: upstream authority changed
+  RUNTIME_REWORK:
+    - to: RUNTIME_APPROVED
+      condition: revalidation of affected contexts passes for the same lineage
+    - to: INTEGRATION_REWORK
+      condition: runtime routed root ownership to engine integration
+    - to: NORMALIZED
+      condition: runtime routed root ownership to the normalizer
+    - to: GENERATION_REWORK
+      condition: runtime routed root ownership to generation
+    - to: PLANNED
+      condition: runtime routed root ownership to the planner
+    - to: INVALIDATED
+      condition: runtime routed root ownership to art-style or game-spec
+  INVALIDATED:
+    - to: PLANNED
+      condition: AssetSpec re-derived from revised upstream authority
 
 severity:
   - BLOCKER
   - MAJOR
   - MINOR
   - NOTE
+
+# Shared vocabulary for any per-dimension verification result, used by QC,
+# engine integration, runtime validation, and the artifact schemas.
+# INSUFFICIENT_EVIDENCE is never a pass: when the unresolved evidence is
+# production-critical, the stage status becomes blocked.
+verification_results:
+  - PASS
+  - FAIL
+  - NOT_APPLICABLE
+  - INSUFFICIENT_EVIDENCE
+  - CONTRACT_CONFLICT
 
 art_style_loop_levels:
   - L0_MICRO
@@ -282,10 +474,88 @@ generation_rework_levels:
   - G3_CHANGE_GENERATION_STRATEGY
   - G4_ESCALATE_UPSTREAM
 
+# ---------------------------------------------------------------------------
+# Lineage: version and hash rules.
+#
+# Dependency-aware invalidation is only executable if identity is computable.
+# These fields are REQUIRED, not "when available". A stage that cannot produce
+# them must block rather than emit an unverifiable record.
+# ---------------------------------------------------------------------------
+lineage:
+  version_format:
+    pattern: '^v[0-9]+$'
+    scope: monotonic per artifact path
+    owner: the stage that writes the artifact increments it
+    rule: a stage increments the version of an artifact it writes whenever the
+      serialized content changes; readers never increment.
+  candidate_version_format:
+    pattern: '^v[0-9]+-c[0-9]+$'
+    rule: generation candidates carry the job version plus a candidate ordinal.
+  content_hash:
+    algorithm: sha256
+    encoding: lowercase hex, full digest
+    scope_for_binary_artifacts: the exact bytes of the file
+    scope_for_yaml_artifacts: the UTF-8 bytes of the serialized file as written to disk
+    field_name: content_hash
+    rule: a record that claims an input MUST carry that input's content_hash.
+  equivalence_rule: >-
+    Effective input equivalence is proven only by identical content_hash for
+    every declared authoritative input plus an identical policy version.
+    Visual similarity, file size, and timestamps never prove equivalence.
+  unavailable_policy: >-
+    If a required version or content_hash cannot be produced, the stage emits a
+    BLOCKER and stops. `unknown` is not an acceptable lineage value in any
+    record that a downstream promotion depends on.
+
+# ---------------------------------------------------------------------------
+# Generation budget. Symmetric with the reference search budget so the
+# expensive side of the pipeline is bounded too.
+# ---------------------------------------------------------------------------
+generation_budget:
+  candidates_per_job:
+    default_max: 4
+    rule: stop as soon as one candidate passes screening on every critical dimension
+  regeneration_attempts_per_asset:
+    default_max: 6
+    rule: counted across all G-levels for one asset within one rework transaction
+  same_level_repeats:
+    G0_SAME_CONTRACT_RETRY: 2
+    rule: a third identical-contract retry is evidence that the contract, not the
+      sampler, is wrong; escalate instead of repeating
+  escalation_rule: >-
+    Two consecutive failures on the same dimension at one level must escalate to
+    the next level rather than repeat. Exhausting the attempt budget escalates to
+    G4_ESCALATE_UPSTREAM and stops.
+  stop_conditions:
+    - a candidate satisfies the production contract
+    - the attempt budget is exhausted
+    - the failure class is UPSTREAM_SPEC_AMBIGUITY
+    - repeated failure indicates provider/topology inadequacy and no strategy remains
+
+accessibility:
+  required_checks:
+    - id: A11Y_CONTRAST
+      stage: asset_qc
+      rule: state-bearing and text-bearing elements meet the project contrast floor at intended runtime size
+    - id: A11Y_COLOR_VISION
+      stage: asset_qc
+      rule: gameplay state distinctions survive protanopia, deuteranopia, and tritanopia simulation
+    - id: A11Y_NON_COLOR_CHANNEL
+      stage: asset_qc
+      rule: any gameplay-critical distinction encoded in hue also uses a second channel (value, shape, icon, or motion)
+    - id: A11Y_RUNTIME_CONTRAST
+      stage: runtime_validation
+      rule: contrast and state distinction hold against the actual scene background, not a transparent canvas
+  gate_binding: >-
+    GameSpec PRODUCTION_READY declares an accessibility baseline. These checks
+    are how downstream stages verify it. A declared baseline with no downstream
+    check is a contract hole.
+
 lineage_rules:
-  - A changed generation candidate invalidates descendant normalization, QC, and dependent runtime approval unless exact effective input equivalence is proven.
-  - A changed normalized output invalidates descendant QC and dependent runtime approval.
-  - Runtime-integration-only changes may preserve generation, normalization, and QC when their authoritative inputs remain unchanged.
+  - A changed generation candidate invalidates descendant normalization, QC, engine integration, and dependent runtime approval unless exact effective input equivalence is proven by content_hash.
+  - A changed normalized output invalidates descendant QC, engine integration, and dependent runtime approval.
+  - A changed atlas or import-setting output invalidates dependent runtime approval only.
+  - Runtime-integration-only changes may preserve generation, normalization, QC, and engine integration when their authoritative inputs remain unchanged.
   - A discovered reference added to the corpus does not invalidate production unless locked style truth or approved scoped authority changes.
 
 principles:
@@ -300,5 +570,7 @@ principles:
   - Asset QC evaluates explicit production contracts and routes failures to root owners without redesigning or modifying assets.
   - Runtime validation evaluates real rendered contexts and does not substitute partial capture review for executable runtime approval.
   - Symptom location, root ownership, invalidation scope, and revalidation scope are separate decisions.
-  - SHIPPABLE promotion requires coherent active versions across generation, normalization, QC, and runtime validation.
+  - SHIPPABLE promotion requires coherent active versions across every stage the active profile requires.
   - External rework handoffs use canonical change_scope and preserve_scope fields.
+  - Deterministic work runs in the stage's declared tool; agent judgment reads the tool output rather than replacing it.
+  - Identity is computed, not asserted. A lineage claim without a content_hash is not a lineage claim.

@@ -1,12 +1,44 @@
-version: 2
+version: 3
 
 project:
   id: null
   name: null
 
+# lite  - fewer artifacts, ceiling QC_APPROVED, engine integration and runtime
+#         validation optional. Good for jams, prototypes, small asset sets.
+# full  - every stage, full lineage discipline, ceiling SHIPPABLE.
+# See contracts/profiles/ for what each relaxes and what it never relaxes.
+profile: full
+
+# Engine target. Required by the engine_integration stage.
+engine:
+  id: default
+  target: web-canvas        # unity | unreal | godot | web-canvas | web-dom | custom
+  pixels_per_unit: 100
+  color_space: gamma
+
+# Performance budgets, measured by
+# skills/game-engine-integrator/scripts/budget_check.py.
+# An undeclared budget is not a passing budget - it reports
+# INSUFFICIENT_EVIDENCE, and an entirely undeclared set blocks integration.
+budgets:
+  max_atlas_dimension: 2048
+  max_texture_memory_mb: 64
+  max_total_asset_bytes: 12000000
+  max_single_asset_bytes: 512000
+
+# Accessibility baseline declared by GameSpec PRODUCTION_READY and verified by
+# game-asset-qc and runtime-visual-validator. A baseline no stage checks is a
+# contract hole; delete this block only with an explicit recorded decision.
+accessibility:
+  min_contrast_ratio: 3.0
+  color_vision_modes: [protanopia, deuteranopia, tritanopia]
+  require_non_color_channel: true
+
 # Canonical logical-artifact -> project-path registry.
-# Skills and the orchestrator should resolve logical artifact names through this
-# map when this file exists rather than hard-coding repository-root paths.
+# EVERY stage resolves logical artifact names through this map when this file
+# exists, including game_spec and art_style. Writing to a repository-root
+# filename when the registry maps it elsewhere breaks the pipeline silently.
 paths:
   game_spec: spec/game-spec.yaml
   game_spec_human: spec/GameSpec.md
@@ -30,6 +62,7 @@ paths:
   generation: generation/
   normalized: normalized/
   qc: qc/
+  engine_integration: engine-integration/
   runtime_validation: runtime-validation/
 
   pipeline_state: .pipeline/game-art-production-state.yaml

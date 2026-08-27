@@ -1,7 +1,7 @@
 {
   "name": "game-production-skills",
-  "version": "0.1.0",
-  "description": "Composable AI-native game production skills for game specification, art direction, asset production, QC, and runtime validation.",
+  "version": "0.2.0",
+  "description": "Composable AI-native game production skills for game specification, art direction, asset production, QC, engine integration, and runtime validation.",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -11,7 +11,9 @@
     "bin/",
     "skills/",
     "contracts/",
+    "scripts/",
     "templates/",
+    "examples/",
     "README.md",
     "LICENSE"
   ],
@@ -41,6 +43,11 @@
   },
   "scripts": {
     "check": "node bin/game-production-skills.js list",
+    "doctor": "python3 scripts/doctor.py .",
+    "validate:contracts": "python3 scripts/validate_contracts.py",
+    "validate:mirrors": "python3 scripts/sync_contracts.py --check",
+    "validate:example": "python3 scripts/validate_project.py examples/gate-family",
+    "test:install": "python3 scripts/test_install.py",
     "pack:check": "npm pack --dry-run"
   }
 }

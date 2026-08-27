@@ -1,0 +1,40 @@
+schema_version: 3
+target:
+  id: web-main
+  engine: web-canvas
+  pixels_per_unit: 64
+  color_space: gamma
+assets:
+  AST-GATE-CLOSED:
+    source: normalized/AST-GATE-CLOSED/runtime/AST-GATE-CLOSED.png
+    content_hash: 00b392e4898137ed16f77013583506f8ab2ea9f48c3e04d555de63bb5b98543e
+    pivot:
+    - 0.5
+    - 1.0
+    pixels_per_unit: 64
+    filter_mode: bilinear
+    compression: none
+    generate_mipmaps: false
+    wrap_mode: clamp
+  AST-GATE-TRANSITION:
+    source: normalized/AST-GATE-TRANSITION/runtime/AST-GATE-TRANSITION.png
+    content_hash: 8a77e22e0cb95352193bf45e0ba97ba84f63a5ab65be3614f35ff9d64bec5112
+    pivot:
+    - 0.5
+    - 1.0
+    pixels_per_unit: 64
+    filter_mode: bilinear
+    compression: none
+    generate_mipmaps: false
+    wrap_mode: clamp
+  AST-GATE-OPEN:
+    source: normalized/AST-GATE-OPEN/runtime/AST-GATE-OPEN.png
+    content_hash: f99f385bb8578a47132870166286448555465e59e2d740f1e973b9f320c7a403
+    pivot:
+    - 0.5
+    - 1.0
+    pixels_per_unit: 64
+    filter_mode: bilinear
+    compression: none
+    generate_mipmaps: false
+    wrap_mode: clamp

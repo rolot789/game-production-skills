@@ -1,6 +1,6 @@
 ---
 name: game-asset-qc
-description: Evaluate normalized game assets against production contracts, scoped visual anchors, persistent style constraints, family lineage, and runtime-readability requirements. Produce evidence-backed findings, pass/fail status, and canonical delta-rework handoffs without modifying assets.
+description: Use when a normalized asset must be judged against its production contract before it reaches the game — "check these assets", "is this on style", "did the regeneration fix it" — or after any regeneration or normalization change. Runs scripts/technical_check.py for measurable conformance and accessibility, then verifies scoped anchors, negative constraints, family coherence, and readability at intended display size. Never modifies assets. Problems that only appear in a real scene belong to runtime-visual-validator.
 ---
 
 # Game Asset QC
@@ -61,13 +61,37 @@ If production-critical truth is missing or contradictory, block and route upstre
 7. Never modify/repaint/crop/normalize/regenerate in QC.
 8. Treat repeated systemic failures as systemic even if individual instances look superficially usable.
 
+## Run the technical check first
+
+QC has two halves. One is judgment: does this honor the art direction, does the state read, is the family coherent. The other is arithmetic: dimensions, colour mode, alpha, clipping, padding, hash lineage, contrast ratio, colour-vision separability.
+
+Only the first needs an agent. Run the second:
+
+```bash
+python3 skills/game-asset-qc/scripts/technical_check.py \
+    --asset normalized/AST-GATE-CLOSED/runtime/AST-GATE-CLOSED.png \
+    --spec assets/specs/AST-GATE-CLOSED.yaml \
+    --record normalized/AST-GATE-CLOSED/normalization-record.yaml \
+    --sibling normalized/AST-GATE-OPEN/runtime/AST-GATE-OPEN.png \
+    --background "#1B1F24" --background "#3A4149"
+```
+
+It emits the `technical` and `accessibility` blocks of the QC report directly, plus measured values. Paste that output into the report rather than re-deriving it by eye — a claim about dimensions or contrast that was eyeballed is not evidence.
+
+Two checks it performs that are easy to miss manually:
+
+- **`lineage_hash_matches`** — whether the asset on disk is actually the file the normalization record describes. A `FAIL` here means the QC run would judge a different file than the record claims, which invalidates the verdict before any visual work begins. Stop and resolve it.
+- **`A11Y_COLOR_VISION`** — whether family states stay distinguishable under protanopia, deuteranopia, and tritanopia simulation. A hue-only state distinction fails for roughly one in twelve players, and it is invisible to unaided review.
+
+Spend your attention on what the script cannot judge.
+
 ## Contract Compliance Matrix
 
 Evaluate applicable dimensions only.
 
 ### Technical conformance
 
-Check file readability, format/color/alpha mode, canvas, transparency, bounds/clipping, naming/export contract, normalization metadata, anchor/pivot consistency, and exact input/output lineage.
+Produced by `scripts/technical_check.py`: file readability, format/colour/alpha mode, canvas, transparency, bounds/clipping, padding, and exact input/output lineage. Verify naming and export contract against the AssetSpec yourself where the script has no rule for it.
 
 ### Semantic conformance
 
@@ -97,9 +121,23 @@ Compare identity, silhouette/proportion, projection, relative scale, palette/mat
 
 ### Gameplay readability
 
-At intended runtime size verify silhouette recognition, state differentiation, important feature visibility, value/contrast hierarchy, clutter/noise, and distinction from neighboring gameplay categories when intrinsic to the asset.
+At `runtime.intended_display_size` — not at source resolution — verify silhouette recognition, state differentiation, important feature visibility, value/contrast hierarchy, clutter/noise, and distinction from neighboring gameplay categories when intrinsic to the asset.
 
 Scene composition belongs to `runtime-visual-validator`.
+
+### Accessibility conformance
+
+When `project.yaml` declares an `accessibility` baseline, verify it. A declared baseline that no stage checks is a contract hole, and this is the stage that closes it.
+
+`scripts/technical_check.py` measures three of the four checks:
+
+- `A11Y_CONTRAST` — alpha-weighted mean colour against every declared background, versus the project's contrast floor.
+- `A11Y_COLOR_VISION` — separation from sibling states under all three colour-vision simulations.
+- `A11Y_NON_COLOR_CHANNEL` — whether `state.encoding_channels` declares anything other than `hue`.
+
+`A11Y_RUNTIME_CONTRAST` belongs to `runtime-visual-validator`, because it needs the real scene background rather than a declared one.
+
+A colour-vision failure is normally **not** a generator defect. If the AssetSpec specified a hue-only encoding, the root owner is `game-asset-planner`; if the locked style leaves no room for a second channel, it is `art-style-builder`. Route to the generator only when a valid non-colour channel was specified and the candidate failed to implement it. See `ACCESSIBILITY_FAILURE` in `references/routing.yaml`.
 
 ## Evidence model
 
@@ -119,7 +157,7 @@ required_action:
 preserve_dimensions: []
 ```
 
-`preserve_dimensions` is a specialist-local diagnostic field. When routing external rework, convert it to the canonical `preserve_scope.dimensions` field defined by `contracts/rework-handoff-contract.yaml`.
+`preserve_dimensions` is a specialist-local diagnostic field inside a finding. When routing external rework, convert it to the canonical `preserve_scope.dimensions` field defined by `references/rework-handoff-contract.yaml`. A routed handoff carrying `preserve_dimensions` is malformed and `validate_project.py` rejects it.
 
 ## Severity and status
 
@@ -139,17 +177,15 @@ Status:
 
 ## Root-cause routing
 
-- visual/style/identity/state/family generation defect → `game-asset-generator`
-- clipping/canvas/alpha/trim/padding/scale/anchor/pivot/export defect → `game-asset-normalizer`
-- missing/incorrect variant, AssetSpec, family relation, runtime footprint → `game-asset-planner`
-- contradictory/scoped style/anchor/constraint truth → `art-style-builder`
-- contradictory gameplay/state semantics → `game-spec-builder`
+Root ownership follows `references/routing.yaml` — the single source of truth for symptom class, root owner, invalidation scope, and revalidation scope. Do not restate it from memory; use `decision_procedure` in that file to pick the class, then take the owner and scopes from the row.
+
+Every `BLOCKER` and `MAJOR` finding carries a `reason_code` naming its symptom class. An unknown reason code is a malformed report and `validate_project.py` rejects it.
 
 Do not route isolated QC defects to runtime validation.
 
 ## Canonical rework handoff
 
-External rework handoffs MUST follow `contracts/rework-handoff-contract.yaml`.
+External rework handoffs MUST follow `references/rework-handoff-contract.yaml` and validate against `references/schemas/rework-handoff.schema.json`.
 
 Example:
 

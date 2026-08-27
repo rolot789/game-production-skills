@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project.schema.json",
+  "title": "project.yaml",
+  "description": "Canonical logical-artifact to project-path registry. Every stage resolves logical artifact names through this file when it exists.",
+  "type": "object",
+  "required": ["version", "project", "paths", "path_resolution"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "type": "integer", "const": 3 },
+    "profile": { "type": "string", "enum": ["lite", "full"] },
+    "project": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "name": { "type": ["string", "null"] }
+      }
+    },
+    "engine": {
+      "type": "object",
+      "description": "Declared engine target. Required by the engine_integration stage.",
+      "required": ["target", "id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "_defs.json#/$defs/id" },
+        "target": {
+          "type": "string",
+          "enum": ["unity", "unreal", "godot", "web-canvas", "web-dom", "custom"]
+        },
+        "pixels_per_unit": { "type": "number", "minimum": 0 },
+        "color_space": { "type": "string", "enum": ["linear", "gamma"] }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "description": "Performance budgets enforced by the engine_integration stage.",
+      "additionalProperties": true,
+      "properties": {
+        "max_atlas_dimension": { "type": "integer", "minimum": 1 },
+        "max_texture_memory_mb": { "type": "number", "minimum": 0 },
+        "max_total_asset_bytes": { "type": "integer", "minimum": 0 },
+        "max_single_asset_bytes": { "type": "integer", "minimum": 0 },
+        "max_draw_calls": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "description": "Accessibility baseline declared by GameSpec and verified downstream.",
+      "additionalProperties": true,
+      "properties": {
+        "min_contrast_ratio": { "type": "number", "minimum": 1 },
+        "color_vision_modes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["protanopia", "deuteranopia", "tritanopia"] }
+        },
+        "require_non_color_channel": { "type": "boolean" }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": [
+        "game_spec",
+        "art_style",
+        "style_anchors",
+        "style_constraint_ledger",
+        "asset_manifest",
+        "asset_specs",
+        "generation",
+        "normalized",
+        "qc",
+        "engine_integration",
+        "runtime_validation",
+        "pipeline_state",
+        "handoffs",
+        "invalidation_ledger",
+        "rework_queue"
+      ],
+      "additionalProperties": { "type": "string" }
+    },
+    "path_resolution": {
+      "type": "object",
+      "required": ["mode"],
+      "additionalProperties": true,
+      "properties": {
+        "mode": { "type": "string", "const": "canonical_registry" },
+        "logical_patterns_in_skill_docs": { "type": "boolean" },
+        "rule": { "type": "string" }
+      }
+    }
+  }
+}

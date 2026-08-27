@@ -1,6 +1,6 @@
 ---
 name: game-spec-builder
-description: Build and lock a production-usable game specification through adaptive interviews with a game designer or planner. Maintain a structured requirement graph, distinguish confirmed/proposed/inferred decisions, detect conflicts, ask high-impact questions first, and emit both human-readable GameSpec.md and machine-readable game-spec.yaml.
+description: Use when a game idea, concept, or partial design must become a specification other people can build from — "help me design my game", "what should this game actually do", "write the design doc" — or when art and asset work is blocked because gameplay meaning is undefined. Runs an adaptive interview, tracks a requirement graph that keeps confirmed, inferred, and conflicting decisions distinct, and emits GameSpec.md plus game-spec.yaml. Does not define visual style (use art-style-builder) or decide which assets exist (use game-asset-planner).
 ---
 
 # Game Spec Builder
@@ -32,6 +32,14 @@ LOCKED GameSpec
 The goal is:
 
 > Remove the smallest number of high-impact ambiguities required to make downstream implementation and asset planning deterministic enough to proceed.
+
+## Project path resolution
+
+If `project.yaml` exists, treat its `paths` registry as the canonical mapping from logical artifact names to project paths. The outputs named in this skill — `game-spec.yaml`, `GameSpec.md`, `requirement-state.yaml`, `decision-log.md` — are **logical names**, not repository-root filenames. Resolve them through `paths.game_spec`, `paths.game_spec_human`, `paths.requirement_state`, and `paths.game_spec_decision_log` before writing anything.
+
+Writing `game-spec.yaml` to the repository root when the registry maps it to `spec/game-spec.yaml` breaks the pipeline silently: every downstream skill resolves through the registry and will not find the file.
+
+When no project registry exists, use a consistent convention and record the resolved output paths in the handoff so downstream stages can locate them.
 
 ## Core principles
 
@@ -103,6 +111,10 @@ The fallback is compatibility behavior, not the preferred interview UX.
 
 Base taxonomy: vision, gameplay, controls, camera, world, level_design, ui_ux, audio, and technical. Extend only when the concept requires it.
 
+## Reference policy
+
+`references/elicitation-policy.md` covers question ranking, branch activation, decision-state discipline, conflict handling, and — the part most often skipped — when to stop interviewing.
+
 ## Interview workflow
 
 1. Parse all current information and preserve confirmed content.
@@ -136,6 +148,28 @@ Use only for low-risk consequences that follow directly from confirmed informati
 - `ART_HANDOFF_READY`: camera/projection, gameplay readability constraints, major entity categories, environment structure, UI screen classes, target display context.
 - `ASSET_PLANNING_READY`: visible entities, gameplay states, orientation/direction, screen flow, UI states, semantic animation requirements, runtime footprint rules.
 - `PRODUCTION_READY`: prototype requirements plus progression, persistence, onboarding, accessibility baseline, technical constraints, production-facing state definitions, no blocker conflict.
+
+### Accessibility baseline is a binding declaration
+
+`PRODUCTION_READY` requires an accessibility baseline, and that baseline is verified downstream rather than merely stated here. Write it into `project.yaml` so `game-asset-qc` and `runtime-visual-validator` can check it:
+
+```yaml
+accessibility:
+  min_contrast_ratio: 3.0
+  color_vision_modes: [protanopia, deuteranopia, tritanopia]
+  require_non_color_channel: true
+```
+
+A baseline that no downstream stage can check is not a baseline. If the project genuinely has no accessibility requirement, record that as an explicit decision rather than omitting the block — silence reads as an oversight to every later stage.
+
+For any gameplay state whose meaning the player must decode, record how that state is encoded. A distinction carried by hue alone fails for roughly one in twelve players, and the planner needs to know before it chooses a representation:
+
+```yaml
+states:
+  locked:
+    gameplay_meaning: player cannot enter
+    encoding_channels: [hue, icon]   # at least one non-hue channel
+```
 
 ## Outputs
 

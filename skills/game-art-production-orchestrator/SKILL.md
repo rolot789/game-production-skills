@@ -1,6 +1,6 @@
 ---
 name: game-art-production-orchestrator
-description: Orchestrate the AI-native game art production pipeline from locked game specification and art style through asset planning, grounded generation, normalization, contract-aware QC, and scene-context runtime validation. Enforce readiness gates, scoped reference authority, canonical delta-rework handoffs, dependency-aware invalidation, provenance, and coherent version lineage.
+description: Use when the question spans the whole asset pipeline rather than one stage — "continue production", "what should we do next", "what's blocking us", "where did this break", "is this ready to ship" — or when a failure must be routed to its root owner. Enforces readiness gates, legal lifecycle transitions, version lineage, and dependency-aware invalidation across all eight stages. Does not perform any specialist's work itself — it decides who acts next, with which inputs, and what exactly may change.
 ---
 
 # Game Art Production Orchestrator
@@ -16,10 +16,27 @@ game-spec-builder
 → game-asset-generator
 → game-asset-normalizer
 → game-asset-qc
+→ game-engine-integrator
 → runtime-visual-validator
 ```
 
-The orchestrator does not redesign art, write provider prompts, normalize pixels, perform QC, or visually approve scenes. It determines which specialist acts next, with which authoritative inputs, and what exact surface may change.
+The orchestrator does not redesign art, write provider prompts, normalize pixels, perform QC, pack atlases, or visually approve scenes. It determines which specialist acts next, with which authoritative inputs, and what exact surface may change.
+
+## Authoritative references
+
+Read these rather than restating them from memory. They are mirrored into this skill so they resolve from any install location.
+
+- `references/toolkit-contract.yaml` — stage order, enums, **legal lifecycle transitions**, lineage rules, generation budget, accessibility checks.
+- `references/routing.yaml` — symptom class to root owner, invalidation scope, revalidation scope.
+- `references/rework-handoff-contract.yaml` — the canonical handoff envelope.
+
+When this document and a contract disagree, the contract wins and the document is a bug.
+
+## Profiles
+
+`project.yaml` may declare `profile: lite` or `profile: full` (default `full`). The profile decides which stages are required and what the promotion ceiling is — see `contracts/profiles/`.
+
+Under `lite`, `engine_integration` and `runtime_validation` are optional and the ceiling is `QC_APPROVED`. Do not route to an optional stage that the project has not asked for, and do not promote past the ceiling. `RUNTIME_APPROVED` still requires executable runtime evidence under either profile; a lite project that wants it runs the optional stage.
 
 ## Project path resolution
 
@@ -30,7 +47,7 @@ If `project.yaml` exists, its `paths` registry is the canonical artifact path ma
 1. Advance artifacts, not assumptions.
 2. Preserve validated truth.
 3. Search-derived references are evidence until explicitly approved as scoped anchors.
-4. Rework uses canonical `change_scope / preserve_scope` from `contracts/rework-handoff-contract.yaml`.
+4. Rework uses canonical `change_scope / preserve_scope` from `references/rework-handoff-contract.yaml`.
 5. Symptom location, root ownership, invalidation scope, and revalidation scope are separate decisions.
 6. Invalidate the smallest descendant surface that can no longer be trusted.
 7. `partial_validation_only` never promotes runtime readiness.
@@ -59,7 +76,7 @@ Stage states:
 
 `NOT_STARTED`, `IN_PROGRESS`, `READY`, `BLOCKED`, `FAILED`, `INVALIDATED`, `COMPLETE`.
 
-Asset lifecycle:
+Asset lifecycle happy path:
 
 ```text
 PLANNED
@@ -67,30 +84,40 @@ PLANNED
 → GENERATED
 → NORMALIZED
 → QC_APPROVED
+→ INTEGRATION_READY
 → RUNTIME_APPROVED
 → SHIPPABLE
 ```
 
 Rework/failure states:
 
-`GENERATION_REWORK`, `NORMALIZATION_BLOCKED`, `QC_REWORK`, `RUNTIME_REWORK`, `INVALIDATED`.
+`GENERATION_REWORK`, `NORMALIZATION_BLOCKED`, `QC_REWORK`, `INTEGRATION_REWORK`, `RUNTIME_REWORK`, `INVALIDATED`.
+
+### Transitions are enforced, not suggested
+
+`references/toolkit-contract.yaml` → `lifecycle_transitions` lists, for every state, the states it may move to and the evidence that authorizes each move.
+
+**Reject any transition not in that table.** A state change without its listed evidence is illegal even when the target state is listed — for example, `NORMALIZED → QC_APPROVED` requires a QC report whose status is in `stages.asset_qc.promotion_status` *and* whose `evaluated.normalized_output.content_hash` equals the active normalized output. A promoting status bound to a stale hash is not evidence for this asset.
+
+This is what makes the orchestrator deterministic rather than merely opinionated: routing decisions come from a table, not from reconstructing intent out of chat history.
 
 Track active version lineage for each asset/family:
 
 ```yaml
 active_versions:
-  asset_spec:
-  generation_candidate:
-  normalization_output:
-  qc_report:
-  runtime_report:
+  asset_spec:            { version: v3, content_hash: <sha256> }
+  generation_candidate:  { id: v6-c2,   content_hash: <sha256> }
+  normalization_output:  { version: v6, content_hash: <sha256> }
+  qc_report:             { version: v6, content_hash: <sha256> }
+  integration_plan:      { version: v2, content_hash: <sha256> }
+  runtime_report:        { version: v6, content_hash: <sha256> }
 ```
 
-Use hashes/IDs when versions are not explicit.
+Version plus `content_hash`, never one or the other. A version string alone cannot prove a file did not change; a hash alone cannot express ordering. Both are required by `references/schemas/`, and `validate_project.py` verifies each recorded hash against the bytes on disk.
 
 ## Canonical handoff envelope
 
-Every external specialist transition follows `contracts/rework-handoff-contract.yaml` when rework is involved. Normal forward handoffs should use the same authority/version discipline.
+Every external specialist transition follows `references/rework-handoff-contract.yaml` when rework is involved. Normal forward handoffs should use the same authority/version discipline.
 
 ```yaml
 handoff_id: HND-0042
@@ -149,26 +176,33 @@ Require complete AssetSpec/style authority/family inputs. `generation-contract.y
 Require exact candidate/spec lineage and mechanical policy. A normalization result applies only to the exact effective input it records.
 
 ### QC
-Only normalized outputs with coherent generation/normalization lineage enter QC. `approved` / policy-allowed `approved_with_minor_findings` promote to `QC_APPROVED`.
+Only normalized outputs with coherent generation/normalization lineage enter QC. `approved` / policy-allowed `approved_with_minor_findings` promote to `QC_APPROVED` — but only when the report's `evaluated.normalized_output.content_hash` matches the active output.
+
+### Engine integration
+Require QC-approved assets whose hashes still match, a declared engine target, and declared budgets. `integration_ready` / `integration_ready_with_minor_findings` promote. An undeclared budget produces `integration_blocked`, never a silent pass. Skip this stage only when the active profile makes it optional.
 
 ### Runtime
-Only executable rendered-context evidence may produce runtime approval. Partial/rework/blocked statuses never promote.
+Only executable rendered-context evidence may produce runtime approval. `partial_validation_only`, `runtime_rework_required`, and `runtime_blocked` never promote. A report claiming approval while `build.executable` is false, or while a `risk: high` context is untested, is malformed.
 
 ### SHIPPABLE
-Require coherent current lineage from AssetSpec through integrated runtime approval.
+Require coherent current lineage across every stage the active profile requires, from AssetSpec through runtime approval. Mixed versions never promote:
+
+```text
+generated candidate v6 + QC report for v5 + runtime report for v4  →  SHIPPABLE   ✗
+```
 
 ## Failure routing
 
-- undefined gameplay/state/screen meaning → `game-spec-builder`
-- missing/contradictory style, scoped anchors, constraints → `art-style-builder`
-- MRAU/family/state representation/runtime requirement → `game-asset-planner`
-- malformed visual, identity/style/state drift, generation contract violation → `game-asset-generator`
-- canvas/scale/trim/alpha/anchor/pivot/export processing → `game-asset-normalizer`
-- missed/incorrect isolated contract classification/evidence → `game-asset-qc`
-- runtime evidence planning/attribution → `runtime-visual-validator`
-- z-order/layout/camera/shader/lighting/blend/mask/postprocess → runtime implementation owner
+`references/routing.yaml` is the single source of truth. Do not carry a routing table in this document — that duplication is what let the pipeline's own vocabulary drift apart in the first place.
 
-When ambiguous, request the smallest diagnostic step capable of separating root causes.
+Procedure:
+
+1. classify the symptom using `decision_procedure` in `routing.yaml`, in order, stopping at the first row that resolves;
+2. take `root_owner`, `invalidation_scope`, and `revalidation_scope` from that row rather than deciding them independently;
+3. when `root_owner` is `null` (`CONTEXT_SENSITIVE_ASSET_FAILURE`, `ACCESSIBILITY_FAILURE`), do not auto-route — determine which upstream contract is deficient first;
+4. when ambiguous, request the smallest diagnostic step capable of separating the candidate causes.
+
+Never widen `invalidation_scope` on a single observation. `systemic_escalation` in `routing.yaml` requires a shared-cause hypothesis tested against one representative dependent subject before the scope grows.
 
 ## Dependency-aware invalidation
 
@@ -282,7 +316,7 @@ Use when needed:
 - `references/orchestration-state-policy.md`
 - `references/invalidation-routing-policy.md`
 - `references/handoff-promotion-policy.md`
-- `contracts/rework-handoff-contract.yaml`
+- `references/rework-handoff-contract.yaml`
 
 ## Completion
 

@@ -9,6 +9,23 @@ Runtime symptoms frequently originate outside the runtime layer. This policy pre
 
 The validator must separate **symptom location**, **root owner**, and **invalidation scope**.
 
+## Canonical reason codes
+
+`references/routing.yaml` is the single source of truth for symptom class, root owner, invalidation scope, and revalidation scope. The sections below explain how to recognize each class in runtime evidence; the routing decision itself comes from that file.
+
+Two names used below are runtime-local descriptions rather than canonical codes. Route them as:
+
+| Section below | `reason_code` to emit |
+|---|---|
+| `INTEGRATION_LOCAL` | `INTEGRATION_LOCAL` |
+| `INTEGRATION_SYSTEMIC` | `INTEGRATION_SYSTEMIC` |
+| `NORMALIZATION_RUNTIME_MECHANICAL` | `MECHANICAL_PROCESSING_DEFECT`, or `FAMILY_ALIGNMENT_DEFECT` when the cause is inconsistent family canvas or scale |
+| `CONTENT_QC_ESCAPE` | the producing owner's class (`IDENTITY_DRIFT`, `CONTENT_ERROR`, `STYLE_DIMENSION_DRIFT`, …) plus `qc_escape: true` |
+| `CONTEXT_SENSITIVE_ASSET_FAILURE` | `CONTEXT_SENSITIVE_ASSET_FAILURE` |
+| `SEMANTIC_UNDEFINED` | `SEMANTIC_UNDEFINED` |
+
+A finding whose `reason_code` does not appear in `routing.yaml` is malformed, and `validate_project.py` rejects it.
+
 ## Failure classes
 
 ### `INTEGRATION_LOCAL`
@@ -280,31 +297,40 @@ Invalidate planning/art/runtime descendants whose expected gameplay meaning chan
 
 ## Preserve/change contract
 
-Each rework finding should include both:
+Every routed rework carries both scopes, in the canonical shape from
+`references/rework-handoff-contract.yaml`:
 
 ```yaml
-change:
-  - <smallest necessary surface>
+change_scope:
+  dimensions: []
+  artifacts: []
+  runtime_properties:
+    - scene.stage_select.postprocess.bloom_intensity
 
-preserve:
-  - <passing decisions / assets / context>
+preserve_scope:
+  dimensions:
+    - asset_palette
+    - node_geometry
+  artifacts:
+    - normalized/AST-STAR-CURRENT/runtime/AST-STAR-CURRENT.png
+    - normalized/AST-STAR-AVAILABLE/runtime/AST-STAR-AVAILABLE.png
+    - qc/AST-STAR-CURRENT/qc-report.yaml
+  upstream_truth:
+    - game_spec
+    - art_style
+    - asset_spec
+    - generation_candidate
+    - normalization
+    - qc_approval
 ```
 
-Example:
+This is what prevents a runtime fix from triggering arbitrary asset regeneration: the receiver can
+see exactly which validated truth it is forbidden to disturb.
 
-```yaml
-change:
-  - runtime.scene.stage_select.postprocess.bloom
-
-preserve:
-  - stage-star-current normalized asset
-  - stage-star-available normalized asset
-  - approved palette relationship
-  - node geometry
-  - camera framing
-```
-
-This prevents runtime fixes from triggering arbitrary asset regeneration.
+Short `change:` / `preserve:` notes may appear inside the validator's own finding as local shorthand.
+They must never be what gets routed - `validate_project.py` rejects a handoff carrying
+`change_dimensions` or `preserve_dimensions`, and a bare `change:` / `preserve:` pair fails the
+handoff schema outright.
 
 ## QC escape handling
 

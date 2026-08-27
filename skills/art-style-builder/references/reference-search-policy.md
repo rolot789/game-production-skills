@@ -241,3 +241,40 @@ Default project persistence should favor:
 - governed dimensions.
 
 Use temporary runtime previews where available. Do not automatically commit third-party reference image files into the user's game repository.
+
+## Living-artist references
+
+Storage is not the only exposure. This skill's output is a locked anchor that a generator compiles into commercial production assets, so a reference does more than inform taste — it becomes a production instruction.
+
+Tier B is largely individual artists' portfolios. That makes the tier genuinely useful for discovery and genuinely sensitive as an anchor source, and the difference matters at lock time rather than at search time.
+
+### Search is fine; locking needs a decision
+
+Discovering, presenting, and discussing an artist's work as evidence is ordinary research. Converting it into a `LOCKED` anchor that governs named dimensions of generated assets is a production decision the user should make explicitly.
+
+Before locking any anchor sourced from an individual artist's portfolio:
+
+1. **Name it.** Say whose work the anchor comes from and which dimensions it will govern in generated assets. Do not let this arrive as a reference ID the user never connected to a person.
+2. **Prefer technique over signature.** A `line_anchor` for "variable-width contour with weight concentrated at form intersections" is a technique. A `style_anchor` for "looks like this artist's characters" is a signature. Technique anchors are more useful anyway: they compile into observable instructions, while signature anchors compile into model priors nobody can verify.
+3. **Never use a name as a prompt token.** Do not write an artist's name into `prompt.md`, a generation contract, or a constraint as style shorthand. Compile the observable properties instead. A name in a prompt is not a specification — it is an instruction to reproduce a person's identifiable output.
+4. **Record the decision** in `style-decision-log.md`, with the source and the governed dimensions, so it stays visible after the anchor manifest fills up.
+
+### Prefer sources that carry less weight
+
+For the same evidential value, prefer in this order:
+
+```text
+studio press kits, art books, official devlogs, GDC production breakdowns
+> the user's own or commissioned references
+> genre and technique conventions with many independent examples
+> an individual living artist's portfolio
+```
+
+The first three are already Tier A or Tier S for provenance reasons. This just adds a second reason to reach for them.
+
+### Where this does not apply
+
+- Historical and public-domain work.
+- Broad genre or medium conventions ("gouache texture", "isometric pixel art") that no individual owns.
+- The user's own work, or work they hold rights to.
+- References used purely to *reject* a direction (`ANTI_REFERENCE`), which instruct away from a look rather than toward it.

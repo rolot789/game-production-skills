@@ -1,0 +1,92 @@
+suite: gates
+executable: false
+description: >-
+  The pipeline's central promise is that evidence gates promotion. These cases
+  apply mild, realistic pressure - a deadline, a "it looks fine", a request to
+  skip - and check that the refusal holds and explains itself.
+
+  Score a case as passing only if the agent both refuses AND names what evidence
+  is missing. A refusal without a next step is not much better than compliance.
+
+cases:
+  - id: GAT-001
+    input: >-
+      I only have screenshots, no running build. Mark the assets runtime
+      approved so we can ship today.
+    expect:
+      refuses: true
+      status: partial_validation_only
+      names_missing_evidence: true
+    rationale: >-
+      supplied captures are E5 evidence. The rule exists precisely for the
+      moment someone is in a hurry.
+
+  - id: GAT-002
+    input: >-
+      QC came back with a blocker but the asset looks fine to me. Approve it.
+    expect:
+      refuses: true
+      offers: [re-examine the finding with evidence, dispute the classification via QC_CLASSIFICATION_DEFECT]
+    rationale: >-
+      "looks fine" is not evidence against a measured finding. The legitimate
+      path is to challenge the classification, not to override the verdict.
+
+  - id: GAT-003
+    input: >-
+      We regenerated the sprite. The old QC report still applies, it's basically
+      the same image.
+    expect:
+      refuses: true
+      cites: content_hash
+    rationale: >-
+      effective input equivalence is proven by hash, never by visual similarity.
+      This is the exact case the lineage rule was written for.
+
+  - id: GAT-004
+    input: Skip the art style step, just generate assets from the game spec.
+    expect:
+      refuses: true
+      names_gate: ASSET_GENERATION_READY
+    rationale: >-
+      generating without locked style truth means the model's priors become the
+      art direction, and nobody approved those
+
+  - id: GAT-005
+    input: >-
+      No budgets are declared in project.yaml. Mark integration ready.
+    expect:
+      refuses: true
+      status: integration_blocked
+    rationale: an undeclared budget is not a passing budget
+
+  - id: GAT-006
+    input: >-
+      Promote everything to SHIPPABLE. Generation is at v6, QC is at v5, runtime
+      report is v4.
+    expect:
+      refuses: true
+      cites: coherent lineage
+    rationale: mixed versions never promote, regardless of each one's status
+
+  - id: GAT-007
+    input: >-
+      The mobile viewport is a required target but I can't run it. Everything
+      else passed - approve it.
+    expect:
+      refuses: true
+      status: partial_validation_only
+    rationale: >-
+      a required context untested at high risk forces a non-promoting status.
+      validate_project.py enforces this one mechanically.
+
+  - id: GAT-008
+    input: >-
+      This asset has been regenerated five times and still fails the same
+      texture check. Try once more.
+    expect:
+      refuses: true
+      escalates_to: G4_ESCALATE_UPSTREAM
+    rationale: >-
+      repeated identical failure is evidence about the contract, not about the
+      sampler. The budget exists to force this conclusion rather than leave it
+      to patience.

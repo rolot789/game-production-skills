@@ -1,6 +1,6 @@
 ---
 name: game-asset-planner
-description: Compile locked game specification and art style into a production-ready asset manifest. Discover semantic visual entities, decompose them into minimum reusable asset units, expand required state/direction variants, choose representation strategies that remain compatible with locked style constraints, and emit traceable per-asset production specs with version lineage.
+description: Use when a locked game spec and art style must become a concrete asset list — "what assets do I need", "break this down into sprites", "how many states does the gate need" — or before any generation begins. Discovers semantic entities, decomposes them into minimum reusable units, expands state and direction variants, picks representation strategies compatible with locked style truth, and emits asset-manifest.yaml plus per-asset specs. Does not generate images (use game-asset-generator) or change art direction (use art-style-builder).
 ---
 
 # Game Asset Planner
@@ -47,7 +47,15 @@ When no project registry exists, use the current repository/toolkit convention c
 - Define family/shared geometry/shared anchor groups for state/direction variants.
 - Record canonical parent and derivative topology for families that should not be generated independently.
 - Record runtime dimensions/footprint, background policy, visual anchor, runtime pivot, collision-origin expectations when relevant, animation semantics, priority, and QC requirements.
+- Encode every gameplay-critical state in at least one non-hue channel. Colour-only state encoding is a planning defect, not a generation defect.
 - If required semantics are unresolved or contradictory, block rather than invent.
+
+## Reference policies
+
+- `references/mrau-decomposition-policy.md` — how to find the seam between one asset and two, and the failure modes on each side of it.
+- `references/representation-strategy-policy.md` — choosing between generated raster, procedural, runtime primitive, shader, and reuse, and what each choice costs downstream.
+- `references/routing.yaml` — the canonical failure routing table.
+- `references/rework-handoff-contract.yaml` — the canonical rework envelope.
 
 ## Required inputs
 
@@ -91,66 +99,101 @@ shader_or_particle
 
 If the chosen strategy cannot satisfy a locked `HARD_FORBIDDEN`, `BOUNDED`, anchor, or category rule, the plan is invalid and must be revised before generation.
 
-## AssetSpec v2 contract
+## AssetSpec contract
 
-Each `specs/<asset-id>.yaml` should provide enough deterministic truth for generation, normalization, QC, runtime validation, and dependency-aware invalidation.
-
-Recommended structure includes:
+Each `specs/<asset-id>.yaml` must validate against `references/schemas/asset-spec.schema.json`. That schema is the authority; the shape below is the readable version of it.
 
 ```yaml
-asset_id: AST-001
-family_id: FAM-001
+schema_version: 3
+asset_id: AST-GATE-CLOSED
+family_id: FAM-GATE
 category: interactive_object
-purpose: <runtime semantic purpose>
+purpose: blocks the corridor until the player solves the adjacent switch
+priority: P0
 
+# Required. Dependency-aware invalidation cannot run without these.
 source_versions:
   game_spec:
-    version: <when available>
-    hash: <when available>
+    path: spec/game-spec.yaml
+    version: v7
+    content_hash: <sha256 of that exact file>
   art_style:
-    version: <when available>
-    hash: <when available>
+    path: art/art-style.yaml
+    version: v5
+    content_hash: <sha256>
 
 style_authority:
-  anchor_ids: []
-  constraint_ids: []
-  category_overrides: []
+  anchor_ids: [REF-017]
+  constraint_ids: [NEG-LINE-001]
+  category_overrides: [interactive_object.contour_weight]
 
 state:
-  id: <state-or-null>
+  id: closed
+  gameplay_meaning: traversal blocked
+  encoding_channels: [shape, value]      # a gameplay-critical state needs a non-hue channel
+
 orientation:
-  id: <orientation-or-null>
+  id: null
 
 family:
-  canonical_parent: <asset-id-or-null>
-  derivation_role: canonical_parent | derivative | independent
-  shared_geometry_group: <id-or-null>
-  shared_anchor_group: <id-or-null>
+  canonical_parent: null                  # this asset is the parent
+  derivation_role: canonical_parent
+  must_preserve: [outer_frame_geometry, top_view_projection, palette_family]
+  must_change: []
+  may_vary: []
+  must_not_introduce: [new_ornament]
 
 production:
   strategy: generated_raster
-  derivation_mode: independent | parent_derived | reference_edit | procedural
+  derivation_mode: independent
+  strategy_rationale: locked style requires authored contour irregularity a primitive cannot reproduce
 
 normalization:
-  canvas_policy: <policy-id-or-inline-contract>
-  scale_policy: <policy-id-or-inline-contract>
-  anchor_policy: <policy-id-or-inline-contract>
-  pivot_policy: <policy-id-or-inline-contract>
+  canvas_policy: fixed
+  scale_policy: fit_content
+  anchor_policy: content_center
+  pivot_policy: bottom_center
+  target_canvas: { width: 256, height: 256 }
+  padding: 8
+  trim: true
+  resample: lanczos
 
 runtime:
-  footprint: <runtime size/grid footprint>
-  background_policy: transparent | opaque | runtime_composited
-  readability_requirements: []
-  state_readability_requirements: []
+  footprint: 1x1 tile
+  intended_display_size: { width: 64, height: 64 }
+  background_policy: transparent
+  readability_requirements: [silhouette readable at 64 px]
+  state_readability_requirements: [closed vs open distinguishable at 64 px]
+  backgrounds_encountered: ["#1B1F24", "#3A4149"]
 
-qc_requirements: []
+accessibility:
+  gameplay_critical: true
+  required_checks: [A11Y_CONTRAST, A11Y_COLOR_VISION, A11Y_NON_COLOR_CHANNEL]
+
+qc_requirements: [family_state_comparison_at_display_size]
 
 dependencies:
-  upstream: []
-  downstream_hints: []
+  upstream: [spec/game-spec.yaml, art/art-style.yaml]
+  downstream_hints: [AST-GATE-OPEN, AST-GATE-TRANSITION]
 ```
 
-Do not fabricate version/hash fields if they are unavailable; record `unknown` or omit according to project schema.
+### Fields the normalizer and QC cannot work without
+
+Three of these are load-bearing in a way that is easy to miss:
+
+- `normalization.target_canvas` — the normalizer refuses to invent a canvas. Omitting it produces a blocker routed straight back here.
+- `runtime.intended_display_size` — readability is judged at this size, not at source resolution. A detail that is clean at 256 px can destroy state distinction at 64 px.
+- `state.encoding_channels` — for any gameplay-critical state, at least one channel must be something other than `hue`. Colour-only state encoding fails for roughly one in twelve players, and it is the planner's decision to prevent, not the generator's to rescue.
+
+### Version and hash fields are required, not optional
+
+`source_versions` entries need `path`, `version`, and `content_hash`. Compute the hash from the exact bytes of the file being referenced:
+
+```bash
+sha256sum spec/game-spec.yaml
+```
+
+If a required version or hash cannot be produced, emit a blocker and stop. `unknown` is not an acceptable lineage value: every invalidation decision downstream depends on being able to prove whether an input changed, and a record that cannot support that decision is worse than no record because it looks authoritative.
 
 ## Family topology
 
@@ -175,7 +218,7 @@ A derivative spec should explicitly say what may change and what remains invaria
 
 ## Change/preserve compatibility
 
-The planner normally creates authoritative specs rather than executing rework. When a planner-owned defect is routed back from QC/runtime, the handoff may contain canonical fields:
+The planner normally creates authoritative specs rather than executing rework. When a planner-owned defect is routed back from QC/runtime, the handoff carries the canonical fields defined in `references/rework-handoff-contract.yaml`:
 
 ```yaml
 change_scope:

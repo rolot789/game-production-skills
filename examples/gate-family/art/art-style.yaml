@@ -1,0 +1,59 @@
+version: v2
+schema_note: illustrative ArtStyle slice; only the parts the gate family depends on
+
+readiness:
+  STYLE_DIRECTION_READY: PASSED
+  REFERENCE_GROUNDED: PASSED
+  CALIBRATION_READY: PASSED
+  ASSET_GENERATION_READY: PASSED
+
+global:
+  dimensionality:
+    value: 2D orthographic top-down
+    status: LOCKED
+  shape_language:
+    value: blocky, few large forms, no ornament below 4 px at display size
+    status: LOCKED
+  line:
+    value: no outline; forms separate by value contrast at their edges
+    status: LOCKED
+  palette:
+    value: desaturated earth tones, warm mid-value structures on cool dark floors
+    status: LOCKED
+    swatches:
+      frame: "#A89070"
+      frame_shadow: "#7E6A52"
+      panel: "#D8B085"
+      panel_edge: "#B08A62"
+      bolt: "#F0E4CC"
+    revision_note: >-
+      v1 used a darker earth palette that measured 2.41:1 against the chamber
+      floor, below the 3.0 baseline in project.yaml. QC routed the finding here
+      rather than to the generator: the candidates implemented the locked palette
+      faithfully, so the palette itself was the defect. See
+      .pipeline/handoffs/HND-0001.yaml.
+  texture:
+    value: restrained per-pixel value grain; texture never competes with silhouette
+    status: LOCKED
+    bounded: grain amplitude within +/- 8 of the base value
+  lighting:
+    value: flat; no directional shading, no rim light, no bloom
+    status: LOCKED
+
+category_overrides:
+  interactive_object:
+    detail_density:
+      value: readable at 64 px; secondary cues such as bolts must survive downscale
+      status: LOCKED
+    state_encoding:
+      value: state changes must alter silhouette, not only hue
+      status: LOCKED
+      note: >-
+        This override exists because the GameSpec marks every gate state
+        decision-critical and the project declares a colour-vision baseline.
+
+runtime_readability:
+  intended_display_size_px: 64
+  backgrounds_encountered: ["#1B1F24", "#3A4149"]
+  min_contrast_ratio: 3.0
+  status: LOCKED

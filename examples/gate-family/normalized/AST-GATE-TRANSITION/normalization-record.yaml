@@ -1,0 +1,101 @@
+schema_version: 3
+asset_id: AST-GATE-TRANSITION
+input_candidate:
+  id: v1-c1
+  path: generation/AST-GATE-TRANSITION/candidates/v1-c1.png
+  content_hash: 56aaa107556067e82524a11e17534dbf07093136894e03d6c7edbf36a9e5ce65
+  generation_job_version: v1
+  generation_record: generation/AST-GATE-TRANSITION/records/v1-c1.yaml
+asset_spec:
+  path: assets/specs/AST-GATE-TRANSITION.yaml
+  version: v1
+  content_hash: b737ec48a484717de563620230f4dd2020bf39dea67723f4fedb8fa35047e1f5
+normalization_policy:
+  id: default-raster-v1
+  version: v1
+operations:
+- op: inspect
+  detail:
+    source_size: &id001
+    - 512
+    - 512
+    mode: RGBA
+- op: trim
+  detail:
+    bbox:
+    - 96
+    - 64
+    - 417
+    - 449
+- op: scale
+  detail:
+    factor: 0.623377
+    from:
+    - 321
+    - 385
+    to:
+    - 200
+    - 240
+    resample: lanczos
+    basis: shared_family_scale
+- op: canvas
+  detail:
+    size:
+    - 256
+    - 256
+    offset:
+    - 28
+    - 8
+    anchor_policy: content_bottom_center
+    padding: 8
+- op: family_align
+  detail:
+    shared_scale: 0.623377
+- op: metadata
+  detail:
+    visual_anchor: &id002
+    - 0.5
+    - 0.5
+    runtime_pivot: &id003
+    - 0.5
+    - 1.0
+    pivot_policy: bottom_center
+- op: export
+  detail:
+    format: PNG
+    path: /home/user/game-production-skills/examples/gate-family/normalized/AST-GATE-TRANSITION/runtime/AST-GATE-TRANSITION.png
+family_lineage:
+  family_id: FAM-GATE
+  canonical_parent: AST-GATE-CLOSED
+  shared_canvas:
+    width: 256
+    height: 256
+  shared_scale_basis: 0.623377
+geometry:
+  source_size: *id001
+  alpha_bbox:
+  - 96
+  - 64
+  - 417
+  - 449
+  scale_factor: 0.623377
+  visual_anchor: *id002
+  runtime_pivot: *id003
+  collision_origin: null
+output:
+  path: normalized/AST-GATE-TRANSITION/runtime/AST-GATE-TRANSITION.png
+  content_hash: 8a77e22e0cb95352193bf45e0ba97ba84f63a5ab65be3614f35ff9d64bec5112
+  width: 256
+  height: 256
+  mode: RGBA
+  bytes: 35540
+validation:
+  status: pass
+  checks:
+    canvas_matches_spec: PASS
+    content_fits_canvas: PASS
+    padding_respected: PASS
+    no_content_clipped: PASS
+    alpha_mode: PASS
+    aspect_preserved: PASS
+  failures: []

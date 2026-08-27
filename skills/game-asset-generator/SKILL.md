@@ -1,6 +1,6 @@
 ---
 name: game-asset-generator
-description: Generate game-art candidates from locked AssetSpec and ArtStyle artifacts without redesigning upstream decisions. Compile scoped approved anchors, reference evidence, category overrides, persistent negative constraints, family invariants, provenance, and canonical rework scopes into generation jobs; detect style drift and regenerate only affected dimensions.
+description: Use when planned asset specs must become actual image candidates — "generate the sprites", "make this asset", "produce the icon set" — or when a rework handoff routes visual content back for regeneration. Compiles scoped anchors, negative constraints, and family invariants into a generation contract, screens candidates for drift, and regenerates only the failing dimension. Does not invent art direction or gameplay meaning; routes those upstream instead of guessing.
 ---
 
 # Game Asset Generator
@@ -70,7 +70,7 @@ style-loop-state.yaml
 project.yaml
 ```
 
-For rework, consume the canonical handoff envelope defined by `contracts/rework-handoff-contract.yaml`:
+For rework, consume the canonical handoff envelope defined by `references/rework-handoff-contract.yaml`:
 
 ```yaml
 change_scope:
@@ -181,26 +181,48 @@ Escalation levels:
 
 `G4` does not grant permission to redesign ArtStyle. Use `references/anti-drift-regeneration-policy.md`.
 
+## Generation budget
+
+The expensive side of this pipeline is bounded like the cheap side. Defaults from `toolkit-contract.yaml` `generation_budget`:
+
+```text
+candidates per job                  <= 4     stop as soon as one passes every critical dimension
+regeneration attempts per asset     <= 6     counted across all G-levels within one rework transaction
+G0_SAME_CONTRACT_RETRY repeats      <= 2     a third identical retry blames the sampler for a contract defect
+```
+
+Two consecutive failures on the same dimension at one level escalate to the next level rather than repeat. Exhausting the attempt budget escalates to `G4_ESCALATE_UPSTREAM` and stops.
+
+Stop generating when a candidate satisfies the production contract. "It might be prettier" is not a reason to spend another attempt — record a stylistic preference as an explicit revision request instead, so endless aesthetic sampling does not quietly replace a production decision.
+
 ## Version lineage
 
-Every generation attempt should record, when available:
+Every generation record must validate against `references/schemas/generation-record.schema.json` and record:
 
 ```text
 asset_id
-job_version
-asset_spec version/hash
-art_style version/hash
+job_version                       vN
+asset_spec        path + version + content_hash    (required)
+art_style         path + version + content_hash    (required)
 anchor IDs + governed dimensions
 constraint IDs + scopes
 canonical parent/family lineage
 change_scope / preserve_scope
-compiled prompt version
-generation capability/model/seed when exposed
-candidate path/id/hash
-screening result
+candidate id (vN-cM) + path + content_hash         (required)
+screening result per critical dimension
+provenance: capability, model, seed
 ```
 
-Unavailable fields remain `unknown` / `not_exposed`.
+Compute the candidate hash from the exact bytes written:
+
+```bash
+sha256sum generation/AST-GATE-CLOSED/candidates/v1-c2.png
+```
+
+Two rules that are not softened by circumstance:
+
+- **Hashes and versions are required.** If one cannot be produced, emit a blocker rather than an unverifiable record. Every downstream invalidation decision rests on being able to prove whether an input changed.
+- **Provenance is never invented.** `capability`, `model`, and `seed` record what actually happened. A provider that does not expose a seed gets `not_exposed`, never a plausible-looking number. If no generation capability was available at all, set `provenance.external_job: true` and emit a complete job for an external tool — do not describe a candidate that does not exist.
 
 ## Outputs
 
@@ -220,7 +242,9 @@ Family outputs may additionally include `family-contract.yaml`, `parent-lineage.
 
 ## Rework output contract
 
-If generation hands rework onward or escalates upstream, external routing data must serialize through `contracts/rework-handoff-contract.yaml`. Specialist-local aliases are allowed only inside internal reports.
+If generation hands rework onward or escalates upstream, external routing data must serialize through `references/rework-handoff-contract.yaml`, and `reason_codes` must resolve against `references/routing.yaml`. Specialist-local aliases such as `change_dimensions` are allowed only inside internal reports, never in a routed handoff.
+
+Root ownership follows `references/routing.yaml`. Do not restate the routing table from memory; the classes this stage owns are `CONTENT_ERROR`, `IDENTITY_DRIFT`, `STYLE_DIMENSION_DRIFT`, `NEGATIVE_CONSTRAINT_VIOLATION`, `FAMILY_DRIFT`, and `STATE_READABILITY_FAILURE`.
 
 ## Completion criteria
 

@@ -1,0 +1,74 @@
+version: 3
+name: contract-mirror-manifest
+
+# ---------------------------------------------------------------------------
+# Why this exists
+#
+# A skill is installed as a self-contained directory (`.agents/skills/<name>/`).
+# Anything a SKILL.md tells the agent to read must therefore resolve *inside*
+# that directory. Before this manifest, four SKILL.md files pointed at
+# `contracts/rework-handoff-contract.yaml`, which does not exist in any
+# installed project - the installer only ever copied `skills/`.
+#
+# The repository keeps `contracts/` as the single editable source. This
+# manifest declares which contract files are mirrored into which skill, and
+# `scripts/sync_contracts.py` performs the copy. CI runs it with `--check`, so
+# an edited contract that was not re-synced fails the build instead of shipping
+# a stale copy.
+#
+# Never hand-edit a mirrored file under `skills/*/references/`. Edit the source
+# under `contracts/` and run `python3 scripts/sync_contracts.py`.
+# ---------------------------------------------------------------------------
+
+mirror_root: references
+header_marker: "# GENERATED MIRROR - DO NOT EDIT"
+
+mirrors:
+  - source: contracts/rework-handoff-contract.yaml
+    reason: every skill that emits or consumes an external rework handoff must be able to read the canonical envelope
+    targets:
+      - game-asset-planner
+      - game-asset-generator
+      - game-asset-normalizer
+      - game-asset-qc
+      - game-engine-integrator
+      - runtime-visual-validator
+      - game-art-production-orchestrator
+
+  - source: contracts/routing.yaml
+    reason: every skill that assigns a root owner or receives a routed handoff must read the same routing table
+    targets:
+      - game-asset-planner
+      - game-asset-generator
+      - game-asset-normalizer
+      - game-asset-qc
+      - game-engine-integrator
+      - runtime-visual-validator
+      - game-art-production-orchestrator
+
+  - source: contracts/toolkit-contract.yaml
+    reason: the orchestrator enforces stage order, enums, lifecycle transitions, lineage, and budgets
+    targets:
+      - game-art-production-orchestrator
+
+# Whole-directory mirrors, for when a skill needs a family of files. Mirrored
+# into references/<into>/ so the skill's own reference documents stay readable.
+#
+# JSON schemas are mirrored byte-identically - JSON has no comment syntax, so
+# the generated-mirror header cannot be embedded. This manifest is the record
+# that they are generated; never hand-edit them either.
+directory_mirrors:
+  - source_dir: contracts/schemas
+    glob: "*.json"
+    into: schemas
+    reason: >-
+      every stage that writes an artifact names its schema, and an installed
+      skill cannot reach a repository-root contracts/ directory
+    targets:
+      - game-asset-planner
+      - game-asset-generator
+      - game-asset-normalizer
+      - game-asset-qc
+      - game-engine-integrator
+      - runtime-visual-validator
+      - game-art-production-orchestrator

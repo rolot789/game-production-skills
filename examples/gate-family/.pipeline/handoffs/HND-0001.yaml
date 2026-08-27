@@ -1,0 +1,88 @@
+handoff_id: HND-0001
+from: game-asset-qc
+to: art-style-builder
+subject:
+  type: family
+  id: FAM-GATE
+
+# This is the interesting handoff in the example, because the obvious routing is
+# wrong. The symptom appeared in QC on generated assets, so the reflex is to
+# blame the generator. But the candidates implemented the locked palette exactly
+# as specified - the palette itself could not meet the contrast baseline the
+# GameSpec declared. Routing this to the generator would have produced N
+# regenerations that could not possibly fix it, because no candidate obeying the
+# locked palette can clear 3.0:1 against #3A4149.
+#
+# Symptom location: asset_qc
+# Root owner:       art-style-builder
+# These are separate decisions, and this handoff is what that separation buys.
+
+root_owner: art-style-builder
+reason_codes:
+  - ACCESSIBILITY_FAILURE
+
+authoritative_inputs:
+  - path: spec/game-spec.yaml
+    version: v1
+    content_hash: 27cbc927c75d77294df970b9a63de1dfa3444f9e9a12ae6239009854899a624a
+  - path: art/art-style.yaml
+    version: v1
+    content_hash: 20979c0e086c8055b9819ff19206fd12ce15e0926ec9ea201b73ad1667248866
+
+change_scope:
+  dimensions:
+    - palette.value_structure
+  artifacts:
+    - art/art-style.yaml
+  runtime_properties: []
+
+preserve_scope:
+  dimensions:
+    - palette.hue_family
+    - shape_language
+    - frame_geometry
+    - texture_density
+    - lighting
+    - state_encoding
+  artifacts:
+    - art/style-anchor-manifest.yaml
+    - art/style-constraint-ledger.yaml
+    - assets/specs/AST-GATE-CLOSED.yaml
+    - assets/specs/AST-GATE-TRANSITION.yaml
+    - assets/specs/AST-GATE-OPEN.yaml
+  upstream_truth:
+    - game_spec
+    - approved_anchors
+
+expected_outputs:
+  - art/art-style.yaml at v2 with a value structure that clears 3.0:1 against both declared floors
+
+invalidation_scope: FAMILY_SYSTEMIC
+revalidation_scope:
+  - generation
+  - normalization
+  - asset_qc
+  - affected_runtime_contexts
+
+next_action: >-
+  Raise palette value structure until the alpha-weighted mean clears 3.0:1
+  against both #1B1F24 and #3A4149. Preserve the hue family - the finding is
+  about value, not about warmth.
+
+evidence:
+  measured_contrast_v1: 2.41
+  required_contrast: 3.0
+  measured_against: "#3A4149"
+  tool: skills/game-asset-qc/scripts/technical_check.py
+
+resolution:
+  status: CLOSED
+  art_style_version: v2
+  measured_contrast_v2:
+    AST-GATE-CLOSED: 4.28
+    AST-GATE-TRANSITION: 3.86
+    AST-GATE-OPEN: 3.32
+  note: >-
+    Hue family preserved as required by preserve_scope; only value structure
+    moved. All three states re-generated, re-normalized, and re-QC'd against the
+    v2 palette per revalidation_scope.

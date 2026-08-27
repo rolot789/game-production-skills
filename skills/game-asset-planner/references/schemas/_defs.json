@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "_defs.json",
+  "title": "Shared definitions",
+  "description": "Common building blocks referenced by the artifact schemas as _defs.json#/$defs/<name>.",
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+$",
+      "description": "Monotonic artifact version. Incremented by the stage that writes the artifact."
+    },
+    "candidateVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+-c[0-9]+$",
+      "description": "Generation job version plus candidate ordinal."
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hex sha256 of the artifact bytes as written to disk."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "artifactRef": {
+      "type": "object",
+      "description": "A pointer to an authoritative input. All three fields are required: a reference without a hash cannot support dependency-aware invalidation.",
+      "properties": {
+        "path": { "type": "string" },
+        "version": { "$ref": "_defs.json#/$defs/version" },
+        "content_hash": { "$ref": "_defs.json#/$defs/contentHash" }
+      },
+      "required": ["path", "version", "content_hash"],
+      "additionalProperties": true
+    },
+    "changeScope": {
+      "type": "object",
+      "properties": {
+        "dimensions": { "type": "array", "items": { "type": "string" } },
+        "artifacts": { "type": "array", "items": { "type": "string" } },
+        "runtime_properties": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["dimensions", "artifacts", "runtime_properties"],
+      "additionalProperties": false
+    },
+    "preserveScope": {
+      "type": "object",
+      "properties": {
+        "dimensions": { "type": "array", "items": { "type": "string" } },
+        "artifacts": { "type": "array", "items": { "type": "string" } },
+        "upstream_truth": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["dimensions", "artifacts", "upstream_truth"],
+      "additionalProperties": false
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["BLOCKER", "MAJOR", "MINOR", "NOTE"]
+    },
+    "invalidationScope": {
+      "type": "string",
+      "enum": [
+        "LOCAL_ASSET",
+        "LOCAL_DERIVATIVE",
+        "FAMILY_SYSTEMIC",
+        "CATEGORY_SYSTEMIC",
+        "GLOBAL_SYSTEMIC",
+        "SCENE_LOCAL",
+        "RUNTIME_SYSTEMIC"
+      ]
+    },
+    "verificationResult": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "NOT_APPLICABLE", "INSUFFICIENT_EVIDENCE", "CONTRACT_CONFLICT"]
+    }
+  }
+}

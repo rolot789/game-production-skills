@@ -1,0 +1,84 @@
+version: v1
+
+# Requirement states are not decoration. Downstream stages treat them
+# differently: LOCKED is production truth, INFERRED is a convenience that must
+# be promoted before anything expensive depends on it, and NOT_APPLICABLE is a
+# closed branch rather than an unanswered question.
+
+requirements:
+  REQ-CAMERA-001:
+    domain: camera
+    question: what projection does the game use
+    value: orthographic top-down
+    state: LOCKED
+    decided_by: D-001
+    downstream_impact: high
+    reversibility: very low
+
+  REQ-CAMERA-002:
+    domain: camera
+    question: what is the tile size in pixels
+    value: 64
+    state: LOCKED
+    decided_by: D-002
+    downstream_impact: high
+    reversibility: low
+
+  REQ-GATE-001:
+    domain: gameplay
+    question: which gate states exist
+    value: [closed, transition, open]
+    state: LOCKED
+    decided_by: D-003
+    downstream_impact: high
+    reversibility: medium
+
+  REQ-GATE-002:
+    domain: gameplay
+    question: which channels encode gate state
+    value: shape primary, value secondary, motion for transition
+    state: LOCKED
+    decided_by: D-005
+    downstream_impact: high
+    reversibility: medium
+    note: constrained by REQ-A11Y-001; hue is excluded as a primary channel
+
+  REQ-GATE-003:
+    domain: world
+    question: does the gate need orientation variants
+    value: null
+    state: NOT_APPLICABLE
+    decided_by: D-004
+    reason: level grammar places gates on one axis only
+
+  REQ-A11Y-001:
+    domain: technical
+    question: what accessibility baseline applies to gameplay-critical assets
+    value:
+      min_contrast_ratio: 3.0
+      color_vision_modes: [protanopia, deuteranopia, tritanopia]
+      require_non_color_channel: true
+    state: LOCKED
+    decided_by: D-005
+    downstream_impact: high
+    verified_by: game-asset-qc via technical_check.py
+
+  REQ-BG-001:
+    domain: world
+    question: which background surfaces are gates drawn against
+    value: ["#1B1F24", "#3A4149"]
+    state: LOCKED
+    downstream_impact: medium
+    note: both are declared because contrast is measured against the worst of them
+
+  REQ-GATE-004:
+    domain: gameplay
+    question: does a permanently sealed gate state exist
+    value: null
+    state: UNRESOLVED
+    blocking: false
+    tracked_as: OQ-001
+    note: >-
+      Left unresolved deliberately. Guessing would create a fourth family member
+      with no defined gameplay meaning, and every downstream stage would inherit
+      that guess.

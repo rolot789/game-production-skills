@@ -1,5 +1,11 @@
-version: 1
+version: 3
 name: rework-handoff
+
+# Canonical envelope for every EXTERNAL specialist-to-specialist transition.
+# Specialist-local diagnostic aliases (change_dimensions, preserve_dimensions,
+# change, preserve) may exist inside a specialist's own report. They MUST NOT
+# appear in a routed handoff. Routing serializes to the fields below.
+
 required_fields:
   - handoff_id
   - from
@@ -15,6 +21,19 @@ required_fields:
   - revalidation_scope
   - next_action
 
+field_semantics:
+  handoff_id: stable identifier, unique within the project
+  from: skill or owner that produced the finding
+  to: skill or owner that must act next
+  subject: '{type: asset|family|scene|category|project, id: <id>}'
+  root_owner: owner resolved through contracts/routing.yaml, not the symptom stage
+  reason_codes: one or more symptom_classes[].id from contracts/routing.yaml
+  authoritative_inputs: resolved paths with version and content_hash for every input the receiver may trust
+  expected_outputs: logical artifacts the receiver must produce
+  invalidation_scope: one value from toolkit-contract.yaml invalidation_scope_classes
+  revalidation_scope: stages or context sets that must rerun after the fix
+  next_action: one imperative sentence naming the smallest sufficient action
+
 scope_schema:
   change_scope:
     dimensions: []
@@ -25,9 +44,18 @@ scope_schema:
     artifacts: []
     upstream_truth: []
 
+forbidden_external_aliases:
+  - change_dimensions
+  - preserve_dimensions
+  - change
+  - preserve
+
 rules:
   - Specialist-local fields such as change_dimensions or preserve_dimensions may exist inside specialist reports, but external rework handoffs MUST serialize to change_scope and preserve_scope.
   - change_scope contains only the smallest surface permitted to change.
   - preserve_scope lists validated truth that downstream rework must not disturb.
+  - An empty preserve_scope on a narrow failure means the route is too broad; reconsider it.
   - symptom location, root owner, invalidation scope, and revalidation scope are separate decisions.
-  - A changed upstream artifact invalidates descendant approvals unless effective input identity is proven unchanged.
+  - A changed upstream artifact invalidates descendant approvals unless effective input identity is proven unchanged by content_hash.
+  - reason_codes must resolve against contracts/routing.yaml; an unknown reason code is a malformed handoff.
+  - If the receiver cannot honor preserve_scope, it reports the conflict before performing broader rework.

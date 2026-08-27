@@ -11,6 +11,7 @@ EXPECTED = [
     "game-asset-generator",
     "game-asset-normalizer",
     "game-asset-qc",
+    "game-engine-integrator",
     "runtime-visual-validator",
     "game-art-production-orchestrator",
 ]

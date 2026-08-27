@@ -1,0 +1,76 @@
+version: v1
+schema_note: illustrative GameSpec slice; only the parts the gate family depends on
+
+project:
+  id: gate-family
+  title: Gate Family
+  premise: a top-down puzzle game where the player routes power to open gates
+
+readiness:
+  VISION_READY: PASSED
+  PROTOTYPE_READY: PASSED
+  ART_HANDOFF_READY: PASSED
+  ASSET_PLANNING_READY: PASSED
+  PRODUCTION_READY: PASSED
+
+camera:
+  projection: orthographic_top_down
+  status: LOCKED
+  tile_size_px: 64
+
+display:
+  target_context: desktop browser, 1280x720 minimum
+  status: LOCKED
+
+entities:
+  gate:
+    status: LOCKED
+    role: blocks a corridor until the adjacent switch is powered
+    footprint: 1x1 tile
+    interaction: none directly; state is driven by the switch
+    states:
+      closed:
+        gameplay_meaning: traversal blocked
+        decision_critical: true
+        encoding_channels: [shape, value]
+        note: >-
+          The player must decide whether to route power here before walking into
+          the corridor, so this state must be readable from across the room.
+      transition:
+        gameplay_meaning: state is changing; traversal not yet permitted
+        decision_critical: true
+        encoding_channels: [shape, motion]
+      open:
+        gameplay_meaning: traversal permitted
+        decision_critical: true
+        encoding_channels: [shape, value]
+
+  # Recorded as NOT_APPLICABLE rather than left unseen: the level grammar only
+  # ever places gates across horizontal corridors, so a vertical orientation
+  # variant would be an asset nobody can reach.
+  gate_orientation:
+    status: NOT_APPLICABLE
+    reason: level grammar places gates on one axis only
+
+backgrounds:
+  corridor_floor: "#1B1F24"
+  chamber_floor: "#3A4149"
+  status: LOCKED
+
+accessibility:
+  status: LOCKED
+  baseline:
+    min_contrast_ratio: 3.0
+    color_vision_modes: [protanopia, deuteranopia, tritanopia]
+    require_non_color_channel: true
+  rationale: >-
+    Gate state drives a movement decision. A distinction carried by hue alone
+    would fail for roughly one player in twelve, so every gate state carries a
+    shape difference as well.
+
+open_questions:
+  - id: OQ-001
+    question: does a locked gate ever need a distinct "permanently sealed" state
+    status: UNRESOLVED
+    blocking: false
+    note: not blocking; would add a fourth family member if confirmed

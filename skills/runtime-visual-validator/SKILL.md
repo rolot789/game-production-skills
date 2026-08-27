@@ -1,6 +1,6 @@
 ---
 name: runtime-visual-validator
-description: Validate QC-approved game assets inside actual playable contexts. Use reproducible runtime evidence to verify scene-level readability, hierarchy, state differentiation, placement, occlusion, compositing, animation continuity, and semantic visual regressions; distinguish integration failures from upstream asset failures and emit canonical delta-rework handoffs.
+description: Use when approved assets must be checked inside the running game — "does this actually work in the game", "the icon is unreadable in that level", "the selected state stopped reading after the update" — or when a scene regression appears. Captures reproducible rendered evidence, separates integration failures from upstream asset failures, and never promotes partial evidence to approval. Defects visible without scene context belong to game-asset-qc; atlas and import problems belong to game-engine-integrator.
 ---
 
 # Runtime Visual Validator
@@ -44,6 +44,7 @@ Typical inputs:
 playable build / executable preview
 QC-approved runtime asset/version
 qc/<asset-id>/qc-report.yaml
+engine-integration/<target-id>/integration-plan.yaml   when engine integration ran
 specs/<asset-id>.yaml
 normalization-record.yaml
 art-style.yaml when context rules matter
@@ -54,7 +55,7 @@ baseline captures or prior runtime report when regression testing
 project.yaml
 ```
 
-For revalidation/rework, consume canonical `change_scope / preserve_scope` from `contracts/rework-handoff-contract.yaml`.
+For revalidation/rework, consume canonical `change_scope / preserve_scope` from `references/rework-handoff-contract.yaml`.
 
 ## Preflight
 
@@ -139,32 +140,20 @@ Specialist-local diagnostic fields such as `change` or `preserve` may exist in t
 
 ## Root-cause routing
 
-### `runtime_integration`
-Use for z-order, layout, transforms, camera, viewport handling, scene lighting, blend/opacity, shader, masks, post-processing, animation wiring, UI/world composition.
+Root ownership follows `references/routing.yaml` — the single source of truth for symptom class, root owner, invalidation scope, and revalidation scope. Work its `decision_procedure` in order, then take the owner and both scopes from the matching row rather than deciding them independently.
 
-### `game-asset-normalizer`
-Use for wrong pivot, bad trim/padding, normalized clipping, canvas inconsistency, anchor metadata, mechanical export problems.
+Every `BLOCKER` and `MAJOR` finding carries a `reason_code` naming its class. An unknown code is a malformed report.
 
-### `game-asset-generator`
-Use for visual content defects that survive independently of integration: identity drift, wrong state depiction, malformed silhouette, generated artifacts. Mark QC escape separately if isolated QC should have caught it.
+The two traps this stage falls into most often:
 
-### `game-asset-qc`
-Use for insufficient/mistaken isolated classification or evidence coverage, not as the content rework owner.
+- **Assuming the symptom owns the cause.** A defect visible in a scene is not automatically an integration defect. Steps 2 through 4 of the decision procedure exist to separate them.
+- **Sending an asset back to QC.** QC cannot edit assets. Route content rework to its producing owner and record `qc_escape: true` with the missed dimension separately.
 
-### `game-asset-planner`
-Use for decomposition, missing state/orientation family, wrong runtime responsibility split.
-
-### `art-style-builder`
-Use when locked style truth itself creates contextual contradiction that ordinary integration cannot solve without violating the style contract.
-
-### `game-spec-builder`
-Use when expected gameplay/UI meaning is undefined or contradictory.
-
-Use `references/runtime-regression-routing-policy.md` for escalation/invalidation.
+Use `references/runtime-regression-routing-policy.md` for how to recognize each class in runtime evidence, and for regression classification and escalation.
 
 ## Canonical rework handoff
 
-External rework MUST serialize through `contracts/rework-handoff-contract.yaml`.
+External rework MUST serialize through `references/rework-handoff-contract.yaml` and validate against `references/schemas/rework-handoff.schema.json`.
 
 Example for runtime-integration-only failure:
 
@@ -218,6 +207,12 @@ Prioritize P0 assets, decision-changing states, difficult backgrounds/post-proce
 
 Use `references/scene-context-validation-policy.md`.
 
+## Accessibility in context
+
+`game-asset-qc` verifies contrast against *declared* backgrounds. This stage verifies `A11Y_RUNTIME_CONTRAST` against the background the scene actually renders, which is the one that counts.
+
+An asset can pass isolated contrast checks and still fail here — scene post-processing, an overlay, or a busier background than the spec anticipated will do it. That failure is usually `INTEGRATION_LOCAL` or `INTEGRATION_SYSTEMIC`, not an asset defect. Route it as `CONTEXT_SENSITIVE_ASSET_FAILURE` only when ordinary integration cannot fix it without violating a locked requirement.
+
 ## Status
 
 - `runtime_approved`
@@ -227,6 +222,14 @@ Use `references/scene-context-validation-policy.md`.
 - `partial_validation_only`
 
 Only the first two may promote to `RUNTIME_APPROVED`. `partial_validation_only` is evidence, never approval.
+
+Three conditions force a non-promoting status, and `validate_project.py` enforces all three:
+
+- `build.executable` is false — supplied captures never produce runtime approval,
+- any `untested` context is marked `risk: high`,
+- any `BLOCKER` or `MAJOR` finding lacks `capture_ids`.
+
+The last one is not bookkeeping. A visual claim without rendered evidence cannot be reproduced by the person who has to fix it, which makes it an opinion rather than a finding.
 
 ## Outputs
 

@@ -1,0 +1,50 @@
+version: 3
+
+# The ledger records why something was invalidated, separately from whatever
+# symptom the invalidation later produced. Overwriting the reason with the
+# symptom is how a project loses the ability to explain itself.
+
+invalidations:
+  - invalidation_id: INV-0001
+    trigger:
+      artifact: art/art-style.yaml
+      from_version: v1
+      to_version: v2
+      changed_fields:
+        - global.palette.swatches
+    reason: >-
+      Locked palette could not satisfy the accessibility contrast baseline
+      declared in project.yaml (measured 2.41:1 against #3A4149, floor 3.0).
+      Root-owned by art-style-builder per ACCESSIBILITY_FAILURE; see
+      handoffs/HND-0001.yaml.
+    root_owner: art-style-builder
+    invalidation_scope: FAMILY_SYSTEMIC
+
+    affected:
+      - family:FAM-GATE
+      - asset:AST-GATE-CLOSED
+      - asset:AST-GATE-TRANSITION
+      - asset:AST-GATE-OPEN
+
+    # Descendants of the changed authority, in dependency order.
+    invalidated_descendants:
+      - generation candidates for all FAM-GATE members
+      - normalization outputs for all FAM-GATE members
+      - QC approvals for all FAM-GATE members
+      - runtime approvals for all FAM-GATE members
+
+    # Siblings that share no dependency on the changed field stay valid. In this
+    # example there are none yet; when the project grows, character and
+    # environment families would appear here rather than being swept up.
+    preserved:
+      - art/style-anchor-manifest.yaml
+      - art/style-constraint-ledger.yaml
+      - assets/specs/*  (spec content unchanged; only the recorded art_style hash moved)
+
+    rerun_from: generation
+    revalidation_scope:
+      - generation
+      - normalization
+      - asset_qc
+      - affected_runtime_contexts
+    status: CLOSED

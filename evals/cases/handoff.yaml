@@ -1,0 +1,114 @@
+suite: handoff
+executable: true
+description: >-
+  Three competing field vocabularies coexisted at once: change_scope /
+  preserve_scope in the contract, change_dimensions / preserve_dimensions in one
+  policy, and bare change / preserve in another. These cases validate concrete
+  envelopes against the schema so the aliases stay dead.
+
+cases:
+  - id: HND-001
+    valid: true
+    envelope:
+      handoff_id: HND-0001
+      from: game-asset-qc
+      to: art-style-builder
+      subject: { type: family, id: FAM-GATE }
+      root_owner: art-style-builder
+      reason_codes: [ACCESSIBILITY_FAILURE]
+      authoritative_inputs: []
+      change_scope:
+        dimensions: [palette.value_structure]
+        artifacts: [art/art-style.yaml]
+        runtime_properties: []
+      preserve_scope:
+        dimensions: [palette.hue_family, shape_language]
+        artifacts: [art/style-anchor-manifest.yaml]
+        upstream_truth: [game_spec, approved_anchors]
+      expected_outputs: [art/art-style.yaml at v2]
+      invalidation_scope: FAMILY_SYSTEMIC
+      revalidation_scope: [generation, normalization, asset_qc]
+      next_action: raise value structure while preserving the hue family
+    rationale: the real handoff from the worked example
+
+  - id: HND-002
+    valid: false
+    expect_error_contains: preserve_dimensions
+    envelope:
+      handoff_id: HND-BAD-1
+      from: game-asset-qc
+      to: game-asset-generator
+      subject: { type: asset, id: AST-001 }
+      root_owner: game-asset-generator
+      reason_codes: [STYLE_DIMENSION_DRIFT]
+      authoritative_inputs: []
+      change_scope: { dimensions: [texture], artifacts: [], runtime_properties: [] }
+      preserve_scope: { dimensions: [], artifacts: [], upstream_truth: [] }
+      preserve_dimensions: [identity, silhouette]
+      expected_outputs: []
+      invalidation_scope: LOCAL_ASSET
+      revalidation_scope: [asset_qc]
+      next_action: regenerate texture
+    rationale: the specialist-local alias must not survive into a routed handoff
+
+  - id: HND-003
+    valid: false
+    expect_error_contains: invalidation_scope
+    envelope:
+      handoff_id: HND-BAD-2
+      from: runtime-visual-validator
+      to: runtime_integration
+      subject: { type: scene, id: corridor-01 }
+      root_owner: runtime_integration
+      reason_codes: [INTEGRATION_LOCAL]
+      authoritative_inputs: []
+      change_scope: { dimensions: [], artifacts: [], runtime_properties: [z_order] }
+      preserve_scope: { dimensions: [], artifacts: [], upstream_truth: [] }
+      expected_outputs: []
+      invalidation_scope: EVERYTHING
+      revalidation_scope: [affected_runtime_contexts]
+      next_action: fix z-order
+    rationale: >-
+      invalidation scope is an enum for a reason - an ad-hoc value is how "this
+      broke something" becomes "invalidate the project"
+
+  - id: HND-004
+    valid: false
+    expect_error_contains: next_action
+    envelope:
+      handoff_id: HND-BAD-3
+      from: game-asset-qc
+      to: game-asset-normalizer
+      subject: { type: asset, id: AST-001 }
+      root_owner: game-asset-normalizer
+      reason_codes: [MECHANICAL_PROCESSING_DEFECT]
+      authoritative_inputs: []
+      change_scope: { dimensions: [], artifacts: [], runtime_properties: [runtime_pivot] }
+      preserve_scope: { dimensions: [visual_content], artifacts: [], upstream_truth: [generation_candidate] }
+      expected_outputs: []
+      invalidation_scope: LOCAL_ASSET
+      revalidation_scope: [asset_qc]
+    rationale: >-
+      a handoff without a next action is a complaint. The receiver has to be
+      told the smallest sufficient thing to do.
+
+  - id: HND-005
+    valid: false
+    expect_error_contains: reason_codes
+    envelope:
+      handoff_id: HND-BAD-4
+      from: game-asset-qc
+      to: game-asset-generator
+      subject: { type: asset, id: AST-001 }
+      root_owner: game-asset-generator
+      reason_codes: []
+      authoritative_inputs: []
+      change_scope: { dimensions: [], artifacts: [], runtime_properties: [] }
+      preserve_scope: { dimensions: [], artifacts: [], upstream_truth: [] }
+      expected_outputs: []
+      invalidation_scope: LOCAL_ASSET
+      revalidation_scope: [asset_qc]
+      next_action: fix it
+    rationale: >-
+      an empty reason code list means the symptom was never classified, which
+      means the root owner was guessed

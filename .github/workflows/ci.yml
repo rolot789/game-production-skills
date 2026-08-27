@@ -19,13 +19,44 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Python validator dependency
-        run: python -m pip install pyyaml
+
+      - name: Install Python dependencies
+        run: python -m pip install pyyaml Pillow
+
       - name: Toolkit doctor
         run: python scripts/doctor.py .
-      - name: Semantic contract validator
+
+      # Contract files are mirrored into skill directories so an installed
+      # skill can resolve them. An edited contract that was never re-synced
+      # fails here rather than shipping a stale copy.
+      - name: Contract mirrors in sync
+        run: python scripts/sync_contracts.py --check
+
+      - name: Contract consistency
         run: python scripts/validate_contracts.py
+
+      # The check that matters most: install into a temporary project the way a
+      # user does, then resolve every path the installed documents point at.
+      # Four SKILL.md files once referenced a contracts/ directory the installer
+      # never copied, and nothing caught it because the repository's own
+      # validators only ever looked at the repository.
+      - name: Install smoke test
+        run: python scripts/test_install.py
+
+      - name: Worked example is rebuildable
+        run: |
+          python examples/gate-family/tools/build_example.py
+          git diff --exit-code examples/gate-family \
+            || (echo "::error::examples/gate-family is stale; run tools/build_example.py and commit" && exit 1)
+
+      - name: Worked example validates
+        run: python scripts/validate_project.py examples/gate-family
+
+      - name: Evals
+        run: python scripts/run_evals.py
+
       - name: CLI smoke test
         run: npm run check
+
       - name: Package contents check
         run: npm run pack:check

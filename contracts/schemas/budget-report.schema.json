@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "budget-report.schema.json",
+  "title": "engine-integration/<target-id>/budget-report.yaml",
+  "description": "Measured performance budget result for an engine target. Produced by skills/game-engine-integrator/scripts/budget_check.py.",
+  "type": "object",
+  "required": ["schema_version", "target", "status", "measured", "budgets", "checks"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 3 },
+    "target": {
+      "type": "object",
+      "required": ["id", "engine"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "_defs.json#/$defs/id" },
+        "engine": { "type": "string", "enum": ["unity", "unreal", "godot", "web-canvas", "web-dom", "custom"] }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "integration_ready",
+        "integration_ready_with_minor_findings",
+        "integration_rework_required",
+        "integration_blocked"
+      ]
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "_defs.json#/$defs/artifactRef" }
+    },
+    "measured": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "asset_count": { "type": "integer", "minimum": 0 },
+        "total_asset_bytes": { "type": "integer", "minimum": 0 },
+        "largest_asset_bytes": { "type": "integer", "minimum": 0 },
+        "largest_asset_id": { "type": ["string", "null"] },
+        "atlas_count": { "type": "integer", "minimum": 0 },
+        "max_atlas_dimension": { "type": "integer", "minimum": 0 },
+        "estimated_texture_memory_mb": { "type": "number", "minimum": 0 }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "description": "Budget values read from project.yaml. Echoed so the report is self-contained.",
+      "additionalProperties": true
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": { "$ref": "_defs.json#/$defs/verificationResult" }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "expected", "observed", "root_owner"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "$ref": "_defs.json#/$defs/severity" },
+          "expected": { "type": ["string", "number"] },
+          "observed": { "type": ["string", "number"] },
+          "reason_code": { "type": "string" },
+          "root_owner": { "type": "string" },
+          "required_action": { "type": "string" }
+        }
+      }
+    },
+    "rework_handoff": { "type": ["object", "null"] }
+  }
+}

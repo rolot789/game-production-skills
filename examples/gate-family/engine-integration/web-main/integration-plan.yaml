@@ -1,0 +1,23 @@
+schema_version: 3
+target:
+  id: web-main
+  engine: web-canvas
+atlas_strategy:
+  decision: single atlas for FAM-GATE
+  rationale: all three states share a draw pass and a lifetime; they load and unload
+    together
+  padding_px: 2
+  padding_rationale: bilinear filtering bleeds neighbouring pixels at non-integer
+    scale below 2 px
+inputs:
+- path: qc/AST-GATE-CLOSED/qc-report.yaml
+  version: v1
+  content_hash: 7095acc3bc21b45ad8b47ccb0b4d4a17231373f989a43a13c26ab71140f09c51
+- path: qc/AST-GATE-TRANSITION/qc-report.yaml
+  version: v1
+  content_hash: 6c300d80d077c21e3b246b1a9e3096778825d807dce7b9f869521807fd10add0
+- path: qc/AST-GATE-OPEN/qc-report.yaml
+  version: v1
+  content_hash: 44a916d2663d223cc5079704f7ef42285bce915e947d887fcf496ed01ed36f6b
+limitations: []
+status: integration_ready
