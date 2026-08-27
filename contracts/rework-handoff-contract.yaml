@@ -1,0 +1,33 @@
+version: 1
+name: rework-handoff
+required_fields:
+  - handoff_id
+  - from
+  - to
+  - subject
+  - root_owner
+  - reason_codes
+  - change_scope
+  - preserve_scope
+  - authoritative_inputs
+  - expected_outputs
+  - invalidation_scope
+  - revalidation_scope
+  - next_action
+
+scope_schema:
+  change_scope:
+    dimensions: []
+    artifacts: []
+    runtime_properties: []
+  preserve_scope:
+    dimensions: []
+    artifacts: []
+    upstream_truth: []
+
+rules:
+  - Specialist-local fields such as change_dimensions or preserve_dimensions may exist inside specialist reports, but external rework handoffs MUST serialize to change_scope and preserve_scope.
+  - change_scope contains only the smallest surface permitted to change.
+  - preserve_scope lists validated truth that downstream rework must not disturb.
+  - symptom location, root owner, invalidation scope, and revalidation scope are separate decisions.
+  - A changed upstream artifact invalidates descendant approvals unless effective input identity is proven unchanged.
