@@ -1,16 +1,43 @@
-version: 1
+version: 2
 
 project:
   id: null
   name: null
 
+# Canonical logical-artifact -> project-path registry.
+# Skills and the orchestrator should resolve logical artifact names through this
+# map when this file exists rather than hard-coding repository-root paths.
 paths:
   game_spec: spec/game-spec.yaml
+  game_spec_human: spec/GameSpec.md
+  requirement_state: spec/requirement-state.yaml
+  game_spec_decision_log: spec/decision-log.md
+
   art_style: art/art-style.yaml
+  art_style_human: art/ArtStyle.md
+  style_requirement_state: art/style-requirement-state.yaml
+  style_decision_log: art/style-decision-log.md
   style_anchors: art/style-anchor-manifest.yaml
+  calibration_plan: art/calibration-plan.yaml
+  reference_corpus: art/reference-corpus.yaml
+  reference_search_history: art/reference-search-history.yaml
+  style_constraint_ledger: art/style-constraint-ledger.yaml
+  style_loop_state: art/style-loop-state.yaml
+
   asset_manifest: assets/asset-manifest.yaml
   asset_specs: assets/specs/
+
   generation: generation/
   normalized: normalized/
   qc: qc/
   runtime_validation: runtime-validation/
+
+  pipeline_state: .pipeline/game-art-production-state.yaml
+  handoffs: .pipeline/handoffs/
+  invalidation_ledger: .pipeline/invalidation-ledger.yaml
+  rework_queue: .pipeline/rework-queue.yaml
+
+path_resolution:
+  mode: canonical_registry
+  logical_patterns_in_skill_docs: true
+  rule: when project.yaml exists, paths in this registry override repository-root examples in skill documentation

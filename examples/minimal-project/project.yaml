@@ -1,0 +1,21 @@
+version: 2
+project:
+  id: minimal-puzzle
+  name: Minimal Puzzle
+paths:
+  game_spec: spec/game-spec.yaml
+  art_style: art/art-style.yaml
+  style_anchors: art/style-anchor-manifest.yaml
+  style_constraint_ledger: art/style-constraint-ledger.yaml
+  asset_manifest: assets/asset-manifest.yaml
+  asset_specs: assets/specs/
+  generation: generation/
+  normalized: normalized/
+  qc: qc/
+  runtime_validation: runtime-validation/
+  pipeline_state: .pipeline/game-art-production-state.yaml
+  handoffs: .pipeline/handoffs/
+  invalidation_ledger: .pipeline/invalidation-ledger.yaml
+  rework_queue: .pipeline/rework-queue.yaml
+path_resolution:
+  mode: canonical_registry

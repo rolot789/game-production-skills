@@ -1,6 +1,6 @@
 ---
 name: game-asset-qc
-description: Evaluate normalized game assets against production contracts, scoped visual anchors, persistent style constraints, family lineage, and runtime-readability requirements. Produce evidence-backed findings, pass/fail status, and precise upstream ownership without modifying assets.
+description: Evaluate normalized game assets against production contracts, scoped visual anchors, persistent style constraints, family lineage, and runtime-readability requirements. Produce evidence-backed findings, pass/fail status, and canonical delta-rework handoffs without modifying assets.
 ---
 
 # Game Asset QC
@@ -29,15 +29,13 @@ Root-owner Routing
 APPROVED / REWORK_REQUIRED / BLOCKED
 ```
 
-The primary question is:
+## Project path resolution
 
-> Did this asset faithfully implement the approved semantic, technical, visual, and family contracts at its intended game-use scale?
+If `project.yaml` exists, its `paths` registry is canonical. Logical output patterns in this skill resolve through that registry.
 
 ## Required inputs
 
-Consume the strongest available evidence. Prefer explicit artifacts over reconstructed assumptions.
-
-Required when applicable:
+Use the strongest available explicit evidence:
 
 - normalized runtime asset,
 - normalization record,
@@ -46,126 +44,66 @@ Required when applicable:
 - selected candidate generation record,
 - locked `art-style.yaml`,
 - `style-anchor-manifest.yaml`,
-- `style-constraint-ledger.yaml`,
-- canonical family parent and sibling variants,
-- gameplay/state semantics from GameSpec or AssetSpec.
+- `style-constraint-ledger.yaml` when applicable,
+- canonical parent/sibling variants when applicable,
+- gameplay/state semantics from GameSpec or AssetSpec when needed.
 
-If a production-critical contract is missing or contradictory, do not invent it. Emit a blocked finding and route to the upstream owner.
+If production-critical truth is missing or contradictory, block and route upstream rather than inventing it.
 
 ## Core rules
 
-1. **Contract first, taste second.** Personal aesthetic preference is not a failure unless it conflicts with an approved contract or gameplay requirement.
-2. Verify scoped anchors only on dimensions they govern. A palette anchor cannot fail an asset for geometry.
-3. Enforce locked negative constraints as real QC rules, not prompt suggestions.
-4. Inspect assets both at source/zoom scale and intended runtime display scale.
-5. Family assets are evaluated comparatively; states/directions must read as the same identity under controlled variation.
-6. Preserve symptom vs root cause. The visible defect location does not determine ownership.
-7. Do not modify, repaint, crop, normalize, or regenerate assets. QC only records evidence and routes remediation.
-8. Do not downgrade a repeated systemic failure to MINOR because each individual asset is superficially usable.
+1. Contract first, taste second.
+2. Verify anchors only on dimensions they govern.
+3. Enforce locked negative constraints as actual QC rules.
+4. Inspect both source scale and intended runtime display size.
+5. Evaluate families comparatively.
+6. Separate symptom from root cause.
+7. Never modify/repaint/crop/normalize/regenerate in QC.
+8. Treat repeated systemic failures as systemic even if individual instances look superficially usable.
 
 ## Contract Compliance Matrix
 
-Build an internal compliance matrix before deciding status. Evaluate only dimensions applicable to the asset.
+Evaluate applicable dimensions only.
 
-### A. Technical conformance
+### Technical conformance
 
-- expected file exists and is readable,
-- format/color/alpha mode,
-- canvas dimensions,
-- transparent-background requirements,
-- bounds/clipping/edge contamination,
-- naming/export contract,
-- normalization metadata,
-- anchor/pivot consistency when verifiable.
+Check file readability, format/color/alpha mode, canvas, transparency, bounds/clipping, naming/export contract, normalization metadata, anchor/pivot consistency, and exact input/output lineage.
 
-### B. Semantic conformance
+### Semantic conformance
 
-- correct asset identity,
-- correct object/category,
-- correct state/direction/pose,
-- required gameplay-significant feature present,
-- no invented semantic feature that changes interpretation,
-- intended state remains distinguishable.
+Check identity/category/state/direction/pose, gameplay-significant features, absence of invented semantics, and intrinsic state distinguishability.
 
-### C. Positive style conformance
+### Positive style conformance
 
-Resolve applicable global and category rules from ArtStyle. Check shape language, line behavior, palette/value, texture, lighting, material treatment, composition, detail density, readability, and category overrides.
+Resolve global/category rules for shape, line, palette/value, texture, lighting, material, composition, detail density, readability, and overrides.
 
-### D. Scoped anchor conformance
+### Scoped anchor conformance
 
-For each applicable anchor, record:
+For each anchor record `anchor_id`, role, governed dimensions, applicability, and result: `PASS`, `FAIL`, `NOT_APPLICABLE`, or `INSUFFICIENT_EVIDENCE`.
+
+### Negative constraint conformance
+
+Apply inheritance:
 
 ```text
-anchor_id
-role
-governed_dimensions
-applicable_to_asset
-result: PASS | FAIL | NOT_APPLICABLE | INSUFFICIENT_EVIDENCE
+Global → Category → Family → Asset Override
 ```
 
-Do not compare unrelated dimensions.
+Evaluate `HARD_FORBIDDEN`, `SOFT_AVOID`, `BOUNDED`, and `ANTI_REFERENCE`. Convert vague feedback such as `looks AI-generated` into observable contract violations before using it as evidence.
 
-### E. Negative constraint conformance
+### Family coherence
 
-Read active constraints from `style-constraint-ledger.yaml` using scope inheritance:
+Compare identity, silhouette/proportion, projection, relative scale, palette/material family, line/texture treatment, shared geometry, intended state difference, and direction consistency.
 
-```text
-Global
-→ Category
-→ Family
-→ Asset Override
-```
+### Gameplay readability
 
-Evaluate `HARD_FORBIDDEN`, `SOFT_AVOID`, `BOUNDED`, and `ANTI_REFERENCE` according to their defined severity/scope. Vague labels such as `looks AI-generated` are not findings; translate them into observable violations such as excessive glossy gradients, purposeless micro-detail, mechanically smooth contours, generic symmetry, unintended bloom, or over-dense texture.
+At intended runtime size verify silhouette recognition, state differentiation, important feature visibility, value/contrast hierarchy, clutter/noise, and distinction from neighboring gameplay categories when intrinsic to the asset.
 
-### F. Family coherence
+Scene composition belongs to `runtime-visual-validator`.
 
-Compare against canonical parent and siblings for applicable invariants:
+## Evidence model
 
-- identity,
-- silhouette/proportion,
-- camera/projection,
-- relative scale,
-- palette/material family,
-- line/texture treatment,
-- shared geometry,
-- controlled state difference,
-- direction consistency.
-
-A family member should look like the same asset transformed by the intended state/direction, not a new independent design.
-
-### G. Gameplay readability
-
-At intended runtime size verify:
-
-- silhouette recognition,
-- state differentiation,
-- important feature visibility,
-- value/contrast hierarchy,
-- clutter/noise level,
-- distinction from neighboring gameplay categories when required.
-
-Runtime scene composition itself belongs to `runtime-visual-validator`, but an asset that is intrinsically unreadable at its specified runtime footprint can fail here.
-
-## Evidence policy
-
-Every `BLOCKER` or `MAJOR` finding must contain concrete evidence. Prefer measurable or directly observable statements.
-
-Bad:
-
-```text
-The asset feels too AI-generated.
-```
-
-Good:
-
-```text
-NEG-TEXTURE-004 is violated: dense high-contrast crayon marks cover the full fill area,
-while the locked rule bounds UI texture to subtle edge/fill grain. At intended 48 px display,
-those marks compete with the state icon.
-```
-
-For each finding record:
+Every `BLOCKER` or `MAJOR` finding must include concrete evidence.
 
 ```yaml
 id:
@@ -178,99 +116,100 @@ evidence:
 root_cause_class:
 owner:
 required_action:
-preserve_dimensions:
+preserve_dimensions: []
 ```
 
-`preserve_dimensions` should list already-passing dimensions that regeneration/normalization must not disturb.
+`preserve_dimensions` is a specialist-local diagnostic field. When routing external rework, convert it to the canonical `preserve_scope.dimensions` field defined by `contracts/rework-handoff-contract.yaml`.
 
-## Severity
+## Severity and status
 
-- `BLOCKER`: unusable, wrong semantic identity/state, missing critical contract, hard forbidden violation with production impact, corrupted/invalid runtime asset, or contradiction that prevents valid evaluation.
-- `MAJOR`: clearly violates a locked production requirement, anchor, family invariant, bounded constraint, or gameplay-readability requirement; rework required.
-- `MINOR`: localized defect that does not materially break identity, style system, state readability, or runtime use; may ship only if project policy allows.
-- `NOTE`: observation or non-blocking recommendation outside locked requirements.
+Severity:
 
-Do not use severity to express aesthetic preference intensity.
+- `BLOCKER`: unusable, wrong semantics/identity, missing critical contract, hard forbidden violation with production impact, invalid runtime asset, or contradiction preventing evaluation.
+- `MAJOR`: clear locked requirement/anchor/family/bounded/readability violation; rework required.
+- `MINOR`: localized defect without material identity/style/state/runtime impact; may ship only if policy allows.
+- `NOTE`: non-blocking observation.
 
-## Asset QC status
+Status:
 
-- `approved`: no unresolved BLOCKER/MAJOR; no project-disallowed MINOR.
-- `approved_with_minor_findings`: only accepted MINOR/NOTE findings remain.
-- `rework_required`: one or more MAJOR findings, or project policy requires fixing MINOR findings.
-- `blocked`: evaluation cannot validly complete because of BLOCKER conditions or missing/contradictory production truth.
+- `approved`
+- `approved_with_minor_findings`
+- `rework_required`
+- `blocked`
 
 ## Root-cause routing
 
-Route according to the source of the defect, not where it was observed.
+- visual/style/identity/state/family generation defect → `game-asset-generator`
+- clipping/canvas/alpha/trim/padding/scale/anchor/pivot/export defect → `game-asset-normalizer`
+- missing/incorrect variant, AssetSpec, family relation, runtime footprint → `game-asset-planner`
+- contradictory/scoped style/anchor/constraint truth → `art-style-builder`
+- contradictory gameplay/state semantics → `game-spec-builder`
 
-- `game-asset-generator`: style drift, identity drift, wrong state visuals, invented details, anchor violation, negative-pattern violation, family visual incoherence originating in generation.
-- `game-asset-normalizer`: clipping, canvas, alpha, trim/padding, runtime scale processing, anchor/pivot/export errors caused during normalization.
-- `game-asset-planner`: missing/incorrect asset variant, contradictory AssetSpec, wrong state inventory, undefined runtime footprint or family relation.
-- `art-style-builder`: insufficient, contradictory, or incorrectly scoped locked style/anchor/constraint truth; user direction changed and requires deliberate style unlock.
-- `game-spec-builder`: underlying gameplay/state semantics are contradictory or insufficient to know what the asset must communicate.
-- `runtime-visual-validator`: do not route isolated QC findings here. Runtime validator owns context/scene integration failures after asset QC approval.
+Do not route isolated QC defects to runtime validation.
 
-See `references/failure-routing-policy.md` for ambiguous and multi-owner cases.
+## Canonical rework handoff
 
-## Rework handoff
-
-A rework request must be delta-oriented. Do not say `regenerate better`.
+External rework handoffs MUST follow `contracts/rework-handoff-contract.yaml`.
 
 Example:
 
 ```yaml
-owner: game-asset-generator
-change_dimensions:
-  - texture_density
-  - highlight_treatment
-preserve_dimensions:
-  - identity
-  - silhouette
-  - palette
-  - line_weight
-violations:
-  - NEG-TEXTURE-004
-  - NEG-LIGHT-002
+root_owner: game-asset-generator
+reason_codes:
+  - NEGATIVE_CONSTRAINT_VIOLATION
+
+change_scope:
+  dimensions:
+    - texture_density
+    - highlight_treatment
+  artifacts: []
+  runtime_properties: []
+
+preserve_scope:
+  dimensions:
+    - identity
+    - silhouette
+    - palette
+    - line_weight
+  artifacts:
+    - specs/AST-001.yaml
+  upstream_truth:
+    - game_spec
+    - art_style
+    - approved_anchors
+
+invalidation_scope: LOCAL_ASSET
+revalidation_scope:
+  - normalization
+  - asset_qc
+  - affected_runtime_contexts
 ```
 
-This allows generator v2 to perform scoped regeneration without reopening passing dimensions.
+Internal fields such as `change_dimensions` / `preserve_dimensions` may be used inside the QC report, but must not replace canonical external fields.
 
 ## Family and batch policy
 
-For a family, QC should normally verify:
+Validate canonical parent first, representative derivatives second, then the remaining family. A canonical/systemic failure blocks dependent derivatives. A local derivative failure preserves passing siblings unless evidence proves family-wide impact.
 
-1. canonical parent first,
-2. representative state/direction variants,
-3. remaining family members with comparative checks.
+Use `references/contract-verification-policy.md`, `references/failure-routing-policy.md`, and `references/family-batch-qc-policy.md` when needed.
 
-If the canonical parent fails identity/style invariants, block derivative approvals until the parent is corrected. If only one derivative fails a local state/direction dimension, keep passing siblings valid.
+## Version lineage
 
-See `references/contract-verification-policy.md` and `references/family-batch-qc-policy.md`.
+The QC report must identify the exact upstream versions/IDs it evaluated, including normalized output hash/version, AssetSpec version/hash, generation contract/candidate lineage, ArtStyle version when available, anchor IDs, and active constraint IDs.
+
+A changed generation candidate or normalized output normally invalidates the previous QC approval unless effective input identity is proven unchanged.
 
 ## Outputs
 
-```text
-qc/<asset-id>/
-├── qc-report.yaml
-└── evidence/            # optional references/crops/measurements when tooling supports them
-```
-
-A family or batch may additionally emit:
+Logical outputs:
 
 ```text
-qc/<family-id>/family-qc-summary.yaml
+qc/<asset-id>/qc-report.yaml
+qc/<family-id>/family-qc-summary.yaml   # when family/batch QC is used
 ```
 
-The report must include evaluated contract versions so a later upstream change can invalidate only affected approvals.
+Resolve actual paths through `project.yaml` when present.
 
 ## Completion criteria
 
-QC is complete only when:
-
-- applicable contracts have been resolved,
-- technical and visual checks are complete at intended scale,
-- all findings have evidence and severity,
-- BLOCKER/MAJOR findings have root owners and required actions,
-- passing dimensions are recorded for preservation,
-- final status is explicit,
-- evaluated upstream versions/IDs are recorded.
+QC is complete only when applicable contracts are resolved, technical/visual checks are complete at intended scale, findings have evidence/severity, blocker/major findings have root owners/actions, passing dimensions are captured for preservation, final status is explicit, evaluated versions are recorded, and any external rework request uses the canonical handoff envelope.

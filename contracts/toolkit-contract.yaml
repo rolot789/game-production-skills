@@ -1,254 +1,304 @@
 version: 2
+
 toolkit:
   id: game-production-skills
   name: AI-Native Game Production Skills
   scope: game specification, art direction, game asset production, asset QC, runtime visual validation
 
+path_resolution:
+  project_registry: project.yaml
+  mode: canonical_registry_when_present
+  rule: paths shown in stage contracts are logical patterns; when project.yaml exists, resolve them through project.yaml.paths
+  required_project_path_keys:
+    - game_spec
+    - art_style
+    - style_anchors
+    - style_constraint_ledger
+    - asset_manifest
+    - asset_specs
+    - generation
+    - normalized
+    - qc
+    - runtime_validation
+    - pipeline_state
+    - handoffs
+    - invalidation_ledger
+    - rework_queue
+
+rework_handoff_contract: contracts/rework-handoff-contract.yaml
+
 stage_order:
-- game_spec
-- art_style
-- asset_planning
-- generation
-- normalization
-- asset_qc
-- runtime_validation
+  - game_spec
+  - art_style
+  - asset_planning
+  - generation
+  - normalization
+  - asset_qc
+  - runtime_validation
 
 stages:
   game_spec:
     skill: game-spec-builder
     entry:
-    - game idea, partial spec, or existing design notes
+      - game idea, partial spec, or existing design notes
     required_exit_gate: ART_HANDOFF_READY
     preferred_production_gate: ASSET_PLANNING_READY
     outputs:
-    - GameSpec.md
-    - game-spec.yaml
-    - requirement-state.yaml
-    - decision-log.md
+      - GameSpec.md
+      - game-spec.yaml
+      - requirement-state.yaml
+      - decision-log.md
 
   art_style:
     skill: art-style-builder
     entry:
-    - game-spec.yaml
-    - visual intent and/or references
+      - game-spec.yaml
+      - visual intent and/or references
     required_exit_gate: ASSET_GENERATION_READY
     outputs:
-    - ArtStyle.md
-    - art-style.yaml
-    - style-requirement-state.yaml
-    - style-decision-log.md
-    - style-anchor-manifest.yaml
-    - calibration-plan.yaml
-    - reference-corpus.yaml
-    - reference-search-history.yaml
-    - style-constraint-ledger.yaml
-    - style-loop-state.yaml
+      - ArtStyle.md
+      - art-style.yaml
+      - style-requirement-state.yaml
+      - style-decision-log.md
+      - style-anchor-manifest.yaml
+      - calibration-plan.yaml
+      - reference-corpus.yaml
+      - reference-search-history.yaml
+      - style-constraint-ledger.yaml
+      - style-loop-state.yaml
 
   asset_planning:
     skill: game-asset-planner
     entry:
-    - game-spec.yaml
-    - art-style.yaml
-    - style-anchor-manifest.yaml
+      - game-spec.yaml
+      - art-style.yaml
+      - style-anchor-manifest.yaml
+      - style-constraint-ledger.yaml when present/applicable
+      - project.yaml when present
     outputs:
-    - asset-manifest.yaml
-    - specs/<asset-id>.yaml
+      - asset-manifest.yaml
+      - specs/<asset-id>.yaml
+    lineage_requirements:
+      - GameSpec version/hash when available
+      - ArtStyle version/hash when available
+      - approved anchor IDs relevant to each AssetSpec
+      - applicable style constraint IDs
+      - canonical family parent/topology when applicable
 
   generation:
     skill: game-asset-generator
     entry:
-    - asset-manifest.yaml
-    - specs/<asset-id>.yaml
-    - art-style.yaml
-    - style-anchor-manifest.yaml
-    - reference-corpus.yaml when present
-    - style-constraint-ledger.yaml when present
-    - style-loop-state.yaml when relevant to current revision
-    - change_scope and preserve_scope when generation is a rework handoff
+      - asset-manifest.yaml
+      - specs/<asset-id>.yaml
+      - art-style.yaml
+      - style-anchor-manifest.yaml
+      - reference-corpus.yaml when present
+      - style-constraint-ledger.yaml when present
+      - style-loop-state.yaml when relevant
+      - project.yaml when present
+      - canonical change_scope and preserve_scope for rework
     outputs:
-    - generation/<asset-id>/job.yaml
-    - generation/<asset-id>/generation-contract.yaml
-    - generation/<asset-id>/prompt.md
-    - generation/<asset-id>/records/*.yaml
-    - generation/<asset-id>/candidates/*
-    - generation/<asset-id>/candidate-index.yaml
+      - generation/<asset-id>/job.yaml
+      - generation/<asset-id>/generation-contract.yaml
+      - generation/<asset-id>/prompt.md
+      - generation/<asset-id>/records/*.yaml
+      - generation/<asset-id>/candidates/*
+      - generation/<asset-id>/candidate-index.yaml
 
   normalization:
     skill: game-asset-normalizer
     entry:
-    - selected generation candidate
-    - asset spec
-    - normalization policy
-    - change_scope and preserve_scope when normalization is a rework handoff
+      - selected generation candidate with identity/hash/version when available
+      - specs/<asset-id>.yaml
+      - normalization policy
+      - project.yaml when present
+      - canonical change_scope and preserve_scope for rework
     outputs:
-    - normalized/<asset-id>/runtime/*
-    - normalized/<asset-id>/normalization-record.yaml
+      - normalized/<asset-id>/runtime/*
+      - normalized/<asset-id>/normalization-record.yaml
+      - normalized/<asset-id>/geometry-report.yaml
+      - normalized/<asset-id>/preview/* when produced
+    lineage_requirements:
+      - exact effective generation candidate identity
+      - AssetSpec version/hash when available
+      - normalization policy version/ID
+      - output identity/hash when supported
 
   asset_qc:
     skill: game-asset-qc
     entry:
-    - normalized runtime asset
-    - normalization record
-    - specs/<asset-id>.yaml
-    - generation/<asset-id>/generation-contract.yaml
-    - selected candidate generation record
-    - art-style.yaml
-    - style-anchor-manifest.yaml
-    - style-constraint-ledger.yaml when present
-    - canonical family parent and sibling variants when applicable
+      - normalized runtime asset
+      - normalization record
+      - specs/<asset-id>.yaml
+      - generation/<asset-id>/generation-contract.yaml
+      - selected candidate generation record
+      - art-style.yaml
+      - style-anchor-manifest.yaml
+      - style-constraint-ledger.yaml when present
+      - canonical family parent and sibling variants when applicable
+      - project.yaml when present
     allowed_exit_status:
-    - approved
-    - approved_with_minor_findings
-    - rework_required
-    - blocked
+      - approved
+      - approved_with_minor_findings
+      - rework_required
+      - blocked
     promotion_status:
-    - approved
-    - approved_with_minor_findings
+      - approved
+      - approved_with_minor_findings
     outputs:
-    - qc/<asset-id>/qc-report.yaml
-    - qc/<family-id>/family-qc-summary.yaml when family/batch QC is used
+      - qc/<asset-id>/qc-report.yaml
+      - qc/<family-id>/family-qc-summary.yaml when family/batch QC is used
+    rework_output: canonical rework handoff contract
 
   runtime_validation:
     skill: runtime-visual-validator
     entry:
-    - executable playable build or preview
-    - QC-approved runtime asset/version
-    - qc/<asset-id>/qc-report.yaml
-    - specs/<asset-id>.yaml
-    - normalized/<asset-id>/normalization-record.yaml
-    - runtime validation plan or sufficient information to compile one
-    - art-style.yaml when contextual style or hierarchy rules are relevant
-    - style-anchor-manifest.yaml when scoped anchor comparison is relevant
-    - style-constraint-ledger.yaml when contextual constraints are relevant
-    - canonical family/state context when applicable
-    - approved baseline captures or prior runtime report when regression testing
-    - change_scope and preserve_scope when runtime validation is a rework handoff
+      - executable playable build or preview
+      - QC-approved runtime asset/version
+      - qc/<asset-id>/qc-report.yaml
+      - specs/<asset-id>.yaml
+      - normalized/<asset-id>/normalization-record.yaml
+      - runtime validation plan or sufficient information to compile one
+      - art-style.yaml when contextual style/hierarchy rules are relevant
+      - style-anchor-manifest.yaml when scoped comparison is relevant
+      - style-constraint-ledger.yaml when contextual constraints are relevant
+      - canonical family/state context when applicable
+      - approved baseline captures or prior runtime report when regression testing
+      - project.yaml when present
+      - canonical change_scope and preserve_scope for rework
     allowed_exit_status:
-    - runtime_approved
-    - runtime_approved_with_minor_findings
-    - runtime_rework_required
-    - runtime_blocked
-    - partial_validation_only
+      - runtime_approved
+      - runtime_approved_with_minor_findings
+      - runtime_rework_required
+      - runtime_blocked
+      - partial_validation_only
     promotion_status:
-    - runtime_approved
-    - runtime_approved_with_minor_findings
+      - runtime_approved
+      - runtime_approved_with_minor_findings
     outputs:
-    - runtime-validation/<asset-id>/runtime-validation-plan.yaml
-    - runtime-validation/<asset-id>/runtime-report.yaml
-    - runtime-validation/<asset-id>/evidence-manifest.yaml
-    - runtime-validation/<asset-id>/captures/* when captures are materialized
-    - runtime-validation/<asset-id>/regression-summary.yaml when baseline comparison is used
-    - runtime-validation/scenes/<scene-id>/scene-report.yaml when scene-level validation is used
-    - runtime-validation/<family-id>/family-runtime-summary.yaml when family validation is used
+      - runtime-validation/<asset-id>/runtime-validation-plan.yaml
+      - runtime-validation/<asset-id>/runtime-report.yaml
+      - runtime-validation/<asset-id>/evidence-manifest.yaml
+      - runtime-validation/<asset-id>/captures/* when materialized
+      - runtime-validation/<asset-id>/regression-summary.yaml when baseline comparison is used
+      - runtime-validation/scenes/<scene-id>/scene-report.yaml when scene validation is used
+      - runtime-validation/<family-id>/family-runtime-summary.yaml when family validation is used
+    rework_output: canonical rework handoff contract
 
 orchestrator:
   skill: game-art-production-orchestrator
   state_file: .pipeline/game-art-production-state.yaml
+  state_version: 2
   optional_state_artifacts:
-  - .pipeline/handoffs/*
-  - .pipeline/invalidation-ledger.yaml
-  - .pipeline/rework-queue.yaml
+    - .pipeline/handoffs/*
+    - .pipeline/invalidation-ledger.yaml
+    - .pipeline/rework-queue.yaml
   responsibilities:
-  - route the next specialist skill without duplicating specialist work
-  - validate readiness and promotion gates
-  - preserve authoritative artifact/version lineage
-  - carry change_scope and preserve_scope through rework handoffs
-  - route failures to root owners rather than symptom locations
-  - invalidate only dependency-affected descendants
-  - preserve search/reference corpus across art-style loops
-  - prevent discovery-only references from becoming production authority
-  - prevent partial runtime evidence from promoting to RUNTIME_APPROVED
-  - track family/canonical-parent systemic versus local failures
-  - require coherent version lineage before SHIPPABLE promotion
+    - resolve logical artifact paths through project.yaml when present
+    - route the next specialist without duplicating specialist work
+    - validate readiness and promotion gates
+    - preserve authoritative artifact/version lineage
+    - normalize specialist-local rework aliases into canonical change_scope and preserve_scope
+    - route failures to root owners rather than symptom locations
+    - invalidate only dependency-affected descendants
+    - preserve search/reference corpus across art-style loops
+    - prevent discovery-only references from becoming production authority
+    - prevent partial runtime evidence from promoting to RUNTIME_APPROVED
+    - track family/canonical-parent systemic versus local failures
+    - require coherent version lineage before SHIPPABLE promotion
   handoff_fields:
-  - handoff_id
-  - from
-  - to
-  - subject
-  - authoritative_inputs
-  - reason_codes
-  - root_owner
-  - change_scope
-  - preserve_scope
-  - expected_outputs
-  - invalidation_scope
-  - revalidation_scope
-  - next_action
+    - handoff_id
+    - from
+    - to
+    - subject
+    - root_owner
+    - reason_codes
+    - authoritative_inputs
+    - change_scope
+    - preserve_scope
+    - expected_outputs
+    - invalidation_scope
+    - revalidation_scope
+    - next_action
   invalidation_scope_classes:
-  - LOCAL_ASSET
-  - LOCAL_DERIVATIVE
-  - FAMILY_SYSTEMIC
-  - CATEGORY_SYSTEMIC
-  - GLOBAL_SYSTEMIC
-  - SCENE_LOCAL
-  - RUNTIME_SYSTEMIC
+    - LOCAL_ASSET
+    - LOCAL_DERIVATIVE
+    - FAMILY_SYSTEMIC
+    - CATEGORY_SYSTEMIC
+    - GLOBAL_SYSTEMIC
+    - SCENE_LOCAL
+    - RUNTIME_SYSTEMIC
 
 requirement_states:
-- UNSEEN
-- UNRESOLVED
-- INFERRED
-- PROPOSED
-- CONFIRMED
-- CONFLICT
-- LOCKED
-- NOT_APPLICABLE
+  - UNSEEN
+  - UNRESOLVED
+  - INFERRED
+  - PROPOSED
+  - CONFIRMED
+  - CONFLICT
+  - LOCKED
+  - NOT_APPLICABLE
 
 pipeline_stage_states:
-- NOT_STARTED
-- IN_PROGRESS
-- READY
-- BLOCKED
-- FAILED
-- INVALIDATED
-- COMPLETE
+  - NOT_STARTED
+  - IN_PROGRESS
+  - READY
+  - BLOCKED
+  - FAILED
+  - INVALIDATED
+  - COMPLETE
 
 asset_lifecycle:
-- PLANNED
-- READY_FOR_GENERATION
-- GENERATED
-- NORMALIZED
-- QC_APPROVED
-- RUNTIME_APPROVED
-- SHIPPABLE
-- GENERATION_REWORK
-- NORMALIZATION_BLOCKED
-- QC_REWORK
-- RUNTIME_REWORK
-- INVALIDATED
+  - PLANNED
+  - READY_FOR_GENERATION
+  - GENERATED
+  - NORMALIZED
+  - QC_APPROVED
+  - RUNTIME_APPROVED
+  - SHIPPABLE
+  - GENERATION_REWORK
+  - NORMALIZATION_BLOCKED
+  - QC_REWORK
+  - RUNTIME_REWORK
+  - INVALIDATED
 
 severity:
-- BLOCKER
-- MAJOR
-- MINOR
-- NOTE
+  - BLOCKER
+  - MAJOR
+  - MINOR
+  - NOTE
 
 art_style_loop_levels:
-- L0_MICRO
-- L1_RESELECT
-- L2_DELTA_SEARCH
-- L3_BRANCH_RESET
-- L4_DIRECTION_RESET
+  - L0_MICRO
+  - L1_RESELECT
+  - L2_DELTA_SEARCH
+  - L3_BRANCH_RESET
+  - L4_DIRECTION_RESET
 
 generation_rework_levels:
-- G0_SAME_CONTRACT_RETRY
-- G1_LOCAL_DIMENSION_DELTA
-- G2_REDERIVE_FROM_CANONICAL_PARENT
-- G3_CHANGE_GENERATION_STRATEGY
-- G4_ESCALATE_UPSTREAM
+  - G0_SAME_CONTRACT_RETRY
+  - G1_LOCAL_DIMENSION_DELTA
+  - G2_REDERIVE_FROM_CANONICAL_PARENT
+  - G3_CHANGE_GENERATION_STRATEGY
+  - G4_ESCALATE_UPSTREAM
+
+lineage_rules:
+  - A changed generation candidate invalidates descendant normalization, QC, and dependent runtime approval unless exact effective input equivalence is proven.
+  - A changed normalized output invalidates descendant QC and dependent runtime approval.
+  - Runtime-integration-only changes may preserve generation, normalization, and QC when their authoritative inputs remain unchanged.
+  - A discovered reference added to the corpus does not invalidate production unless locked style truth or approved scoped authority changes.
 
 principles:
-- Locked upstream artifacts are immutable until explicitly revised.
-- Inferred decisions are never equivalent to confirmed decisions.
-- Do not bypass readiness gates by guessing downstream requirements.
-- Assets are specification + references + provenance + runtime metadata + QC, not files alone.
-- Invalidate only dependency-affected descendants when upstream sources change.
-- Runtime approval is distinct from isolated asset QC approval.
-- Search-derived references become production authorities only through explicit scoped approval.
-- Regeneration preserves passing dimensions and changes only the smallest failing surface whenever possible.
-- Asset QC evaluates explicit production contracts and routes failures to root owners without redesigning or modifying assets.
-- Runtime validation evaluates real rendered contexts, uses evidence-backed semantic checks, and does not substitute partial capture review for executable runtime approval.
-- Runtime rework preserves passing upstream assets and contexts and invalidates only the smallest dependency scope supported by the root cause.
-- Symptom location, root ownership, and invalidation scope are separate orchestration decisions.
-- A discovered reference added to the reference corpus does not invalidate production unless authoritative locked style truth changes.
-- SHIPPABLE promotion requires coherent active versions across generation, normalization, QC, and runtime validation.
-- Rework handoffs carry explicit change_scope and preserve_scope; broad restart is a last resort, not a default.
+  - Locked upstream artifacts are immutable until explicitly revised.
+  - Inferred decisions are never equivalent to confirmed decisions.
+  - Do not bypass readiness gates by guessing downstream requirements.
+  - Assets are specification + references + provenance + runtime metadata + QC, not files alone.
+  - Invalidate only dependency-affected descendants when upstream sources change.
+  - Runtime approval is distinct from isolated asset QC approval.
+  - Search-derived references become production authorities only through explicit scoped approval.
+  - Regeneration preserves passing dimensions and changes only the smallest failing surface whenever possible.
+  - Asset QC evaluates explicit production contracts and routes failures to root owners without redesigning or modifying assets.
+  - Runtime validation evaluates real rendered contexts and does not substitute partial capture review for executable runtime approval.
+  - Symptom location, root ownership, invalidation scope, and revalidation scope are separate decisions.
+  - SHIPPABLE promotion requires coherent active versions across generation, normalization, QC, and runtime validation.
+  - External rework handoffs use canonical change_scope and preserve_scope fields.
