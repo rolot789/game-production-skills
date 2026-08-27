@@ -1,9 +1,12 @@
-version: 1
+version: 2
+
 project:
   id: null
   name: null
+
 target:
   milestone: P0 gameplay assets runtime-approved
+
 stages:
   game_spec:
     skill: game-spec-builder
@@ -40,7 +43,17 @@ stages:
     status: NOT_STARTED
     readiness: null
     artifacts: []
+
 assets: {}
+families: {}
+
+active_versions: {}
+
 handoffs: []
 blockers: []
 invalidations: []
+rework_queue: []
+
+# Asset/family entries may track:
+# root_owner, change_scope, preserve_scope, invalidated_artifacts,
+# preserved_artifacts, next_skill, next_action, and exact active lineage.
