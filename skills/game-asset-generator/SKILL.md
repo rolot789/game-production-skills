@@ -1,15 +1,13 @@
 ---
 name: game-asset-generator
-description: Generate game-art candidates from locked AssetSpec and ArtStyle artifacts without redesigning upstream decisions. Compile scoped approved anchors, reference evidence, category overrides, persistent negative constraints, family invariants, and provenance into generation jobs; detect style drift and regenerate only affected dimensions.
+description: Generate game-art candidates from locked AssetSpec and ArtStyle artifacts without redesigning upstream decisions. Compile scoped approved anchors, reference evidence, category overrides, persistent negative constraints, family invariants, provenance, and canonical rework scopes into generation jobs; detect style drift and regenerate only affected dimensions.
 ---
 
 # Game Asset Generator
 
 ## Purpose
 
-Execute visual generation from already-approved production inputs. **Compile, do not improvise.**
-
-This skill is not an art director. It must not silently invent a new style, reinterpret gameplay semantics, broaden an approved reference, or compensate for missing upstream decisions with generic image-generation taste.
+Execute visual generation from approved production inputs. **Compile, do not improvise.** The generator is not an art director and must not silently reinterpret gameplay semantics, broaden approved references, or replace missing upstream truth with generic image-model taste.
 
 ```text
 AssetSpec
@@ -18,6 +16,7 @@ AssetSpec
 + Reference Corpus
 + Style Constraint Ledger
 + Category Overrides
++ Optional Rework Scope
         ↓
 Input Validation
         ↓
@@ -32,26 +31,24 @@ Candidate(s)
 Drift / Constraint Screening
         ↓
 Generation Record + Provenance
-        ↓
-Selected Candidate → Normalization / QC
 ```
 
-The primary objective is:
+## Project path resolution
 
-> Preserve the approved art system while changing only the asset-specific content required by the AssetSpec.
+If `project.yaml` exists, use its `paths` registry as the canonical mapping for logical artifacts. Do not hard-code root paths that contradict the project registry.
 
-## Core principles
+## Core rules
 
-1. **Upstream truth wins.** Locked GameSpec, AssetSpec, ArtStyle, approved anchors, and locked constraints are authoritative.
-2. **Reference scope is explicit.** A reference may govern line, palette, geometry, identity, texture, lighting, composition, UI treatment, or another declared dimension; it never governs unspecified dimensions by implication.
-3. **User-provided and approved anchors outrank generic model priors.** Do not dilute them with generic aesthetic language.
-4. **Negative constraints are executable production rules, not decorative prompt suffixes.** Pair them with positive counterparts where available.
-5. **Category overrides modify only their declared dimensions.** Global style remains inherited elsewhere.
-6. **Family coherence is planned, not hoped for.** Related states, directions, frames, icons, or character poses should derive from a canonical parent when possible.
-7. **A candidate that is attractive but violates identity, style, state semantics, or family invariants is a failure.**
-8. **Regenerate the smallest failing surface.** Do not rewrite the complete generation contract after a local failure.
-9. **Record provenance truthfully.** Never fabricate model IDs, seeds, timestamps, reference downloads, or tool capabilities.
-10. **Generation availability is not assumed.** If the runtime cannot generate the required media, emit a complete external-generation job instead of pretending an output exists.
+1. Locked GameSpec, AssetSpec, ArtStyle, approved scoped anchors, and locked constraints are authoritative.
+2. A reference governs only declared dimensions.
+3. User-provided/approved anchors outrank generic model priors.
+4. Negative constraints are executable rules, not prompt decoration.
+5. Category overrides change only declared dimensions.
+6. Families should derive from canonical parents when identity/geometry continuity matters.
+7. Attractive but contract-violating candidates fail.
+8. Regenerate the smallest failing surface.
+9. Record provenance truthfully; never invent seed/model/timestamp/tool access.
+10. If generation capability is unavailable, emit a complete external-generation job rather than pretending output exists.
 
 ## Required inputs
 
@@ -64,262 +61,150 @@ art-style.yaml
 style-anchor-manifest.yaml
 ```
 
-When produced by `art-style-builder` v2, also consume:
+When present/applicable:
 
 ```text
 reference-corpus.yaml
 style-constraint-ledger.yaml
-style-loop-state.yaml          # when relevant to current revisions
+style-loop-state.yaml
+project.yaml
 ```
 
-Do not require absent optional artifacts when equivalent locked information is already represented elsewhere, but never ignore them when present and applicable.
+For rework, consume the canonical handoff envelope defined by `contracts/rework-handoff-contract.yaml`:
+
+```yaml
+change_scope:
+  dimensions: []
+  artifacts: []
+  runtime_properties: []
+
+preserve_scope:
+  dimensions: []
+  artifacts: []
+  upstream_truth: []
+```
+
+The generator may derive internal fields such as `change_dimensions`, but external handoffs remain canonical `change_scope / preserve_scope`.
 
 ## Readiness checks
 
 Before generating, verify:
 
-- the target AssetSpec is `READY_FOR_GENERATION` or equivalent;
-- required semantic states/directions are defined;
-- the relevant ArtStyle readiness gate permits asset generation;
-- production-critical anchor dimensions are resolved;
-- required references are visually accessible when their role requires visual grounding;
-- no `HARD_FORBIDDEN` constraint conflicts with the AssetSpec;
-- category overrides are unambiguous;
-- family/canonical-parent requirements are known.
+- AssetSpec is ready for generation,
+- semantic states/directions are defined,
+- ArtStyle gate permits generation,
+- production-critical anchors are resolved,
+- required references are actually accessible when visual grounding is necessary,
+- no hard constraint conflicts with AssetSpec,
+- category overrides are unambiguous,
+- canonical parent/family rules are known,
+- requested change scope does not contradict preserved upstream truth.
 
-If a blocker belongs upstream, stop and route it back. Do not solve an art-direction ambiguity inside this skill.
+Route blockers upstream rather than solving art direction inside generation.
 
-## Reference grounding
+## Scoped reference grounding
 
-References are consumed through declared roles and governed dimensions.
+References may act as:
 
-Supported roles include, but are not limited to:
+`identity_anchor`, `style_anchor`, `geometry_anchor`, `palette_anchor`, `line_anchor`, `texture_anchor`, `lighting_anchor`, `composition_anchor`, `ui_anchor`, `category_anchor`, `state_parent`, `direction_parent`, or `animation_parent`.
 
-```text
-identity_anchor
-style_anchor
-geometry_anchor
-palette_anchor
-line_anchor
-texture_anchor
-lighting_anchor
-composition_anchor
-ui_anchor
-category_anchor
-state_parent
-direction_parent
-animation_parent
-```
-
-For every resolved reference, compile:
-
-```yaml
-reference_id: REF-017
-role: line_anchor
-governs:
-  - line.weight
-  - line.irregularity
-preserve:
-  - restrained hand-drawn contour variation
-do_not_inherit:
-  - cinematic lighting
-  - background composition
-```
-
-### Accessibility rule
-
-A discovered URL is not automatically usable as a generation anchor.
-
-- `PREVIEWABLE` / visually accessible references may be used when the generator can actually inspect or pass them to the generation capability.
-- `LINK_ONLY`, `BLOCKED`, or `UNAVAILABLE` references may remain provenance/evidence records but must not be treated as unseen visual truth.
-- Never claim a visual characteristic was verified from an inaccessible image.
+Compile each reference with its governed and excluded dimensions. `LINK_ONLY`, `BLOCKED`, and `UNAVAILABLE` references may remain provenance/evidence but cannot be treated as visually verified truth.
 
 ## Generation contract
 
-Compile a structured generation contract before writing any free-form prompt.
+Compile `generation-contract.yaml` before any free-form prompt. Recommended order:
 
-Recommended order:
+1. asset identity and semantic purpose,
+2. geometry/silhouette/composition,
+3. global style invariants,
+4. category overrides,
+5. scoped anchors,
+6. family/parent invariants,
+7. positive rendering rules,
+8. negative constraints + positive counterparts,
+9. output/transparency/framing,
+10. explicit non-goals,
+11. rework `change_scope / preserve_scope` when applicable.
 
-```text
-1. Asset identity and semantic purpose
-2. Required geometry / silhouette / composition
-3. Locked global style invariants
-4. Applicable category overrides
-5. Scoped approved anchors
-6. Family / parent invariants
-7. Positive rendering instructions
-8. Negative constraints + positive counterparts
-9. Output / transparency / framing requirements
-10. Explicit non-goals and forbidden drift
-```
+`prompt.md` is a provider-facing serialization of the contract, not the source of truth.
 
-The free-form prompt is a serialization of this contract, not the source of truth itself.
-
-Read `references/generation-compilation-policy.md` when compiling jobs.
+Use `references/generation-compilation-policy.md` when compiling jobs.
 
 ## Constraint compilation
 
-Consume `style-constraint-ledger.yaml` by scope and severity.
+Consume `style-constraint-ledger.yaml` by scope and severity:
 
-### `HARD_FORBIDDEN`
+- `HARD_FORBIDDEN`: any occurrence is unacceptable when applicable,
+- `SOFT_AVOID`: discourage unless another locked rule requires it,
+- `BOUNDED`: retain only within approved range,
+- `ANTI_REFERENCE`: do not inherit the rejected dimension from the named reference.
 
-A candidate exhibiting the pattern is not acceptable.
-
-### `SOFT_AVOID`
-
-Discourage unless another locked requirement requires it.
-
-### `BOUNDED`
-
-Preserve the feature within the declared range rather than eliminating it.
-
-### `ANTI_REFERENCE`
-
-Explicitly do not inherit a rejected dimension from a named reference.
-
-Where possible, compile:
-
-```text
-AVOID <observable failure pattern>
-PRESERVE / DO INSTEAD <approved positive behavior>
-```
-
-Do not reduce the ledger to vague phrases such as `not AI-looking`, `not generic`, or `make it professional`.
-
-## Anti-generic / anti-AI-drift behavior
-
-Treat generic image-model aesthetics as drift symptoms only when they conflict with locked style evidence.
-
-Common diagnostics include:
-
-- excessive glossy gradients on materials defined as matte;
-- default cinematic rim lighting not present in approved anchors;
-- purposeless micro-detail or ornamental segmentation;
-- over-smoothed vector-like contours when handmade irregularity is locked;
-- excessive bloom, glow, volumetric haze, or depth effects;
-- generic mascot proportions overriding an identity anchor;
-- arbitrary asymmetry or decorative noise introduced without style evidence;
-- highly rendered surface detail that destroys small-size gameplay readability.
-
-Do not blindly ban these patterns globally. Apply only constraints supported by the current ArtStyle / ledger.
+Prefer `AVOID <observable failure> / DO INSTEAD <approved behavior>` pairs. Do not use vague final rules such as `not AI-looking`.
 
 ## Family-first generation
 
-When generating a family, determine a canonical parent first.
+Prefer canonical-parent derivation for related states/directions/poses. Preserve identity, proportions, projection, silhouette logic, line hierarchy, palette/material family, scale/canvas footprint, and state-invariant geometry.
 
-Examples:
+Use `references/family-coherence-policy.md` for topology and acceptance rules.
 
-```text
-character neutral pose
-→ directional variants
-→ action poses
+## Candidate screening
 
-closed gate
-→ transition frame
-→ open gate
+Before downstream handoff, reject obvious failures involving:
 
-base icon
-→ active
-→ disabled
-→ hover
-```
+- semantic mismatch,
+- identity drift,
+- anchor-scope violation,
+- hard negative-constraint violation,
+- major family inconsistency,
+- missing state differentiation,
+- wrong camera/orientation,
+- wrong transparency/background,
+- major composition/canvas failure.
 
-Preserve family invariants such as:
+Generation screening is not a substitute for QC.
 
-- identity;
-- proportions;
-- camera/projection;
-- silhouette logic;
-- line hierarchy;
-- palette family;
-- material treatment;
-- local scale and canvas footprint;
-- state-specific geometry that should remain unchanged.
+## Delta regeneration
 
-Prefer reference edit / parent-derived generation over independent redraws when the available generation capability supports it.
+Classify failures before retry:
 
-Read `references/family-coherence-policy.md` for family topology and acceptance rules.
+`CONTENT_ERROR`, `IDENTITY_DRIFT`, `STYLE_DIMENSION_DRIFT`, `CONSTRAINT_VIOLATION`, `FAMILY_DRIFT`, `STATE_READABILITY_FAILURE`, `OUTPUT_TECHNICAL_FAILURE`, `UPSTREAM_SPEC_AMBIGUITY`.
 
-## Candidate screening before downstream handoff
+Preserve every already-passing dimension.
 
-Generation is not full QC, but obviously invalid candidates should not be promoted merely because a file exists.
+Escalation levels:
 
-Screen for:
+- `G0_SAME_CONTRACT_RETRY`
+- `G1_LOCAL_DIMENSION_DELTA`
+- `G2_REDERIVE_FROM_CANONICAL_PARENT`
+- `G3_CHANGE_GENERATION_STRATEGY`
+- `G4_ESCALATE_UPSTREAM`
 
-```text
-semantic mismatch
-identity drift
-anchor-scope violation
-hard negative-constraint violation
-major family inconsistency
-missing state differentiation
-wrong camera/orientation
-wrong required transparency/background
-obvious composition/canvas failure
-```
+`G4` does not grant permission to redesign ArtStyle. Use `references/anti-drift-regeneration-policy.md`.
 
-Record rejected candidates and reasons. Do not silently discard failed generations if provenance matters for later diagnosis.
+## Version lineage
 
-## Regeneration / anti-drift loop
-
-When a candidate fails, classify the failure before regeneration.
-
-```text
-CONTENT_ERROR
-IDENTITY_DRIFT
-STYLE_DIMENSION_DRIFT
-CONSTRAINT_VIOLATION
-FAMILY_DRIFT
-STATE_READABILITY_FAILURE
-OUTPUT_TECHNICAL_FAILURE
-UPSTREAM_SPEC_AMBIGUITY
-```
-
-Then preserve every dimension that already passed.
-
-Example:
-
-```text
-line            PASS
-palette         PASS
-identity        PASS
-texture         FAIL: too dense
-lighting        PASS
-
-→ regenerate texture treatment only
-→ preserve line/palette/identity/lighting contracts
-```
-
-Do not respond to a single failed dimension by replacing the whole prompt with a new artistic description.
-
-Read `references/anti-drift-regeneration-policy.md` for failure ownership, delta contracts, and escalation rules.
-
-## Prompt/version discipline
-
-Every generation attempt should have stable versioned inputs.
-
-Record at least:
+Every generation attempt should record, when available:
 
 ```text
 asset_id
 job_version
-asset_spec_version/hash when available
-art_style_version/hash when available
+asset_spec version/hash
+art_style version/hash
 anchor IDs + governed dimensions
 constraint IDs + scopes
-canonical parent / family lineage
+canonical parent/family lineage
+change_scope / preserve_scope
 compiled prompt version
-runtime generation tool/capability when exposed
-model identifier when exposed
-seed when exposed
-candidate path/reference
-deviations
+generation capability/model/seed when exposed
+candidate path/id/hash
 screening result
 ```
 
-If the provider does not expose a field, store `unknown` / `not_exposed` rather than inventing it.
+Unavailable fields remain `unknown` / `not_exposed`.
 
 ## Outputs
+
+Logical outputs:
 
 ```text
 generation/<asset-id>/
@@ -331,24 +216,12 @@ generation/<asset-id>/
 └── candidate-index.yaml
 ```
 
-For families, optionally include:
+Family outputs may additionally include `family-contract.yaml`, `parent-lineage.yaml`, and `family-candidate-index.yaml`. Resolve actual paths through `project.yaml` when present.
 
-```text
-generation/<family-id>/
-├── family-contract.yaml
-├── parent-lineage.yaml
-└── family-candidate-index.yaml
-```
+## Rework output contract
 
-`generation-contract.yaml` is the structured source used to compile `prompt.md`.
+If generation hands rework onward or escalates upstream, external routing data must serialize through `contracts/rework-handoff-contract.yaml`. Specialist-local aliases are allowed only inside internal reports.
 
 ## Completion criteria
 
-A generation batch is ready for normalization/QC when:
-
-- required candidates exist or an honest external-generation job is emitted;
-- candidates preserve production-critical locked anchors;
-- no known `HARD_FORBIDDEN` violation remains in the selected candidate;
-- family invariants required at generation time are preserved;
-- generation provenance is complete enough to reproduce or diagnose the attempt;
-- unresolved failures are routed to their correct owner rather than hidden.
+A batch is ready for normalization/QC only when required candidates exist (or an honest external job exists), critical anchors are preserved, no known hard violation remains, family invariants are respected, provenance/version lineage is sufficient for diagnosis, and unresolved failures are routed to the correct owner.
