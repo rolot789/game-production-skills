@@ -1,0 +1,90 @@
+version: 3
+profile: lite
+
+# ---------------------------------------------------------------------------
+# The lite profile exists because the full profile's ceremony is the wrong
+# answer for a game jam, a six-icon UI set, or a prototype that has not earned
+# a production pipeline yet. Artifact count is a real adoption cost, and more
+# files means more chances for two files to disagree.
+#
+# Lite keeps the parts that prevent expensive mistakes (explicit semantics,
+# explicit style truth, explicit asset list, verified lineage) and drops the
+# parts that only pay off at scale (separate requirement-state files, search
+# history, loop state, per-asset spec files, family summaries).
+# ---------------------------------------------------------------------------
+
+use_when:
+  - fewer than about 25 assets are planned
+  - one person is making the decisions
+  - no asset family needs more than three variants
+  - there is no separate engine integration or performance budget yet
+
+do_not_use_when:
+  - multiple people approve art direction
+  - the project has shipping performance budgets
+  - assets are regenerated repeatedly and lineage must survive rework
+  - accessibility compliance must be demonstrable
+
+required_artifacts:
+  - game-spec.yaml
+  - art-style.yaml
+  - asset-manifest.yaml
+
+# In lite, per-asset production truth lives inline in asset-manifest.yaml
+# entries rather than in specs/<asset-id>.yaml. The fields are the same; only
+# the file layout changes.
+inlined_into_manifest:
+  - asset spec fields
+  - normalization policy reference
+  - qc requirements
+  - family topology
+
+required_stages:
+  - game_spec
+  - art_style
+  - asset_planning
+  - generation
+  - normalization
+  - asset_qc
+
+optional_stages:
+  - engine_integration
+  - runtime_validation
+
+# Lineage is NOT optional in lite. It is the one discipline that makes rework
+# survivable, and it costs one field per record.
+required_lineage:
+  - content_hash on every generation candidate
+  - content_hash on every normalized output
+  - qc report bound to the exact normalized output_hash
+
+relaxed:
+  - requirement-state.yaml may be folded into game-spec.yaml as a `requirement_states` block
+  - style-requirement-state.yaml, style-loop-state.yaml, and style-decision-log.md may be folded into art-style.yaml
+  - reference-search-history.yaml is optional
+  - per-family summary artifacts are optional
+  - decision logs may be a single decisions.md
+
+not_relaxed:
+  - locked versus inferred distinction
+  - scoped anchor roles (an anchor still declares what it governs and excludes)
+  - negative constraints with positive counterparts
+  - canonical change_scope / preserve_scope on any external rework handoff
+  - partial_validation_only never promotes
+
+promotion_ceiling: QC_APPROVED
+promotion_rule: >-
+  A lite project may promote to QC_APPROVED. RUNTIME_APPROVED and SHIPPABLE
+  require executable runtime evidence regardless of profile, so a lite project
+  that wants either must run runtime_validation as an optional stage.
+
+upgrade_to_full_when:
+  - asset count passes about 25
+  - a second person gains approval authority
+  - the same asset has been reworked three or more times
+  - a performance budget or accessibility requirement becomes binding
+upgrade_procedure: >-
+  Explode inlined manifest entries into specs/<asset-id>.yaml preserving ids and
+  content hashes, split the folded state blocks back into their own files, then
+  run `validate-project` against the full profile. No regeneration is required
+  because lineage was preserved.

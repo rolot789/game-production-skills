@@ -99,16 +99,35 @@ Systemic failures should produce one root issue plus affected asset list, rather
 
 ## Rework payload
 
-Every routed rework should contain:
+A routed rework is an external handoff, so it serializes to the canonical envelope in
+`references/rework-handoff-contract.yaml` - never to specialist-local aliases:
 
 ```yaml
-finding_ids: []
-owner:
-change_dimensions: []
-preserve_dimensions: []
-source_contract_ids: []
-required_action:
-recheck_scope:
+handoff_id: HND-0042
+from: game-asset-qc
+to: game-asset-generator
+subject: { type: asset, id: AST-GATE-CLOSED }
+root_owner: game-asset-generator
+reason_codes: [NEGATIVE_CONSTRAINT_VIOLATION]
+authoritative_inputs: []
+change_scope:
+  dimensions: [texture_density]
+  artifacts: []
+  runtime_properties: []
+preserve_scope:
+  dimensions: [identity, silhouette, palette, line_weight]
+  artifacts: [assets/specs/AST-GATE-CLOSED.yaml]
+  upstream_truth: [game_spec, art_style, approved_anchors]
+expected_outputs: []
+invalidation_scope: LOCAL_ASSET
+revalidation_scope: [normalization, asset_qc, affected_runtime_contexts]
+next_action: regenerate texture density only
 ```
 
-`preserve_dimensions` is mandatory whenever the asset has meaningful passing dimensions. This prevents rework from causing unrelated drift.
+`preserve_scope` is mandatory whenever the asset has meaningful passing dimensions; that is what
+stops rework from causing unrelated drift. An empty `preserve_scope` on a narrow failure means the
+route is too broad.
+
+`change_dimensions` and `preserve_dimensions` may appear **inside a QC finding** as local diagnostic
+notes. They must never appear in the routed handoff - `validate_project.py` rejects a handoff that
+carries them.

@@ -88,15 +88,19 @@ delta:
 
 A delta contract should be understandable without reading the entire conversation history.
 
+`failed_dimensions` and `preserve_dimensions` here are **specialist-local diagnostic fields inside the generator's own record**. The moment this becomes a routed handoff to another skill, it serializes to the canonical `change_scope` / `preserve_scope` envelope in `references/rework-handoff-contract.yaml`. A routed handoff carrying `preserve_dimensions` is malformed and `validate_project.py` rejects it.
+
 ## Regeneration escalation
 
 Use the smallest level that can plausibly solve the failure.
 
-### `G0_REPEAT_WITH_SAME_CONTRACT`
+### `G0_SAME_CONTRACT_RETRY`
 
 Use when the provider is stochastic and the contract itself is correct. Do not mutate style rules.
 
-### `G1_LOCAL_DELTA`
+Budget: at most two repeats. A third identical-contract retry is evidence that the contract is wrong, not that the sampler is unlucky.
+
+### `G1_LOCAL_DIMENSION_DELTA`
 
 Patch one or a few explicit dimensions while preserving the rest.
 
@@ -110,13 +114,13 @@ Examples:
 
 This is the default regeneration level.
 
-### `G2_PARENT_REDERIVE`
+### `G2_REDERIVE_FROM_CANONICAL_PARENT`
 
 Use when one member has drifted too far from a family or identity anchor.
 
 Re-derive from canonical parent / reference edit / previous accepted member rather than patching an unrelated independent generation.
 
-### `G3_GENERATION_STRATEGY_CHANGE`
+### `G3_CHANGE_GENERATION_STRATEGY`
 
 Use when the current provider capability or topology repeatedly fails the same locked requirement.
 
@@ -128,7 +132,7 @@ Examples:
 
 The style contract stays fixed; only generation strategy changes.
 
-### `G4_UPSTREAM_ESCALATION`
+### `G4_ESCALATE_UPSTREAM`
 
 Use only when the requested visual behavior is internally conflicting, unspecified, or impossible under current locked sources.
 

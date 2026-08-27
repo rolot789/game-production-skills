@@ -1,6 +1,6 @@
 ---
 name: art-style-builder
-description: Build and lock a production-usable game art style through interactive interviews, weighted reference research, structured visual requirements, progressive anchor locking, calibration, negative-constraint learning, and feedback-driven delta loops. Emit structured style artifacts for downstream asset production without allowing search results or generated candidates to silently redefine user intent.
+description: Use when a game's visual direction must be defined, locked, or revised — "what should this game look like", "find art references", "this looks too AI-generated", "make it feel more handmade" — or when generation keeps drifting off-style. Runs reference research, scoped anchor locking, calibration, and negative-constraint learning, emitting art-style.yaml plus anchor and constraint ledgers. Does not decide which assets exist (use game-asset-planner) or produce images (use game-asset-generator).
 ---
 
 # Art Style Builder
@@ -49,6 +49,14 @@ STYLE LOCK   Feedback Diagnosis
               ↓
           Delta Loop
 ```
+
+## Project path resolution
+
+If `project.yaml` exists, treat its `paths` registry as canonical. Every output named in this skill is a **logical name**, not a repository-root filename: `art-style.yaml` resolves through `paths.art_style`, `style-anchor-manifest.yaml` through `paths.style_anchors`, `style-constraint-ledger.yaml` through `paths.style_constraint_ledger`, and so on.
+
+Downstream skills resolve the same registry. Writing to the repository root when the registry maps these into `art/` breaks the handoff silently.
+
+When no project registry exists, use a consistent convention and record the resolved output paths in the handoff.
 
 ## Non-negotiable principles
 
@@ -192,6 +200,19 @@ Never claim a blocked or link-only reference was visually verified when it was n
 A production-critical visual anchor should normally require actual visual accessibility to the agent. A `LINK_ONLY` item may remain a discovery hint but is not sufficient by itself for deterministic visual grounding. If the user can access a critical reference that the agent cannot, ask the user to provide an accessible copy when necessary rather than pretending the image was inspected.
 
 Do not bypass access controls, scrape around restrictions, or persist third-party reference image files into the game project merely because they were discoverable. Prefer metadata/provenance in the project and temporary runtime previews when available.
+
+## Living-artist boundary
+
+This skill's core action is to find a reference, lock the dimensions it governs, and compile those into a generation contract that produces commercial assets. When the reference is an identifiable living artist's portfolio, that is style imitation at production scale, and it is a decision the user must make knowingly.
+
+Before locking any anchor whose source is an individual artist's portfolio:
+
+1. say whose work it is and that the anchor will govern named dimensions in generated production assets,
+2. prefer an anchor that captures the **technique** (contour behavior, palette structure, texture logic) over one that captures a **signature** (a recognizable character design, a distinctive motif, a personal visual trademark),
+3. never encode an artist's name in a prompt, contract, or constraint as a style shorthand — compile the observable properties instead,
+4. record the decision in `style-decision-log.md` so it is visible later rather than buried in an anchor manifest.
+
+Attributable technique references from studios, press kits, and production breakdowns carry none of this weight and are preferred for that reason as well as for provenance. Use `references/reference-search-policy.md` for the full policy.
 
 ## Reference presentation
 

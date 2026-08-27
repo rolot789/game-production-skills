@@ -1,0 +1,71 @@
+version: 3
+profile: full
+
+# The default profile. Every stage, every artifact, full lineage discipline.
+
+use_when:
+  - more than about 25 assets
+  - more than one approver
+  - shipping performance budgets or accessibility requirements
+  - assets are regenerated repeatedly and rework must be diagnosable
+
+required_stages:
+  - game_spec
+  - art_style
+  - asset_planning
+  - generation
+  - normalization
+  - asset_qc
+  - engine_integration
+  - runtime_validation
+
+optional_stages: []
+
+required_artifacts:
+  game_spec:
+    - game-spec.yaml
+    - GameSpec.md
+    - requirement-state.yaml
+    - decision-log.md
+  art_style:
+    - art-style.yaml
+    - ArtStyle.md
+    - style-requirement-state.yaml
+    - style-decision-log.md
+    - style-anchor-manifest.yaml
+    - calibration-plan.yaml
+    - reference-corpus.yaml
+    - reference-search-history.yaml
+    - style-constraint-ledger.yaml
+    - style-loop-state.yaml
+  asset_planning:
+    - asset-manifest.yaml
+    - specs/<asset-id>.yaml
+  generation:
+    - generation/<asset-id>/job.yaml
+    - generation/<asset-id>/generation-contract.yaml
+    - generation/<asset-id>/prompt.md
+    - generation/<asset-id>/candidate-index.yaml
+    - generation/<asset-id>/records/*.yaml
+  normalization:
+    - normalized/<asset-id>/runtime/*
+    - normalized/<asset-id>/normalization-record.yaml
+    - normalized/<asset-id>/geometry-report.yaml
+  asset_qc:
+    - qc/<asset-id>/qc-report.yaml
+  engine_integration:
+    - engine-integration/<target-id>/integration-plan.yaml
+    - engine-integration/<target-id>/import-settings.yaml
+    - engine-integration/<target-id>/budget-report.yaml
+  runtime_validation:
+    - runtime-validation/<asset-id>/runtime-validation-plan.yaml
+    - runtime-validation/<asset-id>/runtime-report.yaml
+    - runtime-validation/<asset-id>/evidence-manifest.yaml
+
+required_lineage:
+  - version and content_hash on every artifact a downstream promotion depends on
+  - qc report bound to the exact normalized output_hash
+  - runtime report bound to the exact integrated asset version
+  - coherent active lineage across all required stages before SHIPPABLE
+
+promotion_ceiling: SHIPPABLE

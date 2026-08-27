@@ -1,0 +1,124 @@
+suite: routing
+executable: true
+description: >-
+  These run deterministically against contracts/routing.yaml. They pin the
+  symptom-to-owner mapping so that a future edit changing an owner or a scope is
+  visible in a diff rather than discovered in production.
+
+  The routing table used to be restated in five documents and drifted apart.
+  Single-sourcing it fixed the drift; these cases stop it recurring.
+
+cases:
+  - id: RTE-001
+    reason_code: IDENTITY_DRIFT
+    expect:
+      root_owner: game-asset-generator
+      invalidation_scope: LOCAL_ASSET
+    rationale: the contract was valid; the candidate failed to implement it
+
+  - id: RTE-002
+    reason_code: MECHANICAL_PROCESSING_DEFECT
+    expect:
+      root_owner: game-asset-normalizer
+      invalidation_scope: LOCAL_ASSET
+    rationale: content was correct before processing
+
+  - id: RTE-003
+    reason_code: FAMILY_ALIGNMENT_DEFECT
+    expect:
+      root_owner: game-asset-normalizer
+      invalidation_scope: FAMILY_SYSTEMIC
+    rationale: >-
+      inconsistent family canvas or scale affects every member by construction,
+      so the scope is family-wide even though each asset is individually fine
+
+  - id: RTE-004
+    reason_code: DECOMPOSITION_DEFECT
+    expect:
+      root_owner: game-asset-planner
+      invalidation_scope: FAMILY_SYSTEMIC
+    rationale: a wrong split invalidates everything derived from it
+
+  - id: RTE-005
+    reason_code: STYLE_AUTHORITY_CONFLICT
+    expect:
+      root_owner: art-style-builder
+      invalidation_scope: CATEGORY_SYSTEMIC
+    rationale: contradictory locked truth cannot be fixed downstream
+
+  - id: RTE-006
+    reason_code: SEMANTIC_UNDEFINED
+    expect:
+      root_owner: game-spec-builder
+      default_status: blocked
+    rationale: >-
+      undefined meaning blocks rather than reworks. There is nothing to rework
+      toward until the meaning exists.
+
+  - id: RTE-007
+    reason_code: INTEGRATION_LOCAL
+    expect:
+      root_owner: runtime_integration
+      invalidation_scope: SCENE_LOCAL
+    rationale: >-
+      one context applying valid assets incorrectly must not invalidate the
+      assets
+
+  - id: RTE-008
+    reason_code: INTEGRATION_SYSTEMIC
+    expect:
+      root_owner: runtime_integration
+      invalidation_scope: RUNTIME_SYSTEMIC
+    rationale: a shared runtime rule affects every context that uses it
+
+  - id: RTE-009
+    reason_code: BUDGET_VIOLATION
+    expect:
+      root_owner: game-engine-integrator
+      invalidation_scope: CATEGORY_SYSTEMIC
+    rationale: budgets are measured over a set, so the scope is the set
+
+  - id: RTE-010
+    reason_code: IMPORT_SETTING_DEFECT
+    expect:
+      root_owner: game-engine-integrator
+      invalidation_scope: LOCAL_ASSET
+    rationale: >-
+      import settings are downstream of approved pixels, so upstream approvals
+      survive
+
+  - id: RTE-011
+    reason_code: QC_CLASSIFICATION_DEFECT
+    expect:
+      root_owner: game-asset-qc
+      revalidation_scope: [asset_qc]
+    rationale: >-
+      QC owns its own classification errors but never owns content rework - it
+      cannot edit assets
+
+  - id: RTE-012
+    reason_code: CONTEXT_SENSITIVE_ASSET_FAILURE
+    expect:
+      root_owner: null
+      default_status: runtime_blocked
+    rationale: >-
+      deliberately unrouted. Three upstream owners are plausible and picking one
+      automatically is how the wrong stage gets N pointless cycles.
+
+  - id: RTE-013
+    reason_code: ACCESSIBILITY_FAILURE
+    expect:
+      root_owner: null
+    rationale: >-
+      also deliberately unrouted. A hue-only encoding is a planner or art-style
+      defect; only a failure to implement a specified non-colour channel is the
+      generator's. This is the case the worked example demonstrates.
+
+  - id: RTE-014
+    reason_code: VALIDATION_COVERAGE_DEFECT
+    expect:
+      root_owner: runtime-visual-validator
+      default_status: partial_validation_only
+    rationale: >-
+      insufficient coverage produces partial evidence, and partial evidence
+      never promotes

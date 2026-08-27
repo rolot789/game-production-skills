@@ -1,0 +1,44 @@
+version: v1
+
+# Anchors are scoped by dimension, never by whole image. Each entry states what
+# it governs AND what it must not govern - that exclusion is what stops a
+# reference from quietly redefining dimensions nobody approved.
+
+anchors:
+  ANCH-GATE-GEOMETRY-001:
+    role: geometry_anchor
+    origin: project_owned
+    source: art/calibration/gate-frame-study.png
+    provenance: authored for this project during calibration
+    governs:
+      - frame.outer_proportion
+      - frame.thickness_ratio
+      - opening.aspect
+    excluded_dimensions:
+      - palette
+      - texture_density
+      - lighting
+    status: LOCKED
+    applies_to:
+      family: FAM-GATE
+
+  ANCH-PALETTE-001:
+    role: palette_anchor
+    origin: project_owned
+    source: art/art-style.yaml#global.palette.swatches
+    governs:
+      - palette.hue_family
+      - palette.value_structure
+    excluded_dimensions:
+      - shape_language
+      - detail_density
+    status: LOCKED
+    applies_to:
+      global: true
+
+# No discovered third-party reference was promoted to an anchor in this example.
+# Had one been, the living-artist boundary in
+# skills/art-style-builder/references/reference-search-policy.md would apply:
+# name the source, prefer technique over signature, never encode a person's name
+# as a prompt token, and record the decision in style-decision-log.md.
+discovery_only: []

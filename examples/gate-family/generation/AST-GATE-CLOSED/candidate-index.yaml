@@ -1,0 +1,12 @@
+asset_id: AST-GATE-CLOSED
+job_version: v1
+candidates:
+- id: v1-c1
+  path: generation/AST-GATE-CLOSED/candidates/v1-c1.png
+  content_hash: 8bb8d6ae32dcc729af0c5ef444b9bc229db2f6620b9091bb384914202e79c155
+  screening: PASS
+  selected: true
+budget:
+  candidates_generated: 1
+  candidates_max: 4
+  stop_reason: first candidate satisfied every critical dimension

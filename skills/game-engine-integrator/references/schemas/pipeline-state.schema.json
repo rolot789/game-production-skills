@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pipeline-state.schema.json",
+  "title": ".pipeline/game-art-production-state.yaml",
+  "description": "Orchestration index over authoritative versions, lifecycle, routing, and open rework. It points at authority; it does not create authority.",
+  "type": "object",
+  "required": ["version", "project", "stages", "assets", "families", "active_versions", "handoffs", "blockers", "invalidations", "rework_queue"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "type": "integer", "const": 3 },
+    "profile": { "type": "string", "enum": ["lite", "full"] },
+    "project": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "name": { "type": ["string", "null"] },
+        "pipeline_status": { "type": "string", "enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE"] }
+      }
+    },
+    "target": { "type": "object", "additionalProperties": true },
+    "authoritative": {
+      "type": "object",
+      "description": "Current locked upstream truth with version and hash.",
+      "additionalProperties": true
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["skill", "status"],
+        "additionalProperties": true,
+        "properties": {
+          "skill": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["NOT_STARTED", "IN_PROGRESS", "READY", "BLOCKED", "FAILED", "INVALIDATED", "COMPLETE"]
+          },
+          "readiness": { "type": ["string", "null"] },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["lifecycle"],
+        "additionalProperties": true,
+        "properties": {
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "PLANNED", "READY_FOR_GENERATION", "GENERATED", "NORMALIZED", "QC_APPROVED",
+              "INTEGRATION_READY", "RUNTIME_APPROVED", "SHIPPABLE",
+              "GENERATION_REWORK", "NORMALIZATION_BLOCKED", "QC_REWORK",
+              "INTEGRATION_REWORK", "RUNTIME_REWORK", "INVALIDATED"
+            ]
+          },
+          "family_id": { "type": ["string", "null"] },
+          "priority": { "type": "string" },
+          "active_versions": { "type": "object", "additionalProperties": true },
+          "root_owner": { "type": ["string", "null"] },
+          "change_scope": { "type": ["object", "array", "null"] },
+          "preserve_scope": { "type": ["object", "array", "null"] },
+          "next_skill": { "type": ["string", "null"] },
+          "next_action": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "families": { "type": "object", "additionalProperties": true },
+    "active_versions": { "type": "object", "additionalProperties": true },
+    "handoffs": { "type": "array", "items": { "type": ["object", "string"] } },
+    "blockers": { "type": "array", "items": { "type": ["object", "string"] } },
+    "invalidations": { "type": "array", "items": { "type": ["object", "string"] } },
+    "rework_queue": { "type": "array", "items": { "type": ["object", "string"] } }
+  }
+}

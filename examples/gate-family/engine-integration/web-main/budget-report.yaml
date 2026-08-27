@@ -1,0 +1,25 @@
+schema_version: 3
+target:
+  id: web-main
+  engine: web-canvas
+status: integration_ready
+measured:
+  asset_count: 3
+  total_asset_bytes: 110140
+  largest_asset_bytes: 47936
+  largest_asset_id: AST-GATE-CLOSED
+  atlas_count: 0
+  max_atlas_dimension: 256
+  estimated_texture_memory_mb: 0.75
+budgets:
+  max_atlas_dimension: 2048
+  max_texture_memory_mb: 64
+  max_total_asset_bytes: 12000000
+  max_single_asset_bytes: 512000
+checks:
+  max_atlas_dimension: PASS
+  texture_memory: PASS
+  total_asset_bytes: PASS
+  largest_asset_bytes: PASS
+findings: []
+rework_handoff: null

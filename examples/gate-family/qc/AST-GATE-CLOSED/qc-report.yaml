@@ -1,0 +1,96 @@
+schema_version: 3
+asset_id: AST-GATE-CLOSED
+family_id: FAM-GATE
+status: approved
+evaluated:
+  normalized_output:
+    path: normalized/AST-GATE-CLOSED/runtime/AST-GATE-CLOSED.png
+    version: v1
+    content_hash: 00b392e4898137ed16f77013583506f8ab2ea9f48c3e04d555de63bb5b98543e
+  asset_spec:
+    path: assets/specs/AST-GATE-CLOSED.yaml
+    version: v1
+    content_hash: 6b71f7a335e3cb0656137793e8be0b0be338c86478e5cbb8baeae9f54473a334
+  generation_candidate: v1-c1
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12
+  anchor_ids:
+  - ANCH-GATE-GEOMETRY-001
+  - ANCH-PALETTE-001
+  constraint_ids:
+  - NEG-LIGHTING-001
+  - NEG-TEXTURE-002
+  - NEG-DETAIL-003
+  - NEG-STATE-004
+technical:
+  tool: skills/game-asset-qc/scripts/technical_check.py
+  status: pass
+  checks:
+    canvas_dimensions: PASS
+    alpha_mode: PASS
+    has_transparency: PASS
+    content_present: PASS
+    no_edge_clipping: PASS
+    padding_respected: PASS
+    lineage_hash_matches: PASS
+    normalization_validation_passed: PASS
+anchors:
+- anchor_id: ANCH-GATE-GEOMETRY-001
+  role: geometry_anchor
+  governed_dimensions:
+  - frame.outer_proportion
+  - frame.thickness_ratio
+  - opening.aspect
+  result: PASS
+- anchor_id: ANCH-PALETTE-001
+  role: palette_anchor
+  governed_dimensions:
+  - palette.hue_family
+  - palette.value_structure
+  result: PASS
+constraints:
+- constraint_id: NEG-LIGHTING-001
+  type: HARD_FORBIDDEN
+  result: PASS
+  evidence: flat fills only; no gradient, rim light, or bloom present
+- constraint_id: NEG-TEXTURE-002
+  type: BOUNDED
+  result: PASS
+  evidence: grain amplitude +/- 7, within the +/- 8 bound
+- constraint_id: NEG-DETAIL-003
+  type: SOFT_AVOID
+  result: PASS
+  evidence: bolts remain resolvable at 64 px; no sub-4px ornament
+- constraint_id: NEG-STATE-004
+  type: HARD_FORBIDDEN
+  result: PASS
+  evidence: panel height carries the state; hue is identical across siblings
+accessibility:
+- check_id: A11Y_CONTRAST
+  result: PASS
+  measured: 4.28
+  evidence: alpha-weighted mean (195, 161, 123) against 2 declared background(s),
+    floor 3.0
+- check_id: A11Y_COLOR_VISION
+  result: PASS
+  measured: 55.71
+  evidence: 'RMS luminance separation from AST-GATE-TRANSITION at 64x64 under protanopia
+    simulation over #3A4149, floor 8.0'
+- check_id: A11Y_NON_COLOR_CHANNEL
+  result: PASS
+  measured: shape,value
+  evidence: state.encoding_channels declares a non-hue channel
+passing_dimensions:
+- identity
+- outer_frame_geometry
+- frame_thickness
+- top_down_projection
+- palette_family
+- footprint
+- texture_density
+- lighting
+- state_readability
+findings: []
+rework_handoff: null

@@ -1,0 +1,53 @@
+schema_version: 3
+profile: full
+source_versions:
+  game_spec:
+    path: spec/game-spec.yaml
+    version: v1
+    content_hash: 27cbc927c75d77294df970b9a63de1dfa3444f9e9a12ae6239009854899a624a
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12
+families:
+  FAM-GATE:
+    canonical_asset: AST-GATE-CLOSED
+    topology: CANONICAL_PARENT_TO_STATES
+    members:
+    - AST-GATE-CLOSED
+    - AST-GATE-TRANSITION
+    - AST-GATE-OPEN
+    preserve:
+    - outer_frame_geometry
+    - frame_thickness
+    - top_down_projection
+    - palette_family
+    - footprint
+assets:
+  AST-GATE-CLOSED:
+    spec_path: assets/specs/AST-GATE-CLOSED.yaml
+    family_id: FAM-GATE
+    category: interactive_object
+    priority: P0
+    tier: 1
+    strategy: generated_raster
+    lifecycle: RUNTIME_APPROVED
+    canonical_parent: null
+  AST-GATE-TRANSITION:
+    spec_path: assets/specs/AST-GATE-TRANSITION.yaml
+    family_id: FAM-GATE
+    category: interactive_object
+    priority: P0
+    tier: 1
+    strategy: generated_raster
+    lifecycle: RUNTIME_APPROVED
+    canonical_parent: AST-GATE-CLOSED
+  AST-GATE-OPEN:
+    spec_path: assets/specs/AST-GATE-OPEN.yaml
+    family_id: FAM-GATE
+    category: interactive_object
+    priority: P0
+    tier: 1
+    strategy: generated_raster
+    lifecycle: RUNTIME_APPROVED
+    canonical_parent: AST-GATE-CLOSED

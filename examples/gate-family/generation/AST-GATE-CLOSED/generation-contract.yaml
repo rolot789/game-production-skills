@@ -1,0 +1,57 @@
+schema_version: 3
+asset:
+  id: AST-GATE-CLOSED
+  family: FAM-GATE
+  semantic_role: corridor-blocking object driven by an adjacent switch
+identity:
+  required: true
+  anchors:
+  - id: ANCH-GATE-GEOMETRY-001
+    governs:
+    - frame.outer_proportion
+    - frame.thickness_ratio
+    - opening.aspect
+style:
+  global_rules:
+  - 2D orthographic top-down projection
+  - no outline; forms separate by value contrast at their edges
+  - flat surfaces, no directional shading
+  category_overrides:
+  - readable at 64 px; secondary cues must survive downscale
+  - state changes alter silhouette, not only hue
+anchors:
+- id: ANCH-PALETTE-001
+  role: palette_anchor
+  governs:
+  - palette.hue_family
+  - palette.value_structure
+  do_not_inherit:
+  - shape_language
+  - detail_density
+constraints:
+  hard_forbidden:
+  - 'NEG-LIGHTING-001: no directional shading, rim light, bloom, or glow'
+  - 'NEG-STATE-004: state must not be carried by hue alone'
+  soft_avoid:
+  - 'NEG-DETAIL-003: no ornament that vanishes below 4 px at 64 px display'
+  bounded:
+  - 'NEG-TEXTURE-002: value grain within +/- 8 of base'
+  anti_reference: []
+family:
+  canonical_parent: null
+  preserve:
+  - outer_frame_geometry
+  - frame_thickness
+  - top_down_projection
+  - palette_family
+  - footprint
+  allowed_delta: []
+output:
+  medium: raster
+  background: transparent
+  framing: full_asset
+  clipping: forbidden
+non_goals:
+- do not add ornament that is not in the canonical parent
+- do not introduce a light source
+- do not differentiate this state by recolouring

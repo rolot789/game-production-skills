@@ -1,0 +1,103 @@
+suite: triggering
+executable: false
+description: >-
+  Nine skills share a vocabulary. Selection happens by description match, so
+  these cases check that a real user utterance reaches the right one - and,
+  just as importantly, does not reach its neighbours.
+
+cases:
+  - id: TRG-001
+    input: "I have an idea for a puzzle game but I don't know where to start"
+    expect:
+      skill: game-spec-builder
+      not_skills: [art-style-builder, game-asset-planner]
+    rationale: an undefined concept is a specification problem, not a visual one
+
+  - id: TRG-002
+    input: "what should this game look like? find me some references"
+    expect:
+      skill: art-style-builder
+      not_skills: [game-asset-generator]
+    rationale: >-
+      reference research is art direction. Routing it to the generator produces
+      images before any direction exists to judge them against.
+
+  - id: TRG-003
+    input: "what assets do I need for the gate mechanic?"
+    expect:
+      skill: game-asset-planner
+      not_skills: [game-asset-generator, game-spec-builder]
+    rationale: decomposition, not generation and not specification
+
+  - id: TRG-004
+    input: "generate the three gate states"
+    expect:
+      skill: game-asset-generator
+      not_skills: [game-asset-planner]
+    rationale: the specs exist; this is execution
+
+  - id: TRG-005
+    input: "the sprites are all different sizes and the gate jumps when it opens"
+    expect:
+      skill: game-asset-normalizer
+      not_skills: [game-asset-generator, game-asset-qc]
+    rationale: >-
+      inconsistent family scale is mechanical. Sending it to the generator
+      produces regenerations that cannot fix a normalization defect.
+
+  - id: TRG-006
+    input: "check whether these assets are on style"
+    expect:
+      skill: game-asset-qc
+      not_skills: [runtime-visual-validator]
+    rationale: isolated contract verification, no scene context involved
+
+  - id: TRG-007
+    input: "the icon is unreadable once it's in the actual level"
+    expect:
+      skill: runtime-visual-validator
+      not_skills: [game-asset-qc]
+    rationale: >-
+      "once it's in the level" is the discriminator. The same words without it
+      would be a QC case.
+
+  - id: TRG-008
+    input: "these import into Unity with the wrong pivot"
+    expect:
+      skill: game-engine-integrator
+      not_skills: [game-asset-normalizer]
+    rationale: >-
+      import mapping is integration. The normalizer owns it only if the recorded
+      pivot itself is wrong, which the agent should check before routing.
+
+  - id: TRG-009
+    input: "are we over the texture budget?"
+    expect:
+      skill: game-engine-integrator
+    rationale: budgets are measured at integration
+
+  - id: TRG-010
+    input: "what's blocking us, and what should we do next?"
+    expect:
+      skill: game-art-production-orchestrator
+    rationale: a cross-stage question, not a stage question
+
+  - id: TRG-011
+    input: "this character looks too AI-generated"
+    expect:
+      skill: art-style-builder
+      not_skills: [game-asset-generator]
+    rationale: >-
+      vague rejection is a diagnostic trigger for negative-constraint work, not
+      an instruction to resample until it feels different.
+
+  - id: TRG-012
+    input: "make me a quick sprite of a treasure chest"
+    expect:
+      skill: null
+      acceptable_skills: [game-asset-generator]
+    rationale: >-
+      A one-off request with no project should not drag someone through eight
+      stages. Either answer directly or offer the lite profile. Firing the full
+      orchestrator here is the adoption failure the lite profile exists to
+      prevent.

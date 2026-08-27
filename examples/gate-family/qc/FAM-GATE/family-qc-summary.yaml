@@ -1,0 +1,17 @@
+family_id: FAM-GATE
+canonical_asset: AST-GATE-CLOSED
+family_contract_version: v1
+status: approved
+approved_members:
+- AST-GATE-CLOSED
+- AST-GATE-TRANSITION
+- AST-GATE-OPEN
+rework_members: []
+blocked_members: []
+systemic_findings: []
+local_findings: []
+invariants_verified:
+- outer_frame_geometry identical across all three states
+- shared scale basis 0.623377 applied to every member
+- shared 256x256 canvas and bottom_center pivot
+- state carried by panel height, not hue

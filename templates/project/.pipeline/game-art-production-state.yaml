@@ -1,11 +1,18 @@
-version: 2
+version: 3
 
 project:
   id: null
   name: null
+  pipeline_status: NOT_STARTED
+
+profile: full
 
 target:
   milestone: P0 gameplay assets runtime-approved
+
+# Current locked upstream truth. Each entry carries path + version +
+# content_hash so descendant approvals can be invalidated precisely.
+authoritative: {}
 
 stages:
   game_spec:
@@ -38,6 +45,11 @@ stages:
     status: NOT_STARTED
     readiness: null
     artifacts: []
+  engine_integration:
+    skill: game-engine-integrator
+    status: NOT_STARTED
+    readiness: null
+    artifacts: []
   runtime_validation:
     skill: runtime-visual-validator
     status: NOT_STARTED
@@ -54,6 +66,22 @@ blockers: []
 invalidations: []
 rework_queue: []
 
-# Asset/family entries may track:
-# root_owner, change_scope, preserve_scope, invalidated_artifacts,
-# preserved_artifacts, next_skill, next_action, and exact active lineage.
+# Asset entries track lifecycle plus the exact active lineage:
+#
+#   assets:
+#     AST-GATE-CLOSED:
+#       lifecycle: QC_APPROVED
+#       family_id: FAM-GATE
+#       priority: P0
+#       active_versions:
+#         asset_spec:           { version: v1, content_hash: <sha256> }
+#         generation_candidate: { id: v1-c1,   content_hash: <sha256> }
+#         normalization_output: { version: v1, content_hash: <sha256> }
+#         qc_report:            { version: v1, content_hash: <sha256> }
+#       root_owner: null
+#       next_skill: game-engine-integrator
+#       next_action: pack atlas and verify budgets
+#
+# Lifecycle transitions are not free-form: contracts/toolkit-contract.yaml
+# `lifecycle_transitions` lists every legal move and the evidence that
+# authorizes it. The orchestrator rejects anything else.

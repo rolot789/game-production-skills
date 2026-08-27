@@ -1,0 +1,86 @@
+suite: lineage
+executable: partial
+description: >-
+  Dependency-aware invalidation is only executable if identity is computable.
+  The negative cases here run against the worked example by mutating a copy and
+  asserting that validate_project.py rejects it. The rest are model cases.
+
+# Cases with `mutation` are executed by scripts/run_evals.py against a
+# throwaway copy of examples/gate-family.
+cases:
+  - id: LIN-001
+    executable: true
+    mutation:
+      type: tamper_asset
+      target: normalized/AST-GATE-OPEN/runtime/AST-GATE-OPEN.png
+    expect:
+      validator: FAIL
+      message_contains: content_hash mismatch
+    rationale: >-
+      the single most important check in the toolkit. If a changed file can
+      still pass, every downstream approval is unverifiable.
+
+  - id: LIN-002
+    executable: true
+    mutation:
+      type: set_field
+      target: qc/AST-GATE-CLOSED/qc-report.yaml
+      path: [evaluated, normalized_output, content_hash]
+      value: "0000000000000000000000000000000000000000000000000000000000000000"
+    expect:
+      validator: FAIL
+      message_contains: no longer active
+    rationale: >-
+      a QC verdict bound to a hash that is not the current output does not apply
+      to the current asset, however green it looks
+
+  - id: LIN-003
+    executable: true
+    mutation:
+      type: set_field
+      target: runtime-validation/AST-GATE-CLOSED/runtime-report.yaml
+      path: [build, executable]
+      value: false
+    expect:
+      validator: FAIL
+      message_contains: supplied captures never produce runtime approval
+    rationale: runtime approval requires an executable target, not review of stills
+
+  - id: LIN-004
+    executable: true
+    mutation:
+      type: append_untested_high_risk
+      target: runtime-validation/AST-GATE-OPEN/runtime-report.yaml
+    expect:
+      validator: FAIL
+      message_contains: high-risk context is untested
+    rationale: >-
+      a required high-risk context that was not exercised forces
+      partial_validation_only, and the validator enforces it mechanically
+
+  - id: LIN-005
+    executable: true
+    mutation:
+      type: set_field
+      target: normalized/AST-GATE-OPEN/normalization-record.yaml
+      path: [asset_spec, content_hash]
+      value: "unknown"
+    expect:
+      validator: FAIL
+      message_contains: does not match
+    rationale: >-
+      "unknown" was previously an acceptable lineage value. It is not: a record
+      that cannot support an invalidation decision is worse than no record,
+      because it looks authoritative.
+
+  - id: LIN-006
+    executable: false
+    input: >-
+      Record the normalization for this candidate. The generation tool didn't
+      give us a seed or a version.
+    expect:
+      records_provenance_as: not_exposed
+      invents_values: false
+    rationale: >-
+      an absent seed is recorded as absent. A plausible-looking invented seed is
+      worse than none because it cannot be distinguished from a real one.

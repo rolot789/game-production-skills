@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "generation-record.schema.json",
+  "title": "generation/<asset-id>/records/<candidate>.yaml",
+  "description": "Provenance for one generation attempt. Fields the record cannot truthfully fill are 'not_exposed'; they are never invented.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "asset_id",
+    "job_version",
+    "candidate",
+    "inputs",
+    "screening",
+    "provenance"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 3 },
+    "asset_id": { "$ref": "_defs.json#/$defs/id" },
+    "job_version": { "$ref": "_defs.json#/$defs/version" },
+
+    "candidate": {
+      "type": "object",
+      "required": ["id", "path", "content_hash"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "_defs.json#/$defs/candidateVersion" },
+        "path": { "type": "string" },
+        "content_hash": { "$ref": "_defs.json#/$defs/contentHash" },
+        "selected": { "type": "boolean" }
+      }
+    },
+
+    "inputs": {
+      "type": "object",
+      "required": ["asset_spec", "art_style"],
+      "additionalProperties": true,
+      "properties": {
+        "asset_spec": { "$ref": "_defs.json#/$defs/artifactRef" },
+        "art_style": { "$ref": "_defs.json#/$defs/artifactRef" },
+        "generation_contract": { "$ref": "_defs.json#/$defs/artifactRef" },
+        "anchor_ids": { "type": "array", "items": { "type": "string" } },
+        "constraint_ids": { "type": "array", "items": { "type": "string" } },
+        "canonical_parent_candidate": { "type": ["string", "null"] }
+      }
+    },
+
+    "rework": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "G0_SAME_CONTRACT_RETRY",
+            "G1_LOCAL_DIMENSION_DELTA",
+            "G2_REDERIVE_FROM_CANONICAL_PARENT",
+            "G3_CHANGE_GENERATION_STRATEGY",
+            "G4_ESCALATE_UPSTREAM"
+          ]
+        },
+        "failure_class": {
+          "type": "string",
+          "enum": [
+            "CONTENT_ERROR",
+            "IDENTITY_DRIFT",
+            "STYLE_DIMENSION_DRIFT",
+            "CONSTRAINT_VIOLATION",
+            "FAMILY_DRIFT",
+            "STATE_READABILITY_FAILURE",
+            "OUTPUT_TECHNICAL_FAILURE",
+            "UPSTREAM_SPEC_AMBIGUITY"
+          ]
+        },
+        "parent_candidate": { "type": ["string", "null"] },
+        "attempt_index": { "type": "integer", "minimum": 1 },
+        "change_scope": { "$ref": "_defs.json#/$defs/changeScope" },
+        "preserve_scope": { "$ref": "_defs.json#/$defs/preserveScope" }
+      }
+    },
+
+    "screening": {
+      "type": "object",
+      "description": "Pass/fail per critical dimension. The next attempt must preserve every PASS.",
+      "additionalProperties": { "$ref": "_defs.json#/$defs/verificationResult" }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["capability", "model", "seed"],
+      "additionalProperties": true,
+      "properties": {
+        "capability": { "type": "string" },
+        "model": { "type": "string" },
+        "seed": { "type": ["string", "integer", "null"] },
+        "created_at": { "type": ["string", "null"] },
+        "external_job": {
+          "type": "boolean",
+          "description": "true when no generation capability was available and this record describes a job for an external tool rather than a produced candidate."
+        }
+      }
+    }
+  }
+}
