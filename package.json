@@ -29,12 +29,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rolot789/tokencat.git"
+    "url": "git+https://github.com/rolot789/game-production-skills.git"
   },
   "bugs": {
-    "url": "https://github.com/rolot789/tokencat/issues"
+    "url": "https://github.com/rolot789/game-production-skills/issues"
   },
-  "homepage": "https://github.com/rolot789/tokencat#readme",
+  "homepage": "https://github.com/rolot789/game-production-skills#readme",
   "publishConfig": {
     "access": "public",
     "provenance": true
