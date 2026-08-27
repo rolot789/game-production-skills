@@ -1,13 +1,13 @@
 ---
 name: game-art-production-orchestrator
-description: Orchestrate the AI-native game art production pipeline from locked game specification and art style through asset planning, grounded generation, normalization, contract-aware QC, and scene-context runtime validation. Enforce readiness gates, scoped reference authority, delta rework, preserve/change contracts, dependency-aware invalidation, provenance, and deterministic handoffs between specialist skills.
+description: Orchestrate the AI-native game art production pipeline from locked game specification and art style through asset planning, grounded generation, normalization, contract-aware QC, and scene-context runtime validation. Enforce readiness gates, scoped reference authority, canonical delta-rework handoffs, dependency-aware invalidation, provenance, and coherent version lineage.
 ---
 
 # Game Art Production Orchestrator
 
 ## Purpose
 
-Coordinate the pipeline without duplicating specialist responsibilities. The orchestrator owns **routing, gates, handoffs, lifecycle state, rework scope, invalidation, and promotion**. Specialist skills own their domain decisions and evidence.
+Coordinate routing, gates, handoffs, lifecycle state, rework scope, invalidation, and promotion without duplicating specialist work.
 
 ```text
 game-spec-builder
@@ -19,48 +19,45 @@ game-spec-builder
 → runtime-visual-validator
 ```
 
-The orchestrator must not redesign art, rewrite prompts, normalize files, perform QC, or visually approve runtime scenes itself. It determines **which specialist should act next and with what exact scope**.
+The orchestrator does not redesign art, write provider prompts, normalize pixels, perform QC, or visually approve scenes. It determines which specialist acts next, with which authoritative inputs, and what exact surface may change.
 
-## Core orchestration principles
+## Project path resolution
 
-1. **Advance artifacts, not assumptions.** Every handoff names authoritative inputs and expected outputs.
-2. **Preserve validated truth.** A narrow failure must not reopen unrelated locked decisions or passing dimensions.
-3. **Search-derived references are not authorities by discovery alone.** Only explicitly approved scoped anchors may govern production.
-4. **Rework is delta-based.** Carry `change_scope` and `preserve_scope` through generator, normalization, QC, and runtime loops.
-5. **Symptom location is not root ownership.** Route to the skill or runtime layer that owns the cause.
-6. **Invalidation is dependency-aware.** Invalidate the smallest descendant surface that can no longer be trusted.
-7. **Partial evidence never upgrades readiness.** `partial_validation_only` cannot promote an asset to `RUNTIME_APPROVED`.
-8. **Provenance is append-only history.** Superseded artifacts remain traceable even when no longer authoritative.
+If `project.yaml` exists, its `paths` registry is the canonical artifact path map. Contract paths such as `specs/<asset-id>.yaml` are logical patterns. The orchestrator must resolve logical names through the registry before creating handoffs and must carry resolved paths in `authoritative_inputs` / `expected_outputs`.
+
+## Core principles
+
+1. Advance artifacts, not assumptions.
+2. Preserve validated truth.
+3. Search-derived references are evidence until explicitly approved as scoped anchors.
+4. Rework uses canonical `change_scope / preserve_scope` from `contracts/rework-handoff-contract.yaml`.
+5. Symptom location, root ownership, invalidation scope, and revalidation scope are separate decisions.
+6. Invalidate the smallest descendant surface that can no longer be trusted.
+7. `partial_validation_only` never promotes runtime readiness.
+8. Provenance/history is append-only even when artifacts are superseded.
+9. Descendant approvals cannot survive changed upstream identity unless effective input equivalence is proven.
 
 ## Source-of-truth hierarchy
 
 1. LOCKED GameSpec
 2. LOCKED ArtStyle
-3. Approved scoped Style Anchors
-4. Locked Style Constraint Ledger
+3. approved scoped Style Anchors
+4. locked applicable Style Constraint Ledger
 5. Asset Manifest / Asset Specs
-6. Generation Contract + generation records
-7. Normalization records
-8. QC reports / family QC summaries
-9. Runtime validation reports / evidence manifests / approved baselines
+6. Generation Contract + candidate/generation records
+7. Normalization records / output hashes
+8. QC reports / family summaries
+9. Runtime reports / evidence / approved baselines
 
-`reference-corpus.yaml` is evidence. `style-anchor-manifest.yaml` defines production authority. A discovered reference must not bypass anchor approval.
-
-Downstream artifacts never silently rewrite upstream sources.
+`reference-corpus.yaml` is evidence; `style-anchor-manifest.yaml` defines reference authority.
 
 ## Pipeline state
 
-Maintain `.pipeline/game-art-production-state.yaml` as the canonical orchestration state.
+Maintain `.pipeline/game-art-production-state.yaml` as canonical orchestration state.
 
-Pipeline stage statuses:
+Stage states:
 
-- `NOT_STARTED`
-- `IN_PROGRESS`
-- `READY`
-- `BLOCKED`
-- `FAILED`
-- `INVALIDATED`
-- `COMPLETE`
+`NOT_STARTED`, `IN_PROGRESS`, `READY`, `BLOCKED`, `FAILED`, `INVALIDATED`, `COMPLETE`.
 
 Asset lifecycle:
 
@@ -74,76 +71,26 @@ PLANNED
 → SHIPPABLE
 ```
 
-Failure/rework states:
+Rework/failure states:
 
-- `GENERATION_REWORK`
-- `NORMALIZATION_BLOCKED`
-- `QC_REWORK`
-- `RUNTIME_REWORK`
-- `INVALIDATED`
+`GENERATION_REWORK`, `NORMALIZATION_BLOCKED`, `QC_REWORK`, `RUNTIME_REWORK`, `INVALIDATED`.
 
-Each asset/family state entry should track at minimum:
+Track active version lineage for each asset/family:
 
 ```yaml
-asset_id: AST-001
-stage: asset_qc
-lifecycle: QC_REWORK
-active_version: v4
-root_owner: game-asset-generator
-change_scope:
-  - texture_density
-preserve_scope:
-  - identity
-  - silhouette
-  - palette
-  - line_weight
-invalidated_artifacts:
-  - generation/AST-001/candidates/v4.png
-preserved_artifacts:
-  - specs/AST-001.yaml
-  - normalized/AST-001/normalization-record.yaml
-next_skill: game-asset-generator
-reason: NEG-TEXTURE-004 violated at runtime display scale
+active_versions:
+  asset_spec:
+  generation_candidate:
+  normalization_output:
+  qc_report:
+  runtime_report:
 ```
 
-## Readiness and promotion gates
+Use hashes/IDs when versions are not explicit.
 
-Do not advance merely because files exist.
+## Canonical handoff envelope
 
-### Game specification
-
-- Require the relevant GameSpec readiness gate before art-style work that depends on it.
-- Do not convert `INFERRED` gameplay semantics into production truth.
-
-### Art style
-
-Before mass generation, require:
-
-- locked production-relevant style rules,
-- `REFERENCE_GROUNDED` where reference grounding is required,
-- approved scoped anchors for production-critical dimensions,
-- locked applicable negative constraints,
-- calibration approval for representative P0 families.
-
-### Generation
-
-Before generation, require a complete scoped input set. `generation-contract.yaml` is the generation-stage source of truth; `prompt.md` is only a serialized provider-facing representation.
-
-### Asset QC
-
-Only normalized runtime candidates with sufficient generation and normalization provenance enter QC. `approved` or `approved_with_minor_findings` may promote to `QC_APPROVED` according to project policy.
-
-### Runtime validation
-
-Only executable rendered-context validation may produce `RUNTIME_APPROVED`. `partial_validation_only`, `runtime_rework_required`, and `runtime_blocked` never promote.
-
-### Shipping
-
-An asset is `SHIPPABLE` only when all required upstream versions remain authoritative and runtime approval applies to the currently integrated version/context.
-
-## Handoff envelope
-
-Every specialist transition should preserve a structured handoff envelope conceptually equivalent to:
+Every external specialist transition follows `contracts/rework-handoff-contract.yaml` when rework is involved. Normal forward handoffs should use the same authority/version discipline.
 
 ```yaml
 handoff_id: HND-0042
@@ -155,238 +102,188 @@ subject:
 root_owner: game-asset-generator
 reason_codes:
   - NEGATIVE_CONSTRAINT_VIOLATION
+
+authoritative_inputs: []
+
 change_scope:
-  - texture_density
+  dimensions:
+    - texture_density
+  artifacts: []
+  runtime_properties: []
+
 preserve_scope:
-  - identity
-  - silhouette
-  - palette
-required_inputs:
-  - specs/AST-001.yaml
-  - generation/AST-001/generation-contract.yaml
-  - qc/AST-001/qc-report.yaml
-expected_outputs:
-  - generation/AST-001/generation-contract.yaml
-  - generation/AST-001/records/*.yaml
-revalidate:
+  dimensions:
+    - identity
+    - silhouette
+    - palette
+  artifacts:
+    - assets/specs/AST-001.yaml
+  upstream_truth:
+    - game_spec
+    - art_style
+    - approved_anchors
+
+expected_outputs: []
+invalidation_scope: LOCAL_ASSET
+revalidation_scope:
   - normalization
   - asset_qc
-  - runtime_validation
-preserve:
-  - game_spec
-  - art_style
-  - asset_planning
+  - affected_runtime_contexts
+next_action: regenerate scoped dimension
 ```
 
-The exact storage format may vary, but the information must not be lost across handoffs.
+Specialist-local aliases such as `change_dimensions`, `preserve_dimensions`, `change`, or `preserve` may appear inside specialist reports. Before routing, normalize them into canonical scope fields.
+
+## Readiness / promotion
+
+### GameSpec
+Require the relevant readiness gate. Never promote inferred semantics as confirmed production truth.
+
+### ArtStyle
+Before mass generation require applicable locked rules, reference grounding, approved production-critical anchors, applicable negative constraints, and representative calibration approval.
+
+### Generation
+Require complete AssetSpec/style authority/family inputs. `generation-contract.yaml` is authoritative; `prompt.md` is serialized output.
+
+### Normalization
+Require exact candidate/spec lineage and mechanical policy. A normalization result applies only to the exact effective input it records.
+
+### QC
+Only normalized outputs with coherent generation/normalization lineage enter QC. `approved` / policy-allowed `approved_with_minor_findings` promote to `QC_APPROVED`.
+
+### Runtime
+Only executable rendered-context evidence may produce runtime approval. Partial/rework/blocked statuses never promote.
+
+### SHIPPABLE
+Require coherent current lineage from AssetSpec through integrated runtime approval.
 
 ## Failure routing
 
-Route by root cause, not by where the failure was observed.
-
-- undefined gameplay semantics, state behavior, screen-flow meaning → `game-spec-builder`
-- contradictory/missing art direction, scoped anchor authority, contextual style policy → `art-style-builder`
-- wrong MRAU decomposition, family topology, state/direction representation, runtime requirement → `game-asset-planner`
-- malformed visual, identity/style/state drift, negative-constraint violation, failed generation contract → `game-asset-generator`
+- undefined gameplay/state/screen meaning → `game-spec-builder`
+- missing/contradictory style, scoped anchors, constraints → `art-style-builder`
+- MRAU/family/state representation/runtime requirement → `game-asset-planner`
+- malformed visual, identity/style/state drift, generation contract violation → `game-asset-generator`
 - canvas/scale/trim/alpha/anchor/pivot/export processing → `game-asset-normalizer`
-- incorrect isolated classification, missing contract violation, insufficient QC evidence → `game-asset-qc`
-- scene/context evidence planning or attribution error → `runtime-visual-validator`
-- z-order/layout/camera/shader/lighting/blend/mask/post-processing integration → runtime implementation owner
+- missed/incorrect isolated contract classification/evidence → `game-asset-qc`
+- runtime evidence planning/attribution → `runtime-visual-validator`
+- z-order/layout/camera/shader/lighting/blend/mask/postprocess → runtime implementation owner
 
-If ownership is ambiguous, do not launch broad rework. Request the smallest diagnostic step that can separate competing root causes.
+When ambiguous, request the smallest diagnostic step capable of separating root causes.
 
-## Delta rework policy
+## Dependency-aware invalidation
 
-Every rework loop should explicitly classify:
+Preserve unaffected locked truth by default. Invalidate descendants of changed authoritative input.
 
-```text
-WHAT CHANGES?
-WHAT MUST NOT CHANGE?
-WHAT EVIDENCE CAUSED THE REWORK?
-WHICH ARTIFACTS ARE NOW UNTRUSTWORTHY?
-WHICH DOWNSTREAM CHECKS MUST RUN AGAIN?
-```
+### Generator-local change
 
-Examples:
-
-### Generator-local visual defect
+Correct behavior:
 
 ```text
-QC detects excessive texture density
-→ preserve GameSpec / ArtStyle / anchors / identity / palette
-→ regenerate texture dimension only
-→ rerun normalization if output geometry/canvas may differ
+new generation candidate
+→ old normalization output/record becomes non-authoritative
+→ old QC approval becomes non-authoritative
+→ dependent runtime approval becomes non-authoritative
+→ rerun normalization
 → rerun QC
-→ rerun affected runtime contexts only
+→ rerun affected runtime contexts
 ```
 
-### Normalization-only defect
+Do **not** preserve an old normalization record for a changed candidate unless exact effective input equivalence is proven via hash/version and reuse is policy-permitted.
+
+### Normalization-only change
 
 ```text
-Runtime detects pivot offset
-→ preserve generated visual candidate
-→ invalidate normalization record + QC approval + affected runtime approval
-→ rerun normalizer
-→ QC
-→ affected runtime contexts
+preserve generation candidate
+→ invalidate normalization output/record
+→ invalidate dependent QC/runtime
+→ normalize → QC → affected runtime
 ```
 
-### Runtime-integration-only defect
+### Runtime-integration-only change
 
 ```text
-Asset is valid but z-order hides it
-→ preserve generation / normalization / QC
-→ fix runtime integration
-→ invalidate affected runtime evidence only
-→ rerun affected scene validation
+preserve generation / normalization / QC
+→ change runtime integration
+→ invalidate affected runtime contexts only
+→ revalidate affected contexts
 ```
 
-### Art-direction change
+### Scoped ArtStyle change
 
 ```text
-User unlocks UI texture direction
-→ invalidate dependent UI anchors/constraints
-→ invalidate only asset families governed by those changed dimensions
-→ preserve unrelated character/environment families
+changed locked UI texture rule/anchor
+→ invalidate only AssetSpecs/generation descendants governed by that changed authority
+→ preserve unrelated categories/families
 ```
 
-## Reference-grounding orchestration
+A reference merely added to `reference-corpus.yaml` causes no invalidation until production authority changes.
 
-When `art-style-builder` uses search:
+Record trigger artifact/version, root owner, changed truth, invalidated descendants, preserved siblings, and revalidation scope.
 
-1. preserve user-provided references as primary evidence in `REFERENCE_ANCHORED` mode,
-2. allow search results into `reference-corpus.yaml` as evidence,
-3. require accessibility/role resolution before candidate presentation,
-4. require explicit user approval before a search-derived item becomes a production anchor,
-5. preserve the corpus across feedback loops,
-6. prefer corpus reselection before delta search,
-7. invalidate downstream assets only when an authoritative anchor or locked style rule changes.
+## Art-style loop orchestration
 
-A new search result that is merely added to the corpus does **not** invalidate downstream assets.
+Respect:
 
-## Art-style feedback loop orchestration
+- `L0_MICRO`
+- `L1_RESELECT`
+- `L2_DELTA_SEARCH`
+- `L3_BRANCH_RESET`
+- `L4_DIRECTION_RESET`
 
-Respect the art-style loop escalation model:
-
-- `L0_MICRO`: parameter/intensity refinement; no search by default
-- `L1_RESELECT`: reuse/re-rank current corpus
-- `L2_DELTA_SEARCH`: targeted search for uncovered dimension
-- `L3_BRANCH_RESET`: reopen one category/domain branch
-- `L4_DIRECTION_RESET`: reopen broad art direction only with explicit user intent
-
-The orchestrator must not escalate to a broader loop when a narrower loop can resolve the issue.
+Do not escalate when a narrower loop is sufficient. Broad direction resets require explicit user intent.
 
 ## Generation rework orchestration
 
-Respect generator escalation:
+Respect:
 
-- `G0`: same-contract retry
-- `G1`: local dimension delta
-- `G2`: rederive from canonical family parent
-- `G3`: change generation strategy/provider approach while preserving upstream truth
-- `G4`: escalate upstream because the contract itself is insufficient or contradictory
+- `G0_SAME_CONTRACT_RETRY`
+- `G1_LOCAL_DIMENSION_DELTA`
+- `G2_REDERIVE_FROM_CANONICAL_PARENT`
+- `G3_CHANGE_GENERATION_STRATEGY`
+- `G4_ESCALATE_UPSTREAM`
 
-Do not reinterpret `G4` as permission for the generator to redesign art direction.
+`G4` means contract insufficiency/contradiction, not generator permission to redesign ArtStyle.
 
-## Family and batch orchestration
+## Family/batch orchestration
 
-Prefer family-first progression:
+Prefer:
 
 ```text
 canonical parent
-→ representative state/direction variants
-→ QC representative subset
-→ runtime representative subset
-→ expand remaining family
+→ representative derivatives
+→ representative QC
+→ representative runtime validation
+→ remaining family
 ```
 
-If the canonical parent fails systemically, block dependent variants. If one derivative fails locally, rework only that derivative unless evidence indicates a family-level defect.
+Canonical/systemic failure blocks dependent variants. Local derivative failure preserves passing siblings unless evidence shows family-wide cause.
 
 Batch order:
 
-- Tier 0: calibration / anchors
-- Tier 1: P0 core gameplay
-- Tier 2: P0 state/direction variants
-- Tier 3: core UI
-- Tier 4: secondary / progression
-- Tier 5: decoration / FX / polish
+- Tier 0 calibration/anchors
+- Tier 1 P0 core gameplay
+- Tier 2 P0 variants
+- Tier 3 core UI
+- Tier 4 secondary/progression
+- Tier 5 decoration/FX/polish
 
-Do not scale a later tier while an earlier representative tier exposes systemic problems.
-
-## Runtime approval and regression
-
-Runtime approval is version- and context-sensitive.
-
-- `partial_validation_only` is evidence, never approval.
-- A new integrated asset version invalidates runtime approval for contexts that depend on the changed visual/runtime surface.
-- A scene integration-only change invalidates only affected runtime contexts when upstream asset contracts remain valid.
-- Approved runtime captures may become baselines only when their version/context provenance is recorded.
-- Semantic regression matters more than pixel identity.
-
-## Invalidation model
-
-Use dependency-aware invalidation.
-
-### Preserve by default
-
-Unaffected locked GameSpec, ArtStyle dimensions, anchors, asset specs, passing generation dimensions, and unrelated families remain authoritative.
-
-### Invalidate only descendants of changed truth
-
-Examples:
-
-```text
-Style texture constraint changes for UI only
-→ UI generation contracts invalid
-→ UI generated candidates invalid
-→ UI normalization/QC/runtime descendants invalid
-→ character/environment assets preserved
-```
-
-```text
-Runtime camera zoom changes
-→ generation/QC preserved
-→ runtime validation contexts depending on that camera invalidated
-```
-
-```text
-AssetSpec collision-independent pivot rule changes
-→ generation may remain valid
-→ normalization and downstream QC/runtime invalidated
-```
-
-Record invalidation reason, triggering artifact/version, affected descendants, preserved siblings, and required revalidation.
+Do not scale later tiers while representative earlier tiers expose systemic problems.
 
 ## Human checkpoints
 
-Require explicit human approval for:
+Require explicit human approval for GameSpec lock, ArtStyle direction lock, calibration anchor approval, first P0 canonical family approval, broad L4 direction reset, and systemic runtime fixes that reopen locked upstream truth.
 
-- GameSpec lock,
-- ArtStyle direction lock,
-- calibration anchor approval,
-- first P0 canonical family approval,
-- broad `L4_DIRECTION_RESET`,
-- major systemic runtime regression when the proposed fix would reopen locked upstream truth.
-
-Do not interrupt the user for routine deterministic routing when the existing contracts already determine the next action.
-
-## Completion
-
-Production is complete only when:
-
-- required GameSpec and ArtStyle truth is locked,
-- required reference grounding/anchors are approved,
-- planned required assets have authoritative generated and normalized versions,
-- contract-aware QC passes,
-- required executable runtime contexts pass,
-- all required assets are `SHIPPABLE`,
-- no blocker or unresolved systemic rework remains,
-- orchestration state points to the exact authoritative versions used for shipping.
+Do not interrupt for deterministic routine routing when contracts already determine the next action.
 
 ## Policy references
 
-Read when needed:
+Use when needed:
 
 - `references/orchestration-state-policy.md`
 - `references/invalidation-routing-policy.md`
 - `references/handoff-promotion-policy.md`
+- `contracts/rework-handoff-contract.yaml`
+
+## Completion
+
+Production is complete only when required GameSpec/ArtStyle truth is locked, reference authority is approved, planned assets have authoritative generation and normalization versions, QC passes on those exact versions, executable runtime contexts pass for the integrated lineage, required assets are `SHIPPABLE`, and orchestration state points to the exact shipping versions with no unresolved blocker/systemic rework.
