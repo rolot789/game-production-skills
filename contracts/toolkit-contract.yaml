@@ -99,14 +99,34 @@ stages:
   runtime_validation:
     skill: runtime-visual-validator
     entry:
-    - playable build
-    - QC-approved asset
-    - runtime validation plan
+    - executable playable build or preview
+    - QC-approved runtime asset/version
+    - qc/<asset-id>/qc-report.yaml
+    - specs/<asset-id>.yaml
+    - normalized/<asset-id>/normalization-record.yaml
+    - runtime validation plan or sufficient information to compile one
+    - art-style.yaml when contextual style or hierarchy rules are relevant
+    - style-anchor-manifest.yaml when scoped anchor comparison is relevant
+    - style-constraint-ledger.yaml when contextual constraints are relevant
+    - canonical family/state context when applicable
+    - approved baseline captures or prior runtime report when regression testing
     allowed_exit_status:
     - runtime_approved
     - runtime_approved_with_minor_findings
+    - runtime_rework_required
+    - runtime_blocked
+    - partial_validation_only
+    promotion_status:
+    - runtime_approved
+    - runtime_approved_with_minor_findings
     outputs:
+    - runtime-validation/<asset-id>/runtime-validation-plan.yaml
     - runtime-validation/<asset-id>/runtime-report.yaml
+    - runtime-validation/<asset-id>/evidence-manifest.yaml
+    - runtime-validation/<asset-id>/captures/* when captures are materialized
+    - runtime-validation/<asset-id>/regression-summary.yaml when baseline comparison is used
+    - runtime-validation/scenes/<scene-id>/scene-report.yaml when scene-level validation is used
+    - runtime-validation/<family-id>/family-runtime-summary.yaml when family validation is used
 orchestrator:
   skill: game-art-production-orchestrator
   state_file: .pipeline/game-art-production-state.yaml
@@ -156,3 +176,5 @@ principles:
 - Search-derived references become production authorities only through explicit scoped approval.
 - Regeneration preserves passing dimensions and changes only the smallest failing surface whenever possible.
 - Asset QC evaluates explicit production contracts and routes failures to root owners without redesigning or modifying assets.
+- Runtime validation evaluates real rendered contexts, uses evidence-backed semantic checks, and does not substitute partial capture review for executable runtime approval.
+- Runtime rework preserves passing upstream assets and contexts and invalidates only the smallest dependency scope supported by the root cause.
