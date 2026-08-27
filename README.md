@@ -107,6 +107,28 @@ python3 scripts/run_evals.py             # routing, handoff, and lineage evals
 
 Requires Python 3 with `pyyaml`; the image scripts also need `Pillow`. The npm package itself has no runtime dependencies.
 
+## Upgrading from 0.1.x
+
+`0.2.0` moves the contract from v2 to v3 and is a breaking change. No asset regeneration is required — the changes are to record shape, not to asset content.
+
+```bash
+npx game-production-skills install --force   # installed skills now carry their own contracts
+npx game-production-skills validate          # reports everything that still needs updating
+```
+
+`CHANGELOG.md` has the full migration: the `version` bumps, the new `engine_integration` path key and stage, and converting `hash: unknown` lineage fields to real `content_hash` digests.
+
+Two behaviour changes are worth knowing about before you run the validator, because a project that was previously "green" may not be:
+
+- A QC report bound to a `content_hash` that is no longer the active normalized output does not count as an approval for that asset.
+- A runtime report claiming approval while the build was not executable, or while a high-risk context went untested, is rejected.
+
+Both were previously possible to record.
+
+## Contributing
+
+`CONTRIBUTING.md` covers the rules that keep this consistent — chiefly that contracts live in `contracts/` and are referenced rather than restated, and that any relative path a skill document names must resolve inside the installed skill directory.
+
 ## License
 
 MIT
