@@ -33,8 +33,14 @@ stages:
     outputs:
     - ArtStyle.md
     - art-style.yaml
+    - style-requirement-state.yaml
+    - style-decision-log.md
     - style-anchor-manifest.yaml
     - calibration-plan.yaml
+    - reference-corpus.yaml
+    - reference-search-history.yaml
+    - style-constraint-ledger.yaml
+    - style-loop-state.yaml
   asset_planning:
     skill: game-asset-planner
     entry:
@@ -49,11 +55,18 @@ stages:
     entry:
     - asset-manifest.yaml
     - specs/<asset-id>.yaml
-    - approved style anchors
+    - art-style.yaml
+    - style-anchor-manifest.yaml
+    - reference-corpus.yaml when present
+    - style-constraint-ledger.yaml when present
+    - style-loop-state.yaml when relevant to current revision
     outputs:
     - generation/<asset-id>/job.yaml
+    - generation/<asset-id>/generation-contract.yaml
+    - generation/<asset-id>/prompt.md
     - generation/<asset-id>/records/*.yaml
     - generation/<asset-id>/candidates/*
+    - generation/<asset-id>/candidate-index.yaml
   normalization:
     skill: game-asset-normalizer
     entry:
@@ -132,3 +145,5 @@ principles:
   files alone.
 - Invalidate only dependency-affected descendants when upstream sources change.
 - Runtime approval is distinct from isolated asset QC approval.
+- Search-derived references become production authorities only through explicit scoped approval.
+- Regeneration preserves passing dimensions and changes only the smallest failing surface whenever possible.
