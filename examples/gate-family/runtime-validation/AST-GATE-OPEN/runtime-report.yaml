@@ -12,7 +12,7 @@ integrated_lineage:
   qc_report:
     path: qc/AST-GATE-OPEN/qc-report.yaml
     version: v1
-    content_hash: 44a916d2663d223cc5079704f7ef42285bce915e947d887fcf496ed01ed36f6b
+    content_hash: b2aa1a96e0bda8e9bc3f31c849b32cf2cb08bcc15e4421a90b65c72807c62b06
   integration_plan:
     path: engine-integration/web-main/integration-plan.yaml
 contexts:

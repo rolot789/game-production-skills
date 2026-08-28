@@ -183,6 +183,7 @@ Three of these are load-bearing in a way that is easy to miss:
 
 - `normalization.target_canvas` — the normalizer refuses to invent a canvas. Omitting it produces a blocker routed straight back here.
 - `runtime.intended_display_size` — readability is judged at this size, not at source resolution. A detail that is clean at 256 px can destroy state distinction at 64 px.
+- `runtime.background_policy` — **omit it.** It defaults to `transparent`, which is what a game asset almost always needs. State it only to opt into `opaque` or `runtime_composited`, and say why in the spec.
 - `state.encoding_channels` — for any gameplay-critical state, at least one channel must be something other than `hue`. Colour-only state encoding fails for roughly one in twelve players, and it is the planner's decision to prevent, not the generator's to rescue.
 
 ### Version and hash fields are required, not optional

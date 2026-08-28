@@ -9,7 +9,7 @@ input_candidate:
 asset_spec:
   path: assets/specs/AST-GATE-CLOSED.yaml
   version: v1
-  content_hash: 6b71f7a335e3cb0656137793e8be0b0be338c86478e5cbb8baeae9f54473a334
+  content_hash: 9d7aaad310b6d01996c84bb0d94b35100af4d10f9f266a9422c18d9cb9f84506
 normalization_policy:
   id: default-raster-v1
   version: v1

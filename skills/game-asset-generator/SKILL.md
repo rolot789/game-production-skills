@@ -147,9 +147,28 @@ Prefer canonical-parent derivation for related states/directions/poses. Preserve
 
 Use `references/family-coherence-policy.md` for topology and acceptance rules.
 
+## Transparent background is the default
+
+Game assets are cut out unless something says otherwise. `runtime.background_policy` defaults to `transparent`, so an AssetSpec that omits it wants a transparent background — do not read the omission as "unspecified" and do not ask.
+
+Compile that into the generation contract as an explicit output requirement and use the target's transparency option directly. Do not rely on the phrase "transparent background" in prose to do the work: it also describes stock cutouts and editor screenshots, so a target that reads it as a *description* will paint a white background or a checkerboard and hand back a file that is technically RGBA and completely unusable.
+
+Screen for it immediately, before anything downstream touches the candidate:
+
+```bash
+python3 skills/game-asset-generator/scripts/check_alpha.py \
+    --candidate generation/AST-GATE-CLOSED/candidates/v1-c1.png
+```
+
+Four boolean tests over the alpha channel — channel present, some pixel fully transparent, all four corners transparent, transparent area above a floor. The corner test is the one that matters: it catches a painted-on background that the first two tests pass.
+
+The value is in *when* this runs, not in how clever it is. The same defect is also caught by QC's `has_transparency`, but that is two stages downstream — after normalization has already processed a candidate that was never going to pass.
+
+**A transparency failure is `G3_CHANGE_GENERATION_STRATEGY`, not `G1`.** Re-rolling the prompt is the trap here: a target that drew a background will draw one again, and the retry budget is gone before anyone questions the approach. Change how transparency is requested, or change the output strategy.
+
 ## Candidate screening
 
-Before downstream handoff, reject obvious failures involving:
+Run `check_alpha.py` first — it is deterministic and costs nothing. Then reject obvious failures involving:
 
 - semantic mismatch,
 - identity drift,
