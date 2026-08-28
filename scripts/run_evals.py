@@ -100,11 +100,21 @@ def run_handoff(results: Results) -> None:
                 results.ok()
 
 
-def apply_mutation(project: Path, mutation: dict) -> None:
+def apply_mutation(project: Path, mutation) -> None:
+    # A case may need more than one edit to reach the state it tests - claiming
+    # a promotion usually means removing its evidence *and* asserting the
+    # lifecycle - so a list of mutations is applied in order.
+    if isinstance(mutation, list):
+        for step in mutation:
+            apply_mutation(project, step)
+        return
+
     kind = mutation["type"]
     target = project / mutation["target"]
 
-    if kind == "tamper_asset":
+    if kind == "delete_file":
+        target.unlink()
+    elif kind == "tamper_asset":
         data = bytearray(target.read_bytes())
         data[-1] = (data[-1] + 1) % 256
         target.write_bytes(bytes(data))

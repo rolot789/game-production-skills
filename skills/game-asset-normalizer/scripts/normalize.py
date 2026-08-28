@@ -229,10 +229,14 @@ def main() -> None:
 
     checks["canvas_matches_spec"] = "PASS" if canvas.size == (canvas_w, canvas_h) else "FAIL"
     checks["content_fits_canvas"] = "PASS" if (scaled_w <= inner_w and scaled_h <= inner_h) else "FAIL"
+    # Enforced on both axes. This used to check the horizontal inset against
+    # `padding` and the vertical one against the bare canvas, which let a
+    # vertically overflowing placement pass here and fail QC instead. The +/-1
+    # tolerances absorb the integer rounding in the scale and offset steps.
     checks["padding_respected"] = "PASS" if (
-        offset_x >= padding - 1 and offset_y >= -1 and
+        offset_x >= padding - 1 and offset_y >= padding - 1 and
         offset_x + scaled_w <= canvas_w - padding + 1 and
-        offset_y + scaled_h <= canvas_h + 1
+        offset_y + scaled_h <= canvas_h - padding + 1
     ) else "FAIL"
     post_bbox = canvas.getbbox()
     checks["no_content_clipped"] = "PASS" if post_bbox is not None else "FAIL"

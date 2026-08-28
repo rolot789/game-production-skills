@@ -533,6 +533,37 @@ generation_budget:
     - the failure class is UPSTREAM_SPEC_AMBIGUITY
     - repeated failure indicates provider/topology inadequacy and no strategy remains
 
+# ---------------------------------------------------------------------------
+# Rework budget. `generation_budget` bounds the edge that costs image budget;
+# this bounds every other routing edge, which costs nothing per attempt and so
+# has no natural stopping point.
+#
+# The failure this exists to stop: two stages disagree about a verdict for
+# identical bytes, the routing table sends the subject to the stage that
+# produced those bytes, and it reproduces them. Nothing in the loop changes,
+# and nothing in the loop notices.
+# ---------------------------------------------------------------------------
+rework_budget:
+  same_route_repeats:
+    default_max: 2
+    rule: >-
+      Routing one subject to the same root owner for the same reason_code a
+      third time is evidence that two stages disagree about the contract, not
+      that the fix was applied badly.
+  progress_rule: >-
+    An attempt counts as progress only when the receiving stage produced an
+    output whose content_hash differs from the previous attempt's. An identical
+    output is a repeat regardless of how the receiver described its work.
+  escalation_rule: >-
+    On exhausting same_route_repeats, stop and emit a BLOCKER naming both
+    stages, the disputed check, and the subject. Two stages that cannot agree
+    on a verdict for identical bytes is a contract defect; neither stage owns
+    it, so neither may be sent the ticket again.
+  stop_conditions:
+    - the receiving stage produced an output with a new content_hash
+    - same_route_repeats is exhausted for one subject and reason_code
+  recorded_in: .pipeline/game-art-production-state.yaml -> assets.<id>.rework_attempts
+
 accessibility:
   required_checks:
     - id: A11Y_CONTRAST

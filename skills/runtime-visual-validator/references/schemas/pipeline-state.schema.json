@@ -65,7 +65,22 @@
           "change_scope": { "type": ["object", "array", "null"] },
           "preserve_scope": { "type": ["object", "array", "null"] },
           "next_skill": { "type": ["string", "null"] },
-          "next_action": { "type": ["string", "null"] }
+          "next_action": { "type": ["string", "null"] },
+          "rework_attempts": {
+            "type": "array",
+            "description": "One entry per external rework route taken for this asset, counted per receiving owner and reason_code. Bounded by toolkit-contract.yaml rework_budget.same_route_repeats so a stage pair that disagrees about identical bytes cannot loop forever.",
+            "items": {
+              "type": "object",
+              "required": ["to", "reason_code", "count"],
+              "additionalProperties": true,
+              "properties": {
+                "to": { "type": "string" },
+                "reason_code": { "type": "string" },
+                "count": { "type": "integer", "minimum": 1 },
+                "last_output_hash": { "type": ["string", "null"] }
+              }
+            }
+          }
         }
       }
     },

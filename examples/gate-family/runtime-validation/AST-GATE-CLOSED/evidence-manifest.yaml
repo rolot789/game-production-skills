@@ -1,0 +1,26 @@
+schema_version: 3
+asset_id: AST-GATE-CLOSED
+build:
+  id: example-build-0001
+  executable: true
+captures:
+- id: CAP-001
+  context_id: CTX-CORRIDOR-MIN
+  kind: rendered_frame
+  path: runtime-validation/AST-GATE-CLOSED/captures/CAP-001.png
+  content_hash: 61d1190d0db50efcb494a5fdc3ee3bc876cc5ef58fec1461b9505fdd00b4c4f6
+  background: '#1B1F24'
+  rendered_at: 64x64 on a 320x180 plate
+  produced_by: examples/gate-family/tools/build_example.py:render_capture
+  limitation: headless composite of the runtime asset over a declared background;
+    no game build runs in CI, and this is recorded rather than described as a screenshot
+- id: CAP-002
+  context_id: CTX-CHAMBER-DENSE
+  kind: rendered_frame
+  path: runtime-validation/AST-GATE-CLOSED/captures/CAP-002.png
+  content_hash: 00a978ac336a96194a0ad49725ec964cb48638e765839570a6abb4454ca212fb
+  background: '#3A4149'
+  rendered_at: 64x64 on a 320x180 plate
+  produced_by: examples/gate-family/tools/build_example.py:render_capture
+  limitation: headless composite of the runtime asset over a declared background;
+    no game build runs in CI, and this is recorded rather than described as a screenshot

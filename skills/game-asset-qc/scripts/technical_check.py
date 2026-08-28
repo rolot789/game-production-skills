@@ -200,23 +200,57 @@ def main() -> None:
         notes.append("asset is fully transparent")
     else:
         checks["content_present"] = "PASS"
-        touches_edge = bbox[0] == 0 or bbox[1] == 0 or bbox[2] == image.width or bbox[3] == image.height
-        if background_policy == "transparent":
-            checks["no_edge_clipping"] = "FAIL" if touches_edge else "PASS"
-            if touches_edge:
-                notes.append(f"content bbox {bbox} touches the canvas edge; padding or trim may have clipped it")
+        padding = int(norm.get("padding", 0))
+
+        # Edge contact is only evidence of clipping when the AssetSpec reserved
+        # room. With `padding: 0` - the schema default - `fit_content` scales
+        # the content to fill the canvas exactly, so touching the border is the
+        # correct result, not a defect.
+        #
+        # Reading it as a defect made two stages of this toolkit disagree
+        # deterministically: normalize.py exits 0 on the file it just wrote and
+        # QC then failed it, which routes MECHANICAL_PROCESSING_DEFECT back to
+        # the normalizer, which reproduces identical bytes. That loop does not
+        # terminate, so the two checks below are kept distinct and both are
+        # scoped to the case where padding actually reserves space.
+        if background_policy != "transparent":
+            checks["no_edge_clipping"] = "NOT_APPLICABLE"
+            checks["padding_respected"] = "NOT_APPLICABLE"
+        elif padding > 0:
+            reaches_border = (
+                bbox[0] == 0 or bbox[1] == 0
+                or bbox[2] == image.width or bbox[3] == image.height
+            )
+            inside_inset = (
+                bbox[0] >= padding and bbox[1] >= padding
+                and bbox[2] <= image.width - padding
+                and bbox[3] <= image.height - padding
+            )
+            # Reaching the border while padding was reserved means the canvas
+            # cropped content the scale step expected to fit: something was lost.
+            checks["no_edge_clipping"] = "FAIL" if reaches_border else "PASS"
+            # Entering the reserved band without reaching the border loses
+            # nothing but breaks the padding contract the atlas packer relies on.
+            checks["padding_respected"] = "PASS" if inside_inset else "FAIL"
+            if reaches_border:
+                notes.append(
+                    f"content bbox {bbox} reaches the canvas border although the spec reserves "
+                    f"{padding} px of padding; content was clipped"
+                )
+            elif not inside_inset:
+                notes.append(
+                    f"content bbox {bbox} enters the {padding} px padding band on a "
+                    f"{image.width}x{image.height} canvas; nothing was clipped but the padding "
+                    f"contract is not met"
+                )
         else:
             checks["no_edge_clipping"] = "NOT_APPLICABLE"
-
-        padding = int(norm.get("padding", 0))
-        if padding and background_policy == "transparent":
-            inside = (
-                bbox[0] >= padding and bbox[1] >= 0
-                and bbox[2] <= image.width - padding and bbox[3] <= image.height
-            )
-            checks["padding_respected"] = "PASS" if inside else "FAIL"
-        else:
             checks["padding_respected"] = "NOT_APPLICABLE"
+            notes.append(
+                "normalization.padding is 0, so content filling the canvas to its border is the "
+                "expected result of fit_content; clipping cannot be judged from the output alone. "
+                "normalize.py's content_fits_canvas check covers the oversize case."
+            )
 
     # --- lineage ------------------------------------------------------------
     if args.record:

@@ -41,9 +41,48 @@ STATES = ["CLOSED", "TRANSITION", "OPEN"]
 SHARED_SCALE = "0.623377"
 BACKGROUNDS = ["#1B1F24", "#3A4149"]
 
+# The runtime contexts this example validates. Declared once because the plan,
+# the report, and the evidence manifest must describe the same contexts - three
+# hand-maintained copies is exactly the drift the toolkit exists to prevent.
+CONTEXTS = [
+    {"id": "CTX-CORRIDOR-MIN", "scene": "corridor-01", "viewport": "1280x720",
+     "camera": "fixed-top-down", "states": ["closed", "transition", "open"],
+     "level": 2, "background": "#1B1F24", "capture_id": "CAP-001",
+     "risk": "medium",
+     "expected": "state distinction and silhouette hold at the intended display size"},
+    {"id": "CTX-CHAMBER-DENSE", "scene": "chamber-03", "viewport": "1920x1080",
+     "camera": "fixed-top-down", "states": ["closed", "open"],
+     "level": 3, "background": "#3A4149", "capture_id": "CAP-002",
+     "risk": "high",
+     "expected": "contrast holds against the densest declared background"},
+]
+
+CAPTURE_PLATE = (320, 180)
+
 
 def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def render_capture(asset_path: Path, background: str, display: tuple[int, int], out: Path) -> None:
+    """Composite the runtime asset over a scene background at player scale.
+
+    This is a headless render, not a screenshot of a game that does not exist -
+    and it is recorded as one in the evidence manifest. It is still real
+    rendered evidence: the bytes are produced by compositing the actual runtime
+    asset over a background the AssetSpec declares, at the intended display
+    size. A capture id with no bytes behind it would be the thing the
+    runtime-visual-validator skill forbids.
+    """
+    from PIL import Image
+
+    rgb = tuple(int(background.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    plate = Image.new("RGBA", CAPTURE_PLATE, rgb + (255,))
+    sprite = Image.open(asset_path).convert("RGBA").resize(display, Image.LANCZOS)
+    plate.alpha_composite(sprite, ((CAPTURE_PLATE[0] - display[0]) // 2,
+                                   (CAPTURE_PLATE[1] - display[1]) // 2))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    plate.convert("RGB").save(out, format="PNG", optimize=True)
 
 
 def dump(path: Path, data) -> None:
@@ -414,12 +453,11 @@ Output: transparent background, full asset in frame, no clipping.
                 "integration_plan": {"path": "engine-integration/web-main/integration-plan.yaml"},
             },
             "contexts": [
-                {"id": "CTX-CORRIDOR-MIN", "scene": "corridor-01", "viewport": "1280x720",
-                 "camera": "fixed-top-down", "states": ["closed", "transition", "open"],
-                 "level": 2, "result": "PASS", "capture_ids": ["CAP-001"]},
-                {"id": "CTX-CHAMBER-DENSE", "scene": "chamber-03", "viewport": "1920x1080",
-                 "camera": "fixed-top-down", "states": ["closed", "open"],
-                 "level": 3, "result": "PASS", "capture_ids": ["CAP-002"]},
+                {"id": context["id"], "scene": context["scene"], "viewport": context["viewport"],
+                 "camera": context["camera"], "states": context["states"],
+                 "level": context["level"], "result": "PASS",
+                 "capture_ids": [context["capture_id"]]}
+                for context in CONTEXTS
             ],
             "findings": [],
             "untested": [
@@ -427,6 +465,68 @@ Output: transparent background, full asset in frame, no clipping.
             ],
             "rework_handoff": None,
         }
+
+        # The plan is written before the report it authorizes: it names the
+        # contexts, why that coverage is sufficient, and what was excluded.
+        dump(ROOT / f"runtime-validation/{asset_id}/runtime-validation-plan.yaml", {
+            "schema_version": 3,
+            "asset_id": asset_id,
+            "build_target": {"id": "example-build-0001", "engine": "web-canvas"},
+            "coverage_rationale": (
+                "P0 stateful gameplay asset, so Level 2 minimum. CTX-CORRIDOR-MIN covers the "
+                "smallest declared viewport with all three states present; CTX-CHAMBER-DENSE "
+                "covers the darker of the two backgrounds the AssetSpec records in "
+                "runtime.backgrounds_encountered, which is where A11Y_RUNTIME_CONTRAST is "
+                "most likely to fail."
+            ),
+            "planned_contexts": [
+                {"id": context["id"], "scene": context["scene"], "viewport": context["viewport"],
+                 "camera": context["camera"], "states": context["states"],
+                 "level": context["level"], "risk": context["risk"],
+                 "background": context["background"], "expected": context["expected"]}
+                for context in CONTEXTS
+            ],
+            "excluded_contexts": [
+                {"context": "ultrawide 21:9 viewport", "reason": "not a declared target",
+                 "risk": "low"},
+            ],
+        })
+
+        # Every capture id in the report is backed by bytes on disk and hashed,
+        # so a BLOCKER or MAJOR finding could actually be reproduced by whoever
+        # has to fix it.
+        captures = []
+        spec_doc = yaml.safe_load(
+            (ROOT / f"assets/specs/{asset_id}.yaml").read_text(encoding="utf-8"))
+        display = (
+            spec_doc["runtime"]["intended_display_size"]["width"],
+            spec_doc["runtime"]["intended_display_size"]["height"],
+        )
+        for context in CONTEXTS:
+            capture_rel = f"runtime-validation/{asset_id}/captures/{context['capture_id']}.png"
+            render_capture(ROOT / norm_record["output"]["path"], context["background"],
+                           display, ROOT / capture_rel)
+            captures.append({
+                "id": context["capture_id"],
+                "context_id": context["id"],
+                "kind": "rendered_frame",
+                "path": capture_rel,
+                "content_hash": sha(ROOT / capture_rel),
+                "background": context["background"],
+                "rendered_at": f"{display[0]}x{display[1]} on a {CAPTURE_PLATE[0]}x{CAPTURE_PLATE[1]} plate",
+                "produced_by": "examples/gate-family/tools/build_example.py:render_capture",
+                "limitation": (
+                    "headless composite of the runtime asset over a declared background; no game "
+                    "build runs in CI, and this is recorded rather than described as a screenshot"
+                ),
+            })
+        dump(ROOT / f"runtime-validation/{asset_id}/evidence-manifest.yaml", {
+            "schema_version": 3,
+            "asset_id": asset_id,
+            "build": {"id": "example-build-0001", "executable": True},
+            "captures": captures,
+        })
+
         dump(ROOT / f"runtime-validation/{asset_id}/runtime-report.yaml", report)
         runtime_refs[state] = {
             "path": f"runtime-validation/{asset_id}/runtime-report.yaml",

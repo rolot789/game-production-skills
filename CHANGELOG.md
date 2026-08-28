@@ -2,6 +2,25 @@
 
 Versions follow Semantic Versioning. Before 1.0, a minor bump may carry breaking changes.
 
+## Unreleased
+
+An audit of the promotion gates found that the hard half of the lineage model was enforced and the easy half was not: `content_hash` verification was rigorous, and any promotion claim laid on top of it was accepted. Four defects, all reproduced before being fixed, all now covered by executable evals.
+
+### Fixed
+
+- **Two stages disagreed deterministically, and the routing loop did not terminate.** `normalization.padding` is optional and defaults to `0`. At zero padding the normalizer scales content to fill the canvas exactly and exits `0`; `technical_check.py` then failed the same file on `no_edge_clipping`, which routes `MECHANICAL_PROCESSING_DEFECT` back to the normalizer, which reproduces identical bytes. Edge contact is now only evidence of clipping when the AssetSpec reserved padding, and `no_edge_clipping` (content lost to the canvas) is kept distinct from `padding_respected` (padding contract broken, nothing lost). The worked example uses `padding: 8`, so CI never saw this.
+- **`INTEGRATION_READY` promotion was never checked.** The lifecycle evidence table mapped it to `None` and the next line skipped it. Deleting `budget-report.yaml` outright and claiming the promotion passed validation. It now requires a promoting budget report, and a promoting integration plan that lists the asset when one exists.
+- **`SHIPPABLE` had no validator at all.** It is the one promotion no single report authorizes — it claims every stage the active profile requires agrees about one lineage — and it was absent from the evidence table entirely. It is now checked as a chain.
+- **The active profile was never enforced against a project.** `validate_project.py` did not read `contracts/profiles/`; the `profile` field only produced one lite-ceiling warning. A `full` project missing whole stages passed. Required stages and artifacts are now enforced, gated on what each asset has actually reached so a run in progress is never failed for work it has not started.
+- **Runtime approval bound to a stale normalized output was accepted.** The QC binding was checked and the runtime one was not, so QC and runtime could each be internally consistent while describing different generations — the mixed-version case `ARCHITECTURE.md` uses as its example.
+- **`normalize.py` checked padding on the horizontal axis and the bare canvas on the vertical one,** letting a vertically overflowing placement pass the normalizer and fail QC instead.
+
+### Added
+
+- **`rework_budget`** in `toolkit-contract.yaml`. `generation_budget` bounds the edge that spends image budget; this bounds every other routing edge, which costs nothing per attempt and so has no natural stopping point. Two routes to the same owner for the same `reason_code` on one subject, counted in `assets.<id>.rework_attempts`, then a `BLOCKER` naming both stages. An attempt counts as progress only when the receiving stage produced a new `content_hash`.
+- **Five executable lineage evals** (`LIN-007`–`LIN-011`) covering each promotion gate and the rework cap. Eval cases may now carry a list of mutations, and `delete_file` joins the mutation types.
+- **`runtime-validation-plan.yaml` and `evidence-manifest.yaml` in the worked example**, which the `full` profile required and the example did not ship — found by the new profile enforcement. Every capture id is now backed by hashed bytes on disk: a headless composite of the runtime asset over a declared background at the intended display size, recorded as such rather than described as a screenshot.
+
 ## 0.2.0
 
 Contract **v2 → v3**. Breaking. Existing projects need the migration below.

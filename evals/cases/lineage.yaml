@@ -84,3 +84,87 @@ cases:
     rationale: >-
       an absent seed is recorded as absent. A plausible-looking invented seed is
       worse than none because it cannot be distinguished from a real one.
+
+  # --- promotion evidence -------------------------------------------------
+  # These four were silently passing before the gates were enforced: the
+  # validator checked hash lineage rigorously and then accepted any promotion
+  # claim laid on top of it.
+
+  - id: LIN-007
+    executable: true
+    mutation:
+      - type: delete_file
+        target: runtime-validation/AST-GATE-CLOSED/runtime-report.yaml
+      - type: set_field
+        target: .pipeline/game-art-production-state.yaml
+        path: [assets, AST-GATE-CLOSED, lifecycle]
+        value: SHIPPABLE
+    expect:
+      validator: FAIL
+      message_contains: without coherent lineage
+    rationale: >-
+      SHIPPABLE is the one promotion no single report authorizes. It claims
+      every stage the profile requires agrees about one lineage, so removing any
+      link in that chain must reject it.
+
+  - id: LIN-008
+    executable: true
+    mutation:
+      - type: delete_file
+        target: engine-integration/web-main/budget-report.yaml
+      - type: set_field
+        target: .pipeline/game-art-production-state.yaml
+        path: [assets, AST-GATE-OPEN, lifecycle]
+        value: INTEGRATION_READY
+    expect:
+      validator: FAIL
+      message_contains: no budget-report.yaml on disk has a promoting status
+    rationale: >-
+      an undeclared or absent budget is a blocker, never a pass. This promotion
+      previously had no check at all behind it.
+
+  - id: LIN-009
+    executable: true
+    mutation:
+      type: delete_file
+      target: assets/specs/AST-GATE-OPEN.yaml
+    expect:
+      validator: FAIL
+      message_contains: profile full requires
+    rationale: >-
+      the active profile decides which artifacts must exist. A project missing
+      required stage outputs is incomplete however consistent its remaining
+      hashes are.
+
+  - id: LIN-010
+    executable: true
+    mutation:
+      type: set_field
+      target: .pipeline/game-art-production-state.yaml
+      path: [assets, AST-GATE-OPEN, rework_attempts]
+      value:
+        - to: game-asset-normalizer
+          reason_code: MECHANICAL_PROCESSING_DEFECT
+          count: 3
+    expect:
+      validator: FAIL
+      message_contains: exceeding rework_budget.same_route_repeats
+    rationale: >-
+      a route repeated past the cap is two stages disagreeing about identical
+      bytes, not a fix applied badly. Without a cap that loop is free and never
+      terminates.
+
+  - id: LIN-011
+    executable: true
+    mutation:
+      type: set_field
+      target: runtime-validation/AST-GATE-TRANSITION/runtime-report.yaml
+      path: [integrated_lineage, normalized_output, content_hash]
+      value: "0000000000000000000000000000000000000000000000000000000000000000"
+    expect:
+      validator: FAIL
+      message_contains: bound to a normalized output that is no longer active
+    rationale: >-
+      the mixed-version case. QC and runtime can each be internally consistent
+      while describing different generations of the same asset, so the runtime
+      binding needs checking independently of the QC binding.

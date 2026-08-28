@@ -1,0 +1,37 @@
+schema_version: 3
+asset_id: AST-GATE-CLOSED
+build_target:
+  id: example-build-0001
+  engine: web-canvas
+coverage_rationale: P0 stateful gameplay asset, so Level 2 minimum. CTX-CORRIDOR-MIN
+  covers the smallest declared viewport with all three states present; CTX-CHAMBER-DENSE
+  covers the darker of the two backgrounds the AssetSpec records in runtime.backgrounds_encountered,
+  which is where A11Y_RUNTIME_CONTRAST is most likely to fail.
+planned_contexts:
+- id: CTX-CORRIDOR-MIN
+  scene: corridor-01
+  viewport: 1280x720
+  camera: fixed-top-down
+  states:
+  - closed
+  - transition
+  - open
+  level: 2
+  risk: medium
+  background: '#1B1F24'
+  expected: state distinction and silhouette hold at the intended display size
+- id: CTX-CHAMBER-DENSE
+  scene: chamber-03
+  viewport: 1920x1080
+  camera: fixed-top-down
+  states:
+  - closed
+  - open
+  level: 3
+  risk: high
+  background: '#3A4149'
+  expected: contrast holds against the densest declared background
+excluded_contexts:
+- context: ultrawide 21:9 viewport
+  reason: not a declared target
+  risk: low

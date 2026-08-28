@@ -278,6 +278,14 @@ Respect:
 
 `G4` means contract insufficiency/contradiction, not generator permission to redesign ArtStyle.
 
+## Rework budget on the edges that cost nothing
+
+`generation_budget` bounds the edge that spends image budget. Every other routing edge spends nothing per attempt, which is exactly why it needs a bound: a routing loop there is free, so nothing stops it.
+
+`references/toolkit-contract.yaml` → `rework_budget` caps repeats at **2 routes to the same root owner for the same `reason_code` on one subject**. Count an attempt as progress only when the receiving stage produced an output with a *new* `content_hash`; an identical output is a repeat however the receiver described its work. Record the count in `assets.<id>.rework_attempts` so the cap survives a context reset.
+
+On the third route, stop and emit a `BLOCKER` naming both stages, the disputed check, and the subject. Two stages that return different verdicts for identical bytes is a contract defect — neither of them owns it, and sending the ticket back to either one produces the same bytes and the same disagreement.
+
 ## Family/batch orchestration
 
 Separate the work that costs image budget from the work that does not, and do all of the cheap work first.
