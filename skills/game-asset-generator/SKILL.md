@@ -110,6 +110,37 @@ References may act as:
 
 Compile each reference with its governed and excluded dimensions. `LINK_ONLY`, `BLOCKED`, and `UNAVAILABLE` references may remain provenance/evidence but cannot be treated as visually verified truth.
 
+## Compile every contract before generating anything
+
+Contracts and images are separated deliberately, because they have opposite cost profiles.
+
+A generation contract is derived **deterministically** from the AssetSpec, the locked style, the anchors, and the constraint ledger. It costs no image budget, it does not depend on any other candidate existing, and the whole set can be compiled in one pass. An image costs budget, and once it is wrong, so is everything that inherited its style.
+
+So the stage runs in four steps, not one loop:
+
+```text
+1. compile generation-contract.yaml for EVERY planned asset      no image budget spent
+2. review the set as a set                                        catch systemic errors here
+3. generate ONLY the calibration / canonical family               → check_alpha → screen → approve
+4. batch-generate the rest against the now-proven contracts
+```
+
+**Step 1 is a bulk operation.** Compiling contracts one asset at a time as you generate is the wrong shape: it hides set-level problems until you are already spending image budget on them.
+
+**Step 2 is what bulk compilation buys.** A contradiction between two assets' category overrides, an anchor that governs a dimension nobody scoped, a family whose `must_preserve` list is empty — these are visible when you read forty contracts together and invisible when you read one. Fixing them here costs an edit. Fixing them in step 4 costs forty regenerations.
+
+**Step 3 is the gate, and it does not move.** Never let bulk compilation talk you into bulk generation. The contracts are unproven until an image made from one has been screened and approved; expanding before that is how a systemic style error becomes forty assets instead of one.
+
+### `prompt.md` stays lazy
+
+Contracts are compiled up front. Prompts are not, and this is not an inconsistency:
+
+- a prompt is a **provider-facing serialization**, so it depends on which target is actually being used,
+- a rework prompt is a **delta from the last passing contract**, which does not exist before generation has run,
+- a family derivative's prompt may depend on the canonical parent's **actual output** under reference-edit topology.
+
+Write `prompt.md` when generating the asset it belongs to. The contract is the source of truth and is stable; the prompt is a projection of it and is not.
+
 ## Generation contract
 
 Compile `generation-contract.yaml` before any free-form prompt. Recommended order:
