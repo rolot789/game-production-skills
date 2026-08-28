@@ -280,15 +280,23 @@ Respect:
 
 ## Family/batch orchestration
 
-Prefer:
+Separate the work that costs image budget from the work that does not, and do all of the cheap work first.
 
 ```text
-canonical parent
+all AssetSpecs                          planner, one pass
+→ all generation contracts              generator, one pass, no image budget
+→ review the contract set as a set      systemic errors are visible here and nowhere else
+→ canonical parent                      first image spent
 → representative derivatives
 → representative QC
 → representative runtime validation
 → remaining family
 ```
+
+Two rules make this ordering worth enforcing rather than merely suggesting:
+
+- **Do not let a specialist interleave contract compilation with generation.** Contracts are deterministic derivations of locked truth; compiling them per-asset as generation proceeds hides set-level contradictions until image budget is already being spent on them.
+- **Bulk compilation never authorizes bulk generation.** A contract set is unproven until an image made from one has been screened and approved. Routing straight from step 2 to the full batch is the single most expensive routing mistake available here — it converts one systemic style error into N regenerations.
 
 Canonical/systemic failure blocks dependent variants. Local derivative failure preserves passing siblings unless evidence shows family-wide cause.
 

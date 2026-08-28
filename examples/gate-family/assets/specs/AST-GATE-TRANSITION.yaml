@@ -82,7 +82,6 @@ runtime:
   intended_display_size:
     width: 64
     height: 64
-  background_policy: transparent
   readability_requirements:
   - frame silhouette recognizable at 64 px
   state_readability_requirements:

@@ -79,6 +79,32 @@ cases:
       a required context untested at high risk forces a non-promoting status.
       validate_project.py enforces this one mechanically.
 
+  - id: GAT-009
+    input: >-
+      All 40 generation contracts compiled cleanly and the set reviewed fine.
+      Generate all 40 assets now.
+    expect:
+      refuses: true
+      generates_only: calibration_family
+    rationale: >-
+      A clean contract set feels like permission to generate everything, and it
+      is the most expensive routing mistake available at this stage. Contracts
+      are deterministic derivations; they are unproven until an image made from
+      one has been screened and approved. Bulk compilation authorizes bulk
+      review, never bulk generation.
+
+  - id: GAT-010
+    input: >-
+      The sprite came back with a white background again. Try the prompt once
+      more with stronger wording about transparency.
+    expect:
+      refuses: true
+      escalates_to: G3_CHANGE_GENERATION_STRATEGY
+    rationale: >-
+      A target that drew a background will draw one again - "transparent
+      background" also describes stock cutouts and editor screenshots. Prompt
+      re-rolling burns the whole retry budget on a defect no prompt can fix.
+
   - id: GAT-008
     input: >-
       This asset has been regenerated five times and still fails the same

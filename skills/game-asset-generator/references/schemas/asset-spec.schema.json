@@ -17,77 +17,204 @@
   ],
   "additionalProperties": true,
   "properties": {
-    "schema_version": { "type": "integer", "const": 3 },
-    "asset_id": { "$ref": "_defs.json#/$defs/id" },
-    "family_id": { "type": ["string", "null"] },
+    "schema_version": {
+      "type": "integer",
+      "const": 3
+    },
+    "asset_id": {
+      "$ref": "_defs.json#/$defs/id"
+    },
+    "family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "category": {
       "type": "string",
-      "enum": ["character", "environment", "interactive_object", "ui", "icon", "fx", "background"]
+      "enum": [
+        "character",
+        "environment",
+        "interactive_object",
+        "ui",
+        "icon",
+        "fx",
+        "background"
+      ]
     },
-    "purpose": { "type": "string", "minLength": 1 },
-    "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3"] },
-
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
     "source_versions": {
       "type": "object",
       "description": "Upstream authority this spec was compiled from. Required: invalidation cannot run without it.",
-      "required": ["game_spec", "art_style"],
+      "required": [
+        "game_spec",
+        "art_style"
+      ],
       "additionalProperties": true,
       "properties": {
-        "game_spec": { "$ref": "_defs.json#/$defs/artifactRef" },
-        "art_style": { "$ref": "_defs.json#/$defs/artifactRef" },
-        "style_anchor_manifest": { "$ref": "_defs.json#/$defs/artifactRef" },
-        "style_constraint_ledger": { "$ref": "_defs.json#/$defs/artifactRef" }
+        "game_spec": {
+          "$ref": "_defs.json#/$defs/artifactRef"
+        },
+        "art_style": {
+          "$ref": "_defs.json#/$defs/artifactRef"
+        },
+        "style_anchor_manifest": {
+          "$ref": "_defs.json#/$defs/artifactRef"
+        },
+        "style_constraint_ledger": {
+          "$ref": "_defs.json#/$defs/artifactRef"
+        }
       }
     },
-
     "style_authority": {
       "type": "object",
-      "required": ["anchor_ids", "constraint_ids", "category_overrides"],
+      "required": [
+        "anchor_ids",
+        "constraint_ids",
+        "category_overrides"
+      ],
       "additionalProperties": false,
       "properties": {
-        "anchor_ids": { "type": "array", "items": { "type": "string" } },
-        "constraint_ids": { "type": "array", "items": { "type": "string" } },
-        "category_overrides": { "type": "array", "items": { "type": "string" } }
+        "anchor_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "constraint_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "category_overrides": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
     "state": {
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "id": { "type": ["string", "null"] },
-        "gameplay_meaning": { "type": ["string", "null"] },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gameplay_meaning": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "encoding_channels": {
           "type": "array",
           "description": "Channels that carry the state distinction. A gameplay-critical distinction needs at least one non-hue channel.",
-          "items": { "type": "string", "enum": ["hue", "value", "shape", "icon", "motion", "position", "opacity"] }
+          "items": {
+            "type": "string",
+            "enum": [
+              "hue",
+              "value",
+              "shape",
+              "icon",
+              "motion",
+              "position",
+              "opacity"
+            ]
+          }
         }
       }
     },
     "orientation": {
       "type": "object",
       "additionalProperties": true,
-      "properties": { "id": { "type": ["string", "null"] } }
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     },
-
     "family": {
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "canonical_parent": { "type": ["string", "null"] },
-        "derivation_role": { "type": "string", "enum": ["canonical_parent", "derivative", "independent"] },
-        "shared_geometry_group": { "type": ["string", "null"] },
-        "shared_anchor_group": { "type": ["string", "null"] },
-        "must_preserve": { "type": "array", "items": { "type": "string" } },
-        "must_change": { "type": "array", "items": { "type": "string" } },
-        "may_vary": { "type": "array", "items": { "type": "string" } },
-        "must_not_introduce": { "type": "array", "items": { "type": "string" } }
+        "canonical_parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "derivation_role": {
+          "type": "string",
+          "enum": [
+            "canonical_parent",
+            "derivative",
+            "independent"
+          ]
+        },
+        "shared_geometry_group": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shared_anchor_group": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "must_preserve": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_change": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "may_vary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_not_introduce": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
     "production": {
       "type": "object",
-      "required": ["strategy", "derivation_mode"],
+      "required": [
+        "strategy",
+        "derivation_mode"
+      ],
       "additionalProperties": true,
       "properties": {
         "strategy": {
@@ -105,75 +232,186 @@
         },
         "derivation_mode": {
           "type": "string",
-          "enum": ["independent", "parent_derived", "reference_edit", "procedural"]
+          "enum": [
+            "independent",
+            "parent_derived",
+            "reference_edit",
+            "procedural"
+          ]
         },
-        "strategy_rationale": { "type": "string" }
+        "strategy_rationale": {
+          "type": "string"
+        }
       }
     },
-
     "normalization": {
       "type": "object",
-      "required": ["canvas_policy", "scale_policy", "anchor_policy", "pivot_policy"],
+      "required": [
+        "canvas_policy",
+        "scale_policy",
+        "anchor_policy",
+        "pivot_policy"
+      ],
       "additionalProperties": true,
       "properties": {
-        "canvas_policy": { "type": ["string", "object"] },
-        "scale_policy": { "type": ["string", "object"] },
-        "anchor_policy": { "type": ["string", "object"] },
-        "pivot_policy": { "type": ["string", "object"] },
+        "canvas_policy": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "scale_policy": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "anchor_policy": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "pivot_policy": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
         "target_canvas": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "width": { "type": "integer", "minimum": 1 },
-            "height": { "type": "integer", "minimum": 1 }
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            }
           },
-          "required": ["width", "height"]
+          "required": [
+            "width",
+            "height"
+          ]
         },
-        "padding": { "type": "integer", "minimum": 0 },
-        "trim": { "type": "boolean" },
-        "resample": { "type": "string", "enum": ["nearest", "bilinear", "bicubic", "lanczos"] }
+        "padding": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "trim": {
+          "type": "boolean"
+        },
+        "resample": {
+          "type": "string",
+          "enum": [
+            "nearest",
+            "bilinear",
+            "bicubic",
+            "lanczos"
+          ]
+        }
       }
     },
-
     "runtime": {
       "type": "object",
-      "required": ["footprint", "background_policy"],
+      "required": [
+        "footprint"
+      ],
       "additionalProperties": true,
       "properties": {
-        "footprint": { "type": ["string", "object"] },
+        "footprint": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
         "intended_display_size": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["width", "height"],
+          "required": [
+            "width",
+            "height"
+          ],
           "properties": {
-            "width": { "type": "integer", "minimum": 1 },
-            "height": { "type": "integer", "minimum": 1 }
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         },
-        "background_policy": { "type": "string", "enum": ["transparent", "opaque", "runtime_composited"] },
-        "readability_requirements": { "type": "array", "items": { "type": "string" } },
-        "state_readability_requirements": { "type": "array", "items": { "type": "string" } },
-        "backgrounds_encountered": { "type": "array", "items": { "type": "string" } }
+        "background_policy": {
+          "type": "string",
+          "enum": [
+            "transparent",
+            "opaque",
+            "runtime_composited"
+          ],
+          "default": "transparent",
+          "description": "Omit for transparent. Game assets are cut out by default; state this field only to opt into an opaque or runtime-composited background."
+        },
+        "readability_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "state_readability_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "backgrounds_encountered": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
     "accessibility": {
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "gameplay_critical": { "type": "boolean" },
-        "required_checks": { "type": "array", "items": { "type": "string" } }
+        "gameplay_critical": {
+          "type": "boolean"
+        },
+        "required_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
-    "qc_requirements": { "type": "array", "items": { "type": "string" } },
-
+    "qc_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "dependencies": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "upstream": { "type": "array", "items": { "type": "string" } },
-        "downstream_hints": { "type": "array", "items": { "type": "string" } }
+        "upstream": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "downstream_hints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   }

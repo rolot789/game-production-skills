@@ -19,15 +19,20 @@ python3 -m pip install pyyaml Pillow   # needed by the validators and image scri
 
 1. Run `game-spec-builder`. Continue the interview until at least `ART_HANDOFF_READY`.
 2. Run `art-style-builder`. Approve calibration anchors until `ASSET_GENERATION_READY`.
-3. Run `game-asset-planner`.
-4. Generate **one representative family first** — not the whole tier.
-5. Normalize it: `python3 .agents/skills/game-asset-normalizer/scripts/normalize.py …`
-6. QC it: `python3 .agents/skills/game-asset-qc/scripts/technical_check.py …`
-7. Pack and budget-check it with `game-engine-integrator`.
-8. Integrate into the game and run `runtime-visual-validator`.
-9. Only then expand to the next tier.
+3. Run `game-asset-planner` — all AssetSpecs, one pass.
+4. Have `game-asset-generator` compile **every** generation contract, still without generating anything. This costs no image budget.
+5. Read the contract set as a set. Set-level contradictions are visible here and nowhere else.
+6. Generate **one representative family only** — not the whole tier.
+7. Screen it: `python3 .agents/skills/game-asset-generator/scripts/check_alpha.py …`
+8. Normalize it: `python3 .agents/skills/game-asset-normalizer/scripts/normalize.py …`
+9. QC it: `python3 .agents/skills/game-asset-qc/scripts/technical_check.py …`
+10. Pack and budget-check it with `game-engine-integrator`.
+11. Integrate into the game and run `runtime-visual-validator`.
+12. Only then batch-generate the rest against the now-proven contracts.
 
-Step 4 is the one people skip. A systemic style problem found on the first family costs one regeneration; found on forty assets it costs forty.
+Steps 4–5 are free and steps 6–11 are not. Everything cheap happens before anything expensive.
+
+Step 6 is the one people skip, usually right after step 5 goes well — a clean contract set feels like permission to generate everything. It is not. The contracts are unproven until an image made from one has passed. A systemic style problem found on the first family costs one regeneration; found on forty assets it costs forty.
 
 ## B. Starting from a locked GameSpec and ArtStyle
 
