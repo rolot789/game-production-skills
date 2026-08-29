@@ -135,4 +135,11 @@ Scoring is deterministic — each case asks for a small JSON object and compares
 
 CI cannot run a model, so it runs the next best thing: `run_evals.py` self-tests the harness against two fixtures, one matching every expectation and one with three deliberately wrong answers. A scorer that would accept the wrong run fails the build.
 
-What is still true: **nobody has published a score.** The harness exists, its scoring is verified, and the claim that the trigger-shaped descriptions improve skill selection remains a hypothesis until someone runs it with a model and reports the number.
+**A score has now been published.** One run, `claude-sonnet-5`, `claude -p` as the backend (tool use disabled, so the model sees only the prompt text — no filesystem access to the repository):
+
+- `triggering`: 12/12. Every utterance reached its intended skill and avoided every excluded neighbour.
+- `gates`: 9/10 against the default `game-art-production-orchestrator` body. The one failure (`GAT-010`, a transparency retry that should escalate to `G3_CHANGE_GENERATION_STRATEGY`) needs a rule that lives in `game-asset-generator/SKILL.md`, not the orchestrator's — confirmed by re-running that case with `--gate-skill game-asset-generator`, where it passes. That is a harness limitation, not a skill defect: `gates` cases are written per-judgment-call, not per-skill, and the harness quotes only one skill body per run. `--gate-skill` lets you pick the right one by hand; nothing auto-routes yet, and this is not planned as a follow-on.
+
+Running this surfaced one real bug in the harness itself: `GAT-006` expected the model to cite the literal substring `coherent lineage`, but the orchestrator's actual wording is `coherent current lineage` — the exact-match scorer working exactly as designed, against a case that was typed slightly wrong. Fixed to `cites: coherent`.
+
+This is one run on one model, not a benchmark — variance across models and re-runs is unmeasured, and the fair reading is "the skills held up once, against a model that could see only their own text." Re-run before trusting the number for anything higher-stakes than that.

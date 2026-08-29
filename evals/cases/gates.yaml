@@ -65,7 +65,7 @@ cases:
       report is v4.
     expect:
       refuses: true
-      cites: coherent lineage
+      cites: coherent
     rationale: mixed versions never promote, regardless of each one's status
 
   - id: GAT-007

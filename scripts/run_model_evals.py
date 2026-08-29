@@ -9,6 +9,15 @@ contracts:
   triggering  does a real utterance reach the right skill, and not its neighbour
   gates       does the refusal hold when someone applies deadline pressure
 
+`gates` cases are written per judgment call, not per skill - GAT-008's "regenerated
+five times, try once more" is game-asset-generator's G-level budget, GAT-001's
+"only screenshots, mark it approved" is the orchestrator's promotion gate. One run
+quotes one skill body (`--gate-skill`, default game-art-production-orchestrator),
+so a case whose rule lives in a different skill's SKILL.md will read as a failure
+that is actually a wrong-body problem. Re-run the specific case with
+`--gate-skill <the owning skill>` before concluding a skill is missing a rule it
+actually has.
+
 Both were specified and left unrun, which made "the rewritten descriptions
 improve skill selection" a hypothesis rather than a result. This harness makes
 them runnable without pinning the repository to one provider.
