@@ -334,6 +334,50 @@ def main() -> None:
                     f"mirror it into that skill; add it to schema_mirrors.targets"
                 )
 
+    # Provider capabilities: every capability a derivation requirement names must
+    # exist, every profile must describe known capabilities, and the derivation
+    # modes must be the ones the AssetSpec schema actually allows. A capability
+    # table that names a mode the schema rejects can never fire.
+    providers_file = ROOT / "contracts" / "providers.yaml"
+    if providers_file.exists():
+        providers = load("contracts/providers.yaml")
+        known_capabilities = set(providers.get("capabilities") or {})
+        spec_schema = json.loads((ROOT / "contracts" / "schemas" / "asset-spec.schema.json")
+                                 .read_text(encoding="utf-8"))
+        schema_modes = set(spec_schema["properties"]["production"]["properties"]
+                           ["derivation_mode"]["enum"])
+        declared_modes = set(providers.get("derivation_requirements") or {})
+        for mode in declared_modes - schema_modes:
+            errors.append(f"providers.yaml declares requirements for derivation_mode {mode!r}, "
+                          f"which asset-spec.schema.json does not allow")
+        for mode in schema_modes - declared_modes:
+            errors.append(f"asset-spec.schema.json allows derivation_mode {mode!r} with no entry "
+                          f"in providers.yaml derivation_requirements")
+        for mode, entry in (providers.get("derivation_requirements") or {}).items():
+            for capability in entry.get("requires", []):
+                if capability not in known_capabilities:
+                    errors.append(f"providers.yaml derivation_requirements[{mode}] requires "
+                                  f"{capability!r}, which is not in capabilities")
+        for profile, entry in (providers.get("profiles") or {}).items():
+            unknown = set(entry) - known_capabilities - {"description", "caveat"}
+            for key in sorted(unknown):
+                errors.append(f"providers.yaml profile {profile!r} declares unknown key {key!r}")
+
+        # Strategies must partition the AssetSpec enum exactly: a strategy in
+        # neither list is the silent dead end this section exists to remove.
+        strategies = contract.get("representation_strategies") or {}
+        declared_strategies = set()
+        for group in ("supported", "no_authored_file", "planning_only"):
+            declared_strategies |= set((strategies.get(group) or {}).get("strategies") or [])
+        schema_strategies = set(spec_schema["properties"]["production"]["properties"]
+                                ["strategy"]["enum"])
+        for name in sorted(schema_strategies - declared_strategies):
+            errors.append(f"asset-spec.schema.json allows strategy {name!r} which "
+                          f"toolkit-contract.yaml representation_strategies does not classify")
+        for name in sorted(declared_strategies - schema_strategies):
+            errors.append(f"representation_strategies classifies {name!r}, which is not in the "
+                          f"asset-spec strategy enum")
+
     # ---- 12. skills are well formed ---------------------------------------
     for skill_dir in sorted((ROOT / "skills").iterdir()):
         if not skill_dir.is_dir():

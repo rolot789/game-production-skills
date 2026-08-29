@@ -299,9 +299,12 @@ def main() -> None:
         check_schema(report, store, manifest, "asset-manifest.schema.json", "asset-manifest.yaml")
 
     # --- asset specs --------------------------------------------------------
+    strategy_by_asset: dict[str, str] = {}
     for spec_file in collect(resolve(project_dir, paths, "asset_specs"), "*.yaml"):
         label = str(spec_file.relative_to(project_dir))
-        check_schema(report, store, load_yaml(spec_file), "asset-spec.schema.json", label)
+        doc = load_yaml(spec_file)
+        if check_schema(report, store, doc, "asset-spec.schema.json", label):
+            strategy_by_asset[doc["asset_id"]] = (doc.get("production") or {}).get("strategy")
 
     # --- generation records -------------------------------------------------
     generation_root = resolve(project_dir, paths, "generation")
@@ -513,6 +516,8 @@ def main() -> None:
     required_stages = set(profile_doc.get("required_stages") or [])
     rework_cap = ((contract.get("rework_budget") or {})
                   .get("same_route_repeats", {}).get("default_max", 2))
+    planning_only = set(((contract.get("representation_strategies") or {})
+                         .get("planning_only") or {}).get("strategies") or [])
 
     if state:
         assets = state.get("assets") or {}
@@ -596,6 +601,19 @@ def main() -> None:
                     f"pipeline state: asset {asset_id} is RUNTIME_APPROVED under the {profile} "
                     f"profile, where runtime_validation is optional and did not run; runtime "
                     f"approval requires executable runtime evidence regardless of profile"
+                )
+
+            # A strategy with no production path is a legitimate plan and an
+            # illegitimate promotion: nothing downstream can honor it, so an
+            # asset that advances on one is claiming work no stage performed.
+            strategy = strategy_by_asset.get(asset_id)
+            if strategy in planning_only and lifecycle in LIFECYCLE_ORDER \
+                    and LIFECYCLE_ORDER.index(lifecycle) > LIFECYCLE_ORDER.index("READY_FOR_GENERATION"):
+                report.error(
+                    f"pipeline state: asset {asset_id} is {lifecycle} with production strategy "
+                    f"{strategy!r}, which has no production path in this toolkit\n"
+                    f"    toolkit-contract.yaml -> representation_strategies.planning_only\n"
+                    f"    → the AssetSpec is where this plan stops; nothing downstream can honor it"
                 )
 
             # Rework budget: a route repeated past the cap is two stages

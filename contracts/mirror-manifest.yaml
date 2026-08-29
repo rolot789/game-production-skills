@@ -46,6 +46,16 @@ mirrors:
       - runtime-visual-validator
       - game-art-production-orchestrator
 
+  - source: contracts/providers.yaml
+    reason: >-
+      the generator checks a planned asset set against the declared provider
+      before spending image budget; the planner and orchestrator need the same
+      capability table to know whether a derivation_mode is achievable
+    targets:
+      - game-asset-planner
+      - game-asset-generator
+      - game-art-production-orchestrator
+
   - source: contracts/routing-index.yaml
     reason: >-
       the compact lookup is the default read; the full routing.yaml is 279 lines

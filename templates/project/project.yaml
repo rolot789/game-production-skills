@@ -17,6 +17,23 @@ engine:
   pixels_per_unit: 100
   color_space: gamma
 
+# Generation provider capability. Capability decides whether an AssetSpec's
+# derivation_mode is achievable at all: `parent_derived` needs a provider that
+# can condition on an image, and a text-to-image provider produces a new
+# drawing per family member instead. Checked by
+# skills/game-asset-generator/scripts/check_provider.py before any image budget
+# is spent. Never put credentials here.
+generation:
+  provider: external_manual   # a profile from contracts/providers.yaml
+  # Or declare your own, when the provider is not one of the shipped profiles:
+  # provider: my-tool
+  # capabilities:
+  #   text_to_image: true
+  #   reference_edit: true
+  #   mask_inpaint: false
+  #   native_transparency: true
+  #   seed_exposed: true
+
 # Performance budgets, measured by
 # skills/game-engine-integrator/scripts/budget_check.py.
 # An undeclared budget is not a passing budget - it reports

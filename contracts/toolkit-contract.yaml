@@ -565,6 +565,63 @@ rework_budget:
   recorded_in: .pipeline/game-art-production-state.yaml -> assets.<id>.rework_attempts
 
 # ---------------------------------------------------------------------------
+# Representation strategies, and which of them this toolkit can actually carry
+# to a runtime asset.
+#
+# The AssetSpec enum offers eight strategies. Four of them have no downstream
+# tooling: every deterministic script in this toolkit reads and writes PNG
+# through Pillow, so a spec that selects `generated_3d` is a valid plan that
+# dead-ends silently at normalization.
+#
+# Silently is the problem. A strategy that cannot be produced is a legitimate
+# planning outcome - it says "this is what the asset needs, and this toolkit is
+# not what makes it". What it must not do is look like a strategy that works.
+# ---------------------------------------------------------------------------
+representation_strategies:
+  supported:
+    description: produce a runtime file the deterministic tools can process end to end
+    strategies:
+      - generated_raster
+  no_authored_file:
+    description: >-
+      Nothing is authored, so there is nothing to normalize, QC, or pack. These
+      terminate at the AssetSpec by design and never advance past PLANNED.
+    strategies:
+      - runtime_primitive
+      - runtime_text
+      - reuse_existing
+  planning_only:
+    description: >-
+      A valid plan with no production path in this toolkit. Selecting one is not
+      an error; advancing an asset that selects one past READY_FOR_GENERATION is,
+      because no stage downstream can honor it.
+    strategies:
+      - generated_vector
+      - generated_3d
+      - procedural
+      - shader_or_particle
+    what_each_would_need:
+      generated_vector: >-
+        Rasterize to the target size during normalization and the rest of the
+        pipeline already works. The cost is a vector renderer dependency, which
+        is why it is not simply done.
+      generated_3d: >-
+        A second pipeline, not an extension. target_canvas, padding, trim, and
+        runtime_pivot are all meaningless for a mesh; bounding box, origin, up
+        axis, scale unit, poly budget, UV overlap, and material count replace
+        them. Only the spec, style, planning, and routing layers carry over.
+      procedural: >-
+        The artifact is parameters, not pixels. What ships is a parameter
+        document; what QC and runtime validation can judge is a rendered
+        preview of the declared states, which needs a runtime this toolkit does
+        not have. The realistic path is importing previews captured elsewhere.
+      shader_or_particle: same as procedural.
+  rule: >-
+    validate_project.py rejects an asset whose strategy is planning_only and
+    whose lifecycle is past READY_FOR_GENERATION. The AssetSpec is the correct
+    place for such a plan to stop.
+
+# ---------------------------------------------------------------------------
 # Retention. What is kept, what is superseded, and what may be deleted.
 #
 # This section exists because the toolkit's stated principle - provenance is

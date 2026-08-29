@@ -19,6 +19,22 @@ The default failure is treating every visual element as a generated PNG. That is
 | `shader_or_particle` | behaviour is continuous and parameterized rather than a fixed image | low |
 | `reuse_existing` | an approved asset already satisfies this contract | none |
 
+## What this toolkit can actually produce
+
+The table above is planning advice. It is not a promise that every row has tooling behind it:
+
+| Strategy | Production path here |
+|---|---|
+| `generated_raster` | full — generate, normalize, QC, atlas, runtime |
+| `runtime_primitive`, `runtime_text`, `reuse_existing` | none needed — nothing is authored, so the plan terminates at the AssetSpec |
+| `generated_vector`, `generated_3d`, `procedural`, `shader_or_particle` | **none** — a valid plan with no tooling behind it |
+
+Choosing one of the last four is not an error. It is the correct answer when it is the correct answer, and the AssetSpec is where it stops: `validate_project.py` rejects such an asset if it is ever advanced past `READY_FOR_GENERATION`, because no stage downstream can honor it.
+
+What is an error is planning the whole set that way and discovering it at normalization. Decide it here, and record in `strategy_rationale` who is producing the asset instead.
+
+`toolkit-contract.yaml` → `representation_strategies` lists what each of the four would need.
+
 ## Decide against locked style, not against convenience
 
 The binding question is: **which style dimensions materially depend on authored media?**

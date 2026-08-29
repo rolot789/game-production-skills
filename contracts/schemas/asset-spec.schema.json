@@ -281,7 +281,8 @@
             "runtime_text",
             "shader_or_particle",
             "reuse_existing"
-          ]
+          ],
+          "description": "How this asset is produced. Only `generated_raster` has a downstream production path in this toolkit; `runtime_primitive`, `runtime_text`, and `reuse_existing` author no file by design; `generated_vector`, `generated_3d`, `procedural`, and `shader_or_particle` are valid plans with no tooling behind them and cannot advance past READY_FOR_GENERATION. See toolkit-contract.yaml -> representation_strategies."
         },
         "derivation_mode": {
           "type": "string",

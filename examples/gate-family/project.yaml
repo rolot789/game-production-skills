@@ -12,6 +12,25 @@ engine:
   pixels_per_unit: 64
   color_space: gamma
 
+# This example's "provider" is a deterministic drawing script, not an image
+# model, so none of the shipped profiles describes it. Declared explicitly and
+# truthfully instead: the script draws exactly what the spec says with or
+# without a conditioning image, emits real alpha, and changes one dimension by
+# changing one parameter - which is strictly stronger than masking.
+#
+# The gate family derives every state from a canonical parent, so a provider
+# without reference_edit could not produce it. Declaring `text_to_image_only`
+# here makes check_provider.py block all five parent_derived assets, which is
+# the check earning its place.
+generation:
+  provider: deterministic-script
+  capabilities:
+    text_to_image: true
+    reference_edit: true
+    mask_inpaint: true
+    native_transparency: true
+    seed_exposed: true
+
 budgets:
   max_atlas_dimension: 2048
   max_texture_memory_mb: 64

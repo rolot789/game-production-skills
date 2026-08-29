@@ -1,0 +1,148 @@
+# GENERATED MIRROR - DO NOT EDIT
+# source: contracts/providers.yaml
+# regenerate: python3 scripts/sync_contracts.py
+version: 3
+name: generation-provider-capabilities
+
+# ---------------------------------------------------------------------------
+# What a generation provider can DO, and what each derivation_mode needs it to
+# be able to do.
+#
+# This file exists because provider capability is not a plumbing detail here -
+# it decides whether the pipeline's central promise is achievable at all.
+#
+# `derivation_mode: parent_derived` means "make this, posed differently,
+# preserving identity". That is an image-conditioned edit. A provider that only
+# does text-to-image cannot do it: you get a new drawing every time, which is
+# exactly the IDENTITY_DRIFT the anti-drift machinery exists to prevent. The
+# gate family's frame thickness would differ on every state.
+#
+# The contract already knew this - `generation_budget.stop_conditions` names
+# "provider/topology inadequacy" as a reason to stop - and had nowhere to
+# record it. This is that place.
+#
+# NO CREDENTIALS AND NO ENDPOINTS LIVE HERE. Capability is a property of what
+# you are calling; a key is a property of who is calling. Mixing them would put
+# secrets in a file that wants to be committed and reviewed.
+# ---------------------------------------------------------------------------
+
+capabilities:
+  text_to_image:
+    description: produce an image from a prompt alone
+  reference_edit:
+    description: >-
+      condition generation on a supplied image - img2img, reference, or edit.
+      This is what makes canonical-parent derivation possible.
+  mask_inpaint:
+    description: >-
+      restrict a change to a masked region. Without it, "regenerate the smallest
+      failing surface" is an instruction the provider cannot follow, and every
+      G1_LOCAL_DIMENSION_DELTA is really a full re-roll.
+  native_transparency:
+    description: >-
+      emit real alpha. Without it every candidate arrives with a painted
+      background, check_alpha.py fails all of them, and the correct escalation
+      is G3_CHANGE_GENERATION_STRATEGY rather than a retry budget spent on
+      prompt wording.
+  seed_exposed:
+    description: >-
+      report the seed actually used. Without it, provenance records
+      `not_exposed`, which is truthful and means a candidate cannot be
+      reproduced exactly.
+
+# Which capabilities each AssetSpec production.derivation_mode requires.
+# Checked by skills/game-asset-generator/scripts/check_provider.py before any
+# image budget is spent.
+derivation_requirements:
+  independent:
+    requires: [text_to_image]
+    note: the only mode a text-to-image provider can satisfy
+  parent_derived:
+    requires: [text_to_image, reference_edit]
+    note: >-
+      the canonical parent's actual output conditions the derivative. Without
+      reference_edit the family is N independent drawings that will not match.
+  reference_edit:
+    requires: [reference_edit]
+  procedural:
+    requires: []
+    note: not produced by an image provider at all; see representation_strategies
+
+# Capability profiles rather than named vendors, deliberately. A vendor list
+# goes stale silently and this repository would then be asserting capabilities
+# it never measured. Declare your provider by naming the profile it matches, or
+# add your own entry with the capabilities you have verified yourself.
+profiles:
+  external_manual:
+    description: >-
+      A person driving any tool by hand, with results returned through
+      import_candidates.py. Capabilities are whatever that person can do, so
+      nothing is asserted here and no check can pre-empt a failure.
+    text_to_image: true
+    reference_edit: true
+    mask_inpaint: true
+    native_transparency: true
+    seed_exposed: false
+    caveat: >-
+      This profile asserts capability on a human's behalf. It is the right
+      declaration for a real hand-driven workflow and the wrong one for silencing
+      a check.
+
+  text_to_image_only:
+    description: >-
+      Prompt in, image out. No image conditioning, no masking. Families made
+      this way drift, and that is a property of the provider rather than of the
+      prompt.
+    text_to_image: true
+    reference_edit: false
+    mask_inpaint: false
+    native_transparency: false
+    seed_exposed: false
+
+  reference_edit_capable:
+    description: >-
+      Accepts a conditioning image, so canonical-parent derivation works. The
+      minimum profile at which this toolkit's family model is achievable.
+    text_to_image: true
+    reference_edit: true
+    mask_inpaint: false
+    native_transparency: false
+    seed_exposed: true
+
+  full_edit:
+    description: Reference conditioning plus masking plus real alpha.
+    text_to_image: true
+    reference_edit: true
+    mask_inpaint: true
+    native_transparency: true
+    seed_exposed: true
+
+# ---------------------------------------------------------------------------
+# How a shortfall is reported.
+#
+# A missing capability is not a generator defect - the generator implemented the
+# contract correctly and the provider cannot execute it. It is an input
+# condition, caught before spending rather than diagnosed after.
+# ---------------------------------------------------------------------------
+shortfall_handling:
+  missing_required_capability:
+    severity: BLOCKER
+    action: >-
+      Do not generate. Either declare a provider that has the capability, or
+      revise the AssetSpec's derivation_mode to one the declared provider can
+      satisfy - and accept the family coherence that decision costs.
+  missing_native_transparency:
+    severity: MAJOR
+    applies_when: any AssetSpec declares runtime.background_policy transparent
+    action: >-
+      Expect check_alpha.py to fail every candidate. Plan the output strategy
+      (post-processing, a different provider, or an authored cutout step) before
+      generating, rather than spending the retry budget discovering it.
+  missing_mask_inpaint:
+    severity: NOTE
+    action: >-
+      G1_LOCAL_DIMENSION_DELTA cannot be scoped to a region. Budget for full
+      re-rolls per attempt and escalate sooner.
+  missing_seed_exposed:
+    severity: NOTE
+    action: provenance records seed `not_exposed`; candidates are not exactly reproducible

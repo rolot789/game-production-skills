@@ -197,6 +197,22 @@ The value is in *when* this runs, not in how clever it is. The same defect is al
 
 **A transparency failure is `G3_CHANGE_GENERATION_STRATEGY`, not `G1`.** Re-rolling the prompt is the trap here: a target that drew a background will draw one again, and the retry budget is gone before anyone questions the approach. Change how transparency is requested, or change the output strategy.
 
+## Check the provider before spending anything
+
+Provider capability is not a plumbing detail. `derivation_mode: parent_derived` means *make this, posed differently, preserving identity* — an image-conditioned edit. A provider that only does text-to-image cannot do it, and what you get instead is a new drawing per family member, which is exactly the `IDENTITY_DRIFT` this stage exists to prevent.
+
+```bash
+python3 skills/game-asset-generator/scripts/check_provider.py --project-root .
+```
+
+It reads `project.yaml` → `generation.provider` (a profile from `references/providers.yaml`, or capabilities the project declares itself), walks the planned AssetSpecs, and answers with no image budget spent: **can this provider execute this plan?**
+
+- a missing required capability is a `BLOCKER` — and not a generator defect. The contract compiled correctly and the provider cannot execute it. Either declare a provider that has the capability, or revise `derivation_mode` and accept the family coherence that costs.
+- no `native_transparency` against specs wanting a transparent background is a `MAJOR`: `check_alpha.py` will fail every candidate, and knowing that before the retry budget is gone is the whole point.
+- no `mask_inpaint` means `G1_LOCAL_DIMENSION_DELTA` cannot be scoped to a region, so budget for full re-rolls and escalate sooner.
+
+Run it after planning and before step 3 of the compile-then-generate sequence. `generation_budget.stop_conditions` already names provider inadequacy as a reason to stop; this is how you find out before rather than after.
+
 ## When generation happens outside this pipeline
 
 This toolkit ships no image provider. If the runtime has an image capability, use it. If it does not, the honest path is a complete external job — and that path only works if the results can come back.

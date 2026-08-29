@@ -276,3 +276,37 @@ cases:
       example a legitimate end-of-travel frame is further from the canonical
       pose than a frame replaced with a different shape. The verdict belongs to
       whoever can look at the frames, and INSUFFICIENT_EVIDENCE is never a pass.
+
+  # --- representation strategy and provider capability -----------------------
+
+  - id: LIN-019
+    executable: true
+    mutation:
+      type: set_field
+      target: assets/specs/AST-GATE-OPEN.yaml
+      path: [production, strategy]
+      value: shader_or_particle
+    expect:
+      validator: FAIL
+      message_contains: no production path in this toolkit
+    rationale: >-
+      four of the eight strategies have no tooling behind them. Choosing one is
+      a legitimate plan; advancing an asset on one is claiming work no stage
+      performed, and the silent version of that was a dead end at normalization.
+
+  - id: LIN-020
+    executable: false
+    input: >-
+      Our image tool is prompt-only, no img2img. Generate the four gate states.
+    expect:
+      runs: check_provider.py
+      refuses: true
+      cites: reference_edit
+      blames_generator: false
+      offers: [declare a provider with reference_edit, revise derivation_mode and accept the coherence cost]
+    rationale: >-
+      parent_derived needs an image-conditioned edit. A prompt-only provider
+      produces a new drawing per member, which is the IDENTITY_DRIFT the
+      anti-drift machinery exists to prevent - and it is an input condition, not
+      a generator defect. The check exists so this is found before the images,
+      not after.

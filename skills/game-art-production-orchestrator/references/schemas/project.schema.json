@@ -4,33 +4,81 @@
   "title": "project.yaml",
   "description": "Canonical logical-artifact to project-path registry. Every stage resolves logical artifact names through this file when it exists.",
   "type": "object",
-  "required": ["version", "project", "paths", "path_resolution"],
+  "required": [
+    "version",
+    "project",
+    "paths",
+    "path_resolution"
+  ],
   "additionalProperties": true,
   "properties": {
-    "version": { "type": "integer", "const": 3 },
-    "profile": { "type": "string", "enum": ["lite", "full"] },
+    "version": {
+      "type": "integer",
+      "const": 3
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "lite",
+        "full"
+      ]
+    },
     "project": {
       "type": "object",
-      "required": ["id", "name"],
+      "required": [
+        "id",
+        "name"
+      ],
       "additionalProperties": true,
       "properties": {
-        "id": { "type": ["string", "null"] },
-        "name": { "type": ["string", "null"] }
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "engine": {
       "type": "object",
       "description": "Declared engine target. Required by the engine_integration stage.",
-      "required": ["target", "id"],
+      "required": [
+        "target",
+        "id"
+      ],
       "additionalProperties": true,
       "properties": {
-        "id": { "$ref": "_defs.json#/$defs/id" },
+        "id": {
+          "$ref": "_defs.json#/$defs/id"
+        },
         "target": {
           "type": "string",
-          "enum": ["unity", "unreal", "godot", "web-canvas", "web-dom", "custom"]
+          "enum": [
+            "unity",
+            "unreal",
+            "godot",
+            "web-canvas",
+            "web-dom",
+            "custom"
+          ]
         },
-        "pixels_per_unit": { "type": "number", "minimum": 0 },
-        "color_space": { "type": "string", "enum": ["linear", "gamma"] }
+        "pixels_per_unit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "color_space": {
+          "type": "string",
+          "enum": [
+            "linear",
+            "gamma"
+          ]
+        }
       }
     },
     "budgets": {
@@ -38,11 +86,26 @@
       "description": "Performance budgets enforced by the engine_integration stage.",
       "additionalProperties": true,
       "properties": {
-        "max_atlas_dimension": { "type": "integer", "minimum": 1 },
-        "max_texture_memory_mb": { "type": "number", "minimum": 0 },
-        "max_total_asset_bytes": { "type": "integer", "minimum": 0 },
-        "max_single_asset_bytes": { "type": "integer", "minimum": 0 },
-        "max_draw_calls": { "type": "integer", "minimum": 0 }
+        "max_atlas_dimension": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_texture_memory_mb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_total_asset_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_single_asset_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_draw_calls": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "accessibility": {
@@ -50,12 +113,24 @@
       "description": "Accessibility baseline declared by GameSpec and verified downstream.",
       "additionalProperties": true,
       "properties": {
-        "min_contrast_ratio": { "type": "number", "minimum": 1 },
+        "min_contrast_ratio": {
+          "type": "number",
+          "minimum": 1
+        },
         "color_vision_modes": {
           "type": "array",
-          "items": { "type": "string", "enum": ["protanopia", "deuteranopia", "tritanopia"] }
+          "items": {
+            "type": "string",
+            "enum": [
+              "protanopia",
+              "deuteranopia",
+              "tritanopia"
+            ]
+          }
         },
-        "require_non_color_channel": { "type": "boolean" }
+        "require_non_color_channel": {
+          "type": "boolean"
+        }
       }
     },
     "paths": {
@@ -77,16 +152,45 @@
         "invalidation_ledger",
         "rework_queue"
       ],
-      "additionalProperties": { "type": "string" }
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "path_resolution": {
       "type": "object",
-      "required": ["mode"],
+      "required": [
+        "mode"
+      ],
       "additionalProperties": true,
       "properties": {
-        "mode": { "type": "string", "const": "canonical_registry" },
-        "logical_patterns_in_skill_docs": { "type": "boolean" },
-        "rule": { "type": "string" }
+        "mode": {
+          "type": "string",
+          "const": "canonical_registry"
+        },
+        "logical_patterns_in_skill_docs": {
+          "type": "boolean"
+        },
+        "rule": {
+          "type": "string"
+        }
+      }
+    },
+    "generation": {
+      "type": "object",
+      "description": "Which generation provider this project uses. Capability decides whether an AssetSpec's derivation_mode is achievable, so it is declared here and checked before any image budget is spent. Never credentials - see contracts/providers.yaml.",
+      "additionalProperties": true,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "A profile id from contracts/providers.yaml, or a name this project defines alongside its own `capabilities` block."
+        },
+        "capabilities": {
+          "type": "object",
+          "description": "Capabilities verified for this provider, when it is not one of the shipped profiles.",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
       }
     }
   }
