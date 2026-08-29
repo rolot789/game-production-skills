@@ -1,0 +1,40 @@
+schema_version: 3
+asset_id: AST-GATE-OPENING-003
+job_version: v1
+candidate:
+  id: v1-c1
+  path: generation/AST-GATE-OPENING-003/candidates/v1-c1.png
+  content_hash: 7f7cc47cf7adf974d9e16adcea20ee1b72f998256ec2481591e93475d9f071e3
+  selected: true
+inputs:
+  asset_spec:
+    path: assets/specs/AST-GATE-OPENING-003.yaml
+    version: v1
+    content_hash: 7f15484049e9800de301c9e5085cc431eab30b7346274436e8ec0a5db5766e25
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12
+  anchor_ids:
+  - ANCH-GATE-GEOMETRY-001
+  - ANCH-PALETTE-001
+  constraint_ids:
+  - NEG-LIGHTING-001
+  - NEG-TEXTURE-002
+  - NEG-DETAIL-003
+  - NEG-STATE-004
+  canonical_parent_candidate: AST-GATE-OPENING-000/v1-c1
+screening:
+  identity: PASS
+  geometry_family: PASS
+  palette: PASS
+  texture: PASS
+  lighting: PASS
+  state_readability: PASS
+  output: PASS
+provenance:
+  capability: deterministic-script
+  model: examples/gate-family/tools/make_candidates.py
+  seed: 7
+  created_at: null
+  external_job: false

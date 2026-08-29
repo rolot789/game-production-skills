@@ -116,6 +116,12 @@ Dimensions are packed tight by default. Pass `--power-of-two` only when the targ
 
 **The atlas is what is resident at runtime, not the loose sprites.** Pack before measuring: `budget_check.py` counts an atlased member as part of its atlas rather than charging for both, and reports `max_atlas_dimension` as `INSUFFICIENT_EVIDENCE` when no atlas has been packed. It does not substitute the largest sprite dimension for an atlas dimension — that reads green for a reason unrelated to the risk.
 
+## Sprite sheets
+
+A clip packs like any atlas, and the manifest gains a `clips` block: ordered frames with their rects, `fps`, `loop`, `hold_frames`, and total `duration_ms`. That is the difference between an atlas and a sprite sheet an engine can play — the region rects alone do not say which rect is frame 0.
+
+Pack every frame of a clip into one sheet. The packer refuses a partial clip rather than emitting a frame map that indexes frames the sheet does not contain.
+
 ## Budgets
 
 Budgets live in `project.yaml`:

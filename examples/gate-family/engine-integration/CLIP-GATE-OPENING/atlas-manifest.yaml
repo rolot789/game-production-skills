@@ -1,0 +1,114 @@
+schema_version: 3
+atlas_id: CLIP-GATE-OPENING
+target:
+  id: web-main
+  engine: web-canvas
+atlas:
+  path: engine-integration/CLIP-GATE-OPENING/CLIP-GATE-OPENING.png
+  width: 520
+  height: 520
+  content_hash: 3d9d2e8f1e4882befedd7823f064836956698aa3f8942835fa555ec48740ce61
+  estimated_texture_memory_bytes: 1081600
+padding_px: 2
+power_of_two: false
+members:
+- asset_id: AST-GATE-OPENING-000
+  source: normalized/AST-GATE-OPENING-000/runtime/AST-GATE-OPENING-000.png
+  content_hash: a8b60a2f9e6f17389914f968c5e4f5b296e18a3227bea074ff453551a7d9bdc9
+  width: 256
+  height: 256
+  animation:
+    clip_id: CLIP-GATE-OPENING
+    frame_index: 0
+    frame_count: 4
+    fps: 12
+    loop: once
+    canonical_frame: 0
+    hold_frames: 1
+  rect: &id001
+    x: 2
+    y: 2
+    width: 256
+    height: 256
+- asset_id: AST-GATE-OPENING-001
+  source: normalized/AST-GATE-OPENING-001/runtime/AST-GATE-OPENING-001.png
+  content_hash: 78dced9a16c26655f949e661ae17d424eb529c0e19d329a8fa438c78e1a78f2a
+  width: 256
+  height: 256
+  animation:
+    clip_id: CLIP-GATE-OPENING
+    frame_index: 1
+    frame_count: 4
+    fps: 12
+    loop: once
+    canonical_frame: 0
+    hold_frames: 1
+  rect: &id002
+    x: 262
+    y: 2
+    width: 256
+    height: 256
+- asset_id: AST-GATE-OPENING-002
+  source: normalized/AST-GATE-OPENING-002/runtime/AST-GATE-OPENING-002.png
+  content_hash: ea0a580f53908ce9beb92fd0d8f3aa70b20f3dd8134648daaedec3178206857e
+  width: 256
+  height: 256
+  animation:
+    clip_id: CLIP-GATE-OPENING
+    frame_index: 2
+    frame_count: 4
+    fps: 12
+    loop: once
+    canonical_frame: 0
+    hold_frames: 1
+  rect: &id003
+    x: 2
+    y: 262
+    width: 256
+    height: 256
+- asset_id: AST-GATE-OPENING-003
+  source: normalized/AST-GATE-OPENING-003/runtime/AST-GATE-OPENING-003.png
+  content_hash: ca2e9218e84ab4a3236cac1c2ce6d331f51625b06ca3871fb236af30ad707f96
+  width: 256
+  height: 256
+  animation:
+    clip_id: CLIP-GATE-OPENING
+    frame_index: 3
+    frame_count: 4
+    fps: 12
+    loop: once
+    canonical_frame: 0
+    hold_frames: 1
+  rect: &id004
+    x: 262
+    y: 262
+    width: 256
+    height: 256
+clips:
+- clip_id: CLIP-GATE-OPENING
+  frame_count: 4
+  fps: 12
+  loop: once
+  canonical_frame: 0
+  frames:
+  - index: 0
+    asset_id: AST-GATE-OPENING-000
+    rect: *id001
+    hold_frames: 1
+  - index: 1
+    asset_id: AST-GATE-OPENING-001
+    rect: *id002
+    hold_frames: 1
+  - index: 2
+    asset_id: AST-GATE-OPENING-002
+    rect: *id003
+    hold_frames: 1
+  - index: 3
+    asset_id: AST-GATE-OPENING-003
+    rect: *id004
+    hold_frames: 1
+  duration_ms: 333.333
+packer:
+  algorithm: shelf, tallest-first, id-stable
+  tool: skills/game-engine-integrator/scripts/pack_atlas.py
+notes: []

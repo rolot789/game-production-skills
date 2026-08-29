@@ -1,0 +1,101 @@
+schema_version: 3
+asset_id: AST-GATE-OPENING-002
+input_candidate:
+  id: v1-c1
+  path: generation/AST-GATE-OPENING-002/candidates/v1-c1.png
+  content_hash: 40827e71fbb6d5a452bd3698cefdf6167918e5adb42bc640376548585247344b
+  generation_job_version: v1
+  generation_record: generation/AST-GATE-OPENING-002/records/v1-c1.yaml
+asset_spec:
+  path: assets/specs/AST-GATE-OPENING-002.yaml
+  version: v1
+  content_hash: bea384d4f48b556900a16dc7e3d6a06d26011f9cec9107f9533643100bc55ae0
+normalization_policy:
+  id: default-raster-v1
+  version: v1
+operations:
+- op: inspect
+  detail:
+    source_size: &id001
+    - 512
+    - 512
+    mode: RGBA
+- op: trim
+  detail:
+    bbox:
+    - 96
+    - 64
+    - 417
+    - 449
+- op: scale
+  detail:
+    factor: 0.623377
+    from:
+    - 321
+    - 385
+    to:
+    - 200
+    - 240
+    resample: lanczos
+    basis: shared_family_scale
+- op: canvas
+  detail:
+    size:
+    - 256
+    - 256
+    offset:
+    - 28
+    - 8
+    anchor_policy: content_bottom_center
+    padding: 8
+- op: family_align
+  detail:
+    shared_scale: 0.623377
+- op: metadata
+  detail:
+    visual_anchor: &id002
+    - 0.5
+    - 0.5
+    runtime_pivot: &id003
+    - 0.5
+    - 1.0
+    pivot_policy: bottom_center
+- op: export
+  detail:
+    format: PNG
+    path: normalized/AST-GATE-OPENING-002/runtime/AST-GATE-OPENING-002.png
+family_lineage:
+  family_id: FAM-GATE-OPENING
+  canonical_parent: AST-GATE-OPENING-000
+  shared_canvas:
+    width: 256
+    height: 256
+  shared_scale_basis: 0.623377
+geometry:
+  source_size: *id001
+  alpha_bbox:
+  - 96
+  - 64
+  - 417
+  - 449
+  scale_factor: 0.623377
+  visual_anchor: *id002
+  runtime_pivot: *id003
+  collision_origin: null
+output:
+  path: normalized/AST-GATE-OPENING-002/runtime/AST-GATE-OPENING-002.png
+  content_hash: ea0a580f53908ce9beb92fd0d8f3aa70b20f3dd8134648daaedec3178206857e
+  width: 256
+  height: 256
+  mode: RGBA
+  bytes: 33479
+validation:
+  status: pass
+  checks:
+    canvas_matches_spec: PASS
+    content_fits_canvas: PASS
+    padding_respected: PASS
+    no_content_clipped: PASS
+    alpha_mode: PASS
+    aspect_preserved: PASS
+  failures: []

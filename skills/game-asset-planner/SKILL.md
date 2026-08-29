@@ -196,6 +196,28 @@ sha256sum spec/game-spec.yaml
 
 If a required version or hash cannot be produced, emit a blocker and stop. `unknown` is not an acceptable lineage value: every invalidation decision downstream depends on being able to prove whether an input changed, and a record that cannot support that decision is worse than no record because it looks authoritative.
 
+## Animation clips are ordered families
+
+A clip is not a new kind of thing. It is a family with an order: each frame is its own asset sharing `family_id`, and the `animation` block carries the ordering the family model cannot otherwise express.
+
+```yaml
+animation:
+  clip_id: CLIP-GATE-OPENING
+  frame_index: 2          # 0-based position
+  frame_count: 4          # every frame of one clip must agree
+  fps: 12
+  loop: once              # once | loop | pingpong
+  canonical_frame: 0      # the rest pose the others are posed from
+```
+
+Because it is a family, everything family-shaped already applies: canonical-parent derivation, `must_preserve` / `must_change`, one shared scale basis, one shared canvas. Three planning decisions are specific to clips:
+
+- **`must_preserve` includes `runtime_pivot`.** Frames of a clip share one pivot. A pivot that moves between frames is what makes a walk cycle bob, and it is a planning decision before it is a normalization defect.
+- **Frame count is a decomposition decision, not a rendering one.** Too few frames is a stutter that no amount of regeneration fixes; `check_frames.py` reports missing indices as `DECOMPOSITION_DEFECT`, owned here.
+- **Readability is judged at `fps`, not per frame.** A detail that reads in a still can be invisible for 83 ms.
+
+Reuse across clips is a planning decision too: if a clip's first frame is a state the project already has, say so rather than planning a duplicate.
+
 ## Family topology
 
 For related assets, plan a canonical parent whenever identity or geometry should remain stable across variants.

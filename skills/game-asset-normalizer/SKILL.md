@@ -140,6 +140,23 @@ Do not independently maximize each state or direction. A family should preserve 
 
 If a derivative is normalized against a canonical parent, record that lineage.
 
+## Animation frames
+
+Frames of one clip are a family with an order, so they normalize like any family — one shared canvas, one shared scale basis via `--shared-scale`, one pivot policy — and then get checked as a sequence:
+
+```bash
+python3 skills/game-asset-normalizer/scripts/check_frames.py \
+    --project-root . --clip CLIP-GATE-OPENING \
+    --spec assets/specs/AST-GATE-OPENING-000.yaml \
+    --spec assets/specs/AST-GATE-OPENING-001.yaml
+```
+
+It reports the defects that are invisible frame by frame and obvious the moment the clip plays: pivot drift (the bob), canvas mismatch (the jump), content sliding inside a fixed canvas, duplicate frames (the stutter), missing indices, and loop closure when `loop: loop`.
+
+`pivot_stable` is this stage's own defect and defaults to zero tolerance. Frames are placed on one canvas from one scale basis; if the pivot moved, the frames were not normalized as a family.
+
+**`poses_share_a_subject` is measured and deliberately not decided.** Silhouette distance cannot separate a far pose from a redraw — on the worked example a legitimate end-of-travel frame sits further from the canonical pose than a frame replaced with a different shape entirely. The script reports `delta_from_canonical` and leaves the verdict to whoever can compare the frames against the family's `must_preserve` list. A broken invariant there is `IDENTITY_DRIFT`, owned by `game-asset-generator`, not by this stage.
+
 ## Delta rework contract
 
 Canonical rework fields are:

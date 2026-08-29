@@ -58,6 +58,7 @@ stages:
     readiness: null
     artifacts:
     - qc/FAM-GATE/family-qc-summary.yaml
+    - qc/FAM-GATE-OPENING/family-qc-summary.yaml
   engine_integration:
     skill: game-engine-integrator
     status: COMPLETE
@@ -148,7 +149,109 @@ assets:
     root_owner: null
     next_skill: null
     next_action: eligible for SHIPPABLE once the milestone requires it
+  AST-GATE-OPENING-000:
+    lifecycle: QC_APPROVED
+    family_id: FAM-GATE-OPENING
+    priority: P1
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-OPENING-000.yaml
+        version: v1
+        content_hash: 859b000b1e161f2d4a63cc950c03f6b416250f7b6204d1eaa20bdbf5cc0a8542
+      generation_candidate:
+        id: v1-c1
+        content_hash: 6d6a9cf94ecd0216b4c26c72e4295a51743ec1daddab215353676ddca828f377
+      normalization_output:
+        version: v1
+        content_hash: a8b60a2f9e6f17389914f968c5e4f5b296e18a3227bea074ff453551a7d9bdc9
+      qc_report:
+        path: qc/AST-GATE-OPENING-000/qc-report.yaml
+        version: v1
+        content_hash: 10a23f1f7ef9d847c5f235da65f473844d723d486e1be8b2709d9bfb7b338948
+    root_owner: null
+    next_skill: runtime-visual-validator
+    next_action: validate the clip at 12 fps once frame-sequence evidence is modelled
+  AST-GATE-OPENING-001:
+    lifecycle: QC_APPROVED
+    family_id: FAM-GATE-OPENING
+    priority: P1
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-OPENING-001.yaml
+        version: v1
+        content_hash: 027a01257ef6fa60bb757504ddc0b7115166a87c9c33ef2aa62a3eb7115dac9b
+      generation_candidate:
+        id: v1-c1
+        content_hash: 887f7f1dbb8f395bb6747a739192ca943be52a42465ed5712d5553b1e4470c95
+      normalization_output:
+        version: v1
+        content_hash: 78dced9a16c26655f949e661ae17d424eb529c0e19d329a8fa438c78e1a78f2a
+      qc_report:
+        path: qc/AST-GATE-OPENING-001/qc-report.yaml
+        version: v1
+        content_hash: 296b5a86a8d4817a96ef10ec503274ca8f28de253baf9be83924cb06736dff1b
+    root_owner: null
+    next_skill: runtime-visual-validator
+    next_action: validate the clip at 12 fps once frame-sequence evidence is modelled
+  AST-GATE-OPENING-002:
+    lifecycle: QC_APPROVED
+    family_id: FAM-GATE-OPENING
+    priority: P1
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-OPENING-002.yaml
+        version: v1
+        content_hash: bea384d4f48b556900a16dc7e3d6a06d26011f9cec9107f9533643100bc55ae0
+      generation_candidate:
+        id: v1-c1
+        content_hash: 40827e71fbb6d5a452bd3698cefdf6167918e5adb42bc640376548585247344b
+      normalization_output:
+        version: v1
+        content_hash: ea0a580f53908ce9beb92fd0d8f3aa70b20f3dd8134648daaedec3178206857e
+      qc_report:
+        path: qc/AST-GATE-OPENING-002/qc-report.yaml
+        version: v1
+        content_hash: 5f060269ce40b5756df55a4de2631de4a4f3d15aea4eee2b6844d8aa1316b191
+    root_owner: null
+    next_skill: runtime-visual-validator
+    next_action: validate the clip at 12 fps once frame-sequence evidence is modelled
+  AST-GATE-OPENING-003:
+    lifecycle: QC_APPROVED
+    family_id: FAM-GATE-OPENING
+    priority: P1
+    active_versions:
+      asset_spec:
+        path: assets/specs/AST-GATE-OPENING-003.yaml
+        version: v1
+        content_hash: 7f15484049e9800de301c9e5085cc431eab30b7346274436e8ec0a5db5766e25
+      generation_candidate:
+        id: v1-c1
+        content_hash: 7f7cc47cf7adf974d9e16adcea20ee1b72f998256ec2481591e93475d9f071e3
+      normalization_output:
+        version: v1
+        content_hash: ca2e9218e84ab4a3236cac1c2ce6d331f51625b06ca3871fb236af30ad707f96
+      qc_report:
+        path: qc/AST-GATE-OPENING-003/qc-report.yaml
+        version: v1
+        content_hash: 6137015eb8ea7a69ddf90619cc4c1f089699d611be011985949e309796d498bc
+    root_owner: null
+    next_skill: runtime-visual-validator
+    next_action: validate the clip at 12 fps once frame-sequence evidence is modelled
 families:
+  FAM-GATE-OPENING:
+    canonical_asset: AST-GATE-OPENING-000
+    canonical_status: QC_APPROVED
+    systemic_blocker: null
+    clip:
+      id: CLIP-GATE-OPENING
+      frame_count: 4
+      fps: 12
+      loop: once
+      continuity: pass
+    derivatives:
+      AST-GATE-OPENING-001: QC_APPROVED
+      AST-GATE-OPENING-002: QC_APPROVED
+      AST-GATE-OPENING-003: QC_APPROVED
   FAM-GATE:
     canonical_asset: AST-GATE-CLOSED
     canonical_status: RUNTIME_APPROVED

@@ -1,0 +1,17 @@
+schema_version: 3
+asset_id: AST-GATE-OPENING-002
+job_version: v1
+contract: generation/AST-GATE-OPENING-002/generation-contract.yaml
+prompt: generation/AST-GATE-OPENING-002/prompt.md
+budget:
+  candidates_max: 4
+  regeneration_attempts_max: 6
+inputs:
+  asset_spec:
+    path: assets/specs/AST-GATE-OPENING-002.yaml
+    version: v1
+    content_hash: bea384d4f48b556900a16dc7e3d6a06d26011f9cec9107f9533643100bc55ae0
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12

@@ -1,0 +1,44 @@
+clip:
+  id: CLIP-GATE-OPENING
+  frames: 4
+  fps: 12
+  loop: once
+  canonical_frame: 0
+tool: skills/game-asset-normalizer/scripts/check_frames.py
+status: pass
+checks:
+  frame_count_agrees: PASS
+  frames_complete: PASS
+  shared_canvas: PASS
+  pivot_stable: PASS
+  no_duplicate_frames: PASS
+  poses_share_a_subject: INSUFFICIENT_EVIDENCE
+  bbox_drift_bounded: PASS
+  loop_closes: NOT_APPLICABLE
+measured:
+  max_pivot_drift: 0.0
+  inter_frame_delta:
+  - from: AST-GATE-OPENING-000
+    to: AST-GATE-OPENING-001
+    delta: 0.1742
+  - from: AST-GATE-OPENING-001
+    to: AST-GATE-OPENING-002
+    delta: 0.2193
+  - from: AST-GATE-OPENING-002
+    to: AST-GATE-OPENING-003
+    delta: 0.2597
+  delta_from_canonical:
+  - asset_id: AST-GATE-OPENING-001
+    index: 1
+    delta: 0.1742
+  - asset_id: AST-GATE-OPENING-002
+    index: 2
+    delta: 0.3553
+  - asset_id: AST-GATE-OPENING-003
+    index: 3
+    delta: 0.5227
+  max_bbox_origin_drift_px: 0
+notes:
+- 'delta_from_canonical is reported, not judged: silhouette distance cannot separate
+  a far pose from a redraw. Compare the frames against the family''s must_preserve
+  list; a broken invariant is IDENTITY_DRIFT, owner game-asset-generator.'

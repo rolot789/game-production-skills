@@ -209,6 +209,59 @@
         }
       }
     },
+    "animation": {
+      "type": "object",
+      "description": "One frame of an animation clip. A clip is an ordered family: each frame is its own asset sharing family_id, and this block carries the ordering the family model has no other way to express. Frames of one clip must share a canvas, a scale basis, and a runtime_pivot - a pivot that moves between frames is what jitter is.",
+      "required": [
+        "clip_id",
+        "frame_index",
+        "frame_count"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "clip_id": {
+          "$ref": "_defs.json#/$defs/id"
+        },
+        "frame_index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-based position in the clip."
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Total frames in the clip. Every frame of one clip must agree."
+        },
+        "fps": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Playback rate. Readability is judged at this rate, not frame by frame."
+        },
+        "loop": {
+          "type": "string",
+          "enum": [
+            "once",
+            "loop",
+            "pingpong"
+          ],
+          "description": "'loop' additionally requires the last frame to return to the first; 'once' does not, and loop closure is not checked for it."
+        },
+        "canonical_frame": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Index of the rest pose the other frames derive from. Identity drift is measured against this frame, not against the neighbour."
+        },
+        "hold_frames": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "How many playback frames this frame is held for, when the clip is not evenly timed."
+        }
+      }
+    },
     "production": {
       "type": "object",
       "required": [

@@ -119,6 +119,14 @@ Evaluate `HARD_FORBIDDEN`, `SOFT_AVOID`, `BOUNDED`, and `ANTI_REFERENCE`. Conver
 
 Compare identity, silhouette/proportion, projection, relative scale, palette/material family, line/texture treatment, shared geometry, intended state difference, and direction consistency.
 
+### Animation clips
+
+Judge a clip as a clip before judging any single frame of it. The normalizer's frame continuity report is the input: a clip whose `pivot_stable` or `no_duplicate_frames` failed cannot be approved frame by frame, because every frame is individually fine and the sequence is not.
+
+Readability is judged at the clip's `fps`. A frame that reads at leisure can be invisible for 83 ms, and `intended_display_size` alone does not capture that.
+
+`poses_share_a_subject` arrives as `INSUFFICIENT_EVIDENCE` by design — deciding it is QC's job, not the script's. Compare the reported `delta_from_canonical` against the family's `must_preserve` list: a frame that changed something the family declared invariant is `IDENTITY_DRIFT`, routed to `game-asset-generator`.
+
 ### Gameplay readability
 
 At `runtime.intended_display_size` — not at source resolution — verify silhouette recognition, state differentiation, important feature visibility, value/contrast hierarchy, clutter/noise, and distinction from neighboring gameplay categories when intrinsic to the asset.

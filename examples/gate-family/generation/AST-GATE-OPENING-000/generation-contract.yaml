@@ -1,0 +1,24 @@
+schema_version: 3
+asset_id: AST-GATE-OPENING-000
+clip:
+  id: CLIP-GATE-OPENING
+  frame_index: 0
+  frame_count: 4
+semantic_purpose: frame 0 of the gate opening; the panel travels, nothing else does
+geometry:
+  invariant:
+  - outer_frame_geometry
+  - frame_thickness
+  - top_down_projection
+  varies:
+  - panel_height
+family:
+  canonical_parent: null
+  derivation: pose the parent, do not redraw it
+output:
+  background: transparent
+  framing: full asset in frame
+non_goals:
+- new ornament
+- directional shading
+- per-frame grain reseed

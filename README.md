@@ -98,7 +98,7 @@ So the honest description is that this is a production-management and failure-ro
 
 **The anti-drift machinery is specified but not yet measured.** Scoped anchors, the negative-constraint ledger, and the `G0`–`G4` escalation levels are the reason to use this over a prompt file, and they are the part with no executable evidence behind them. `evals/` runs 30 deterministic cases; 23 more are written and need a model harness. See ARCHITECTURE.md §10.
 
-**Coverage is single-frame 2D raster.** The deterministic layer reads and writes PNG. `generated_vector`, `generated_3d`, `procedural`, and `shader_or_particle` are valid planning strategies with no downstream tooling, and there is no animation, spritesheet, tileset, or nine-slice model. Specification, art direction, planning, and failure routing are genre-neutral; the executable layer is not.
+**Coverage is 2D raster.** The deterministic layer reads and writes PNG. Animation clips are modelled and checked (ordered families, frame continuity, sprite sheets with frame maps), but runtime validation of a clip still needs frame-sequence evidence that the evidence model does not yet carry. `generated_vector`, `generated_3d`, `procedural`, and `shader_or_particle` are valid planning strategies with no downstream tooling, and there is no tileset or nine-slice model. Specification, art direction, planning, and failure routing are genre-neutral; the executable layer is narrower.
 
 ## Profiles
 

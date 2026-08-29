@@ -42,6 +42,7 @@ members:
     y: 522
     width: 256
     height: 256
+clips: []
 packer:
   algorithm: shelf, tallest-first, id-stable
   tool: skills/game-engine-integrator/scripts/pack_atlas.py

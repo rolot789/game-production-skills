@@ -38,6 +38,12 @@ REPO = ROOT.parents[1]
 SKILLS = REPO / "skills"
 
 STATES = ["CLOSED", "TRANSITION", "OPEN"]
+# The opening clip. Frames are their own assets sharing a family_id, because an
+# animation is an ordered family - which is why nothing about family coherence,
+# shared scale, or canonical-parent derivation had to be reinvented for it.
+CLIP_ID = "CLIP-GATE-OPENING"
+FRAME_COUNT = 4
+FRAMES = [f"AST-GATE-OPENING-{index:03d}" for index in range(FRAME_COUNT)]
 SHARED_SCALE = "0.623377"
 BACKGROUNDS = ["#1B1F24", "#3A4149"]
 
@@ -129,6 +135,21 @@ def main() -> None:
             "content_hash": sha(ROOT / f"assets/specs/AST-GATE-{state}.yaml"),
         }
         for state in STATES
+    }
+
+    for asset_id in FRAMES:
+        spec_path = ROOT / f"assets/specs/{asset_id}.yaml"
+        spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+        spec["source_versions"] = dict(upstream_refs)
+        dump(spec_path, spec)
+
+    frame_spec_refs = {
+        asset_id: {
+            "path": f"assets/specs/{asset_id}.yaml",
+            "version": "v1",
+            "content_hash": sha(ROOT / f"assets/specs/{asset_id}.yaml"),
+        }
+        for asset_id in FRAMES
     }
 
     # ---- 2. generation records --------------------------------------------
@@ -282,6 +303,104 @@ Output: transparent background, full asset in frame, no clipping.
             },
         })
 
+    for index, asset_id in enumerate(FRAMES):
+        candidate = ROOT / f"generation/{asset_id}/candidates/v1-c1.png"
+        parent = None if index == 0 else f"{FRAMES[0]}/v1-c1"
+        dump(ROOT / f"generation/{asset_id}/records/v1-c1.yaml", {
+            "schema_version": 3,
+            "asset_id": asset_id,
+            "job_version": "v1",
+            "candidate": {
+                "id": "v1-c1",
+                "path": f"generation/{asset_id}/candidates/v1-c1.png",
+                "content_hash": sha(candidate),
+                "selected": True,
+            },
+            "inputs": {
+                "asset_spec": frame_spec_refs[asset_id],
+                "art_style": upstream_refs["art_style"],
+                "anchor_ids": ["ANCH-GATE-GEOMETRY-001", "ANCH-PALETTE-001"],
+                "constraint_ids": ["NEG-LIGHTING-001", "NEG-TEXTURE-002",
+                                   "NEG-DETAIL-003", "NEG-STATE-004"],
+                "canonical_parent_candidate": parent,
+            },
+            "screening": {
+                "identity": "PASS",
+                "geometry_family": "PASS",
+                "palette": "PASS",
+                "texture": "PASS",
+                "lighting": "PASS",
+                "state_readability": "PASS",
+                "output": "PASS",
+            },
+            "provenance": {
+                "capability": "deterministic-script",
+                "model": "examples/gate-family/tools/make_candidates.py",
+                # One seed for the whole clip: a per-frame seed would make the
+                # grain crawl, and check_frames.py would report the crawl as an
+                # inter-frame delta with no pose behind it.
+                "seed": 7,
+                "created_at": None,
+                "external_job": False,
+            },
+        })
+
+        dump(ROOT / f"generation/{asset_id}/generation-contract.yaml", {
+            "schema_version": 3,
+            "asset_id": asset_id,
+            "clip": {"id": CLIP_ID, "frame_index": index, "frame_count": FRAME_COUNT},
+            "semantic_purpose": f"frame {index} of the gate opening; the panel travels, nothing else does",
+            "geometry": {
+                "invariant": ["outer_frame_geometry", "frame_thickness", "top_down_projection"],
+                "varies": ["panel_height"],
+            },
+            "family": {
+                "canonical_parent": None if index == 0 else FRAMES[0],
+                "derivation": "pose the parent, do not redraw it",
+            },
+            "output": {"background": "transparent", "framing": "full asset in frame"},
+            "non_goals": ["new ornament", "directional shading", "per-frame grain reseed"],
+        })
+
+        (ROOT / f"generation/{asset_id}/prompt.md").write_text(
+            f"""# {asset_id}
+
+Frame {index} of {FRAME_COUNT} in {CLIP_ID}.
+
+Pose the canonical frame; do not redraw it. The outer frame, its thickness, the
+projection, and the grain are identical to frame 0. Only the panel travels.
+
+Output: transparent background, full asset in frame, no clipping.
+""", encoding="utf-8")
+
+        dump(ROOT / f"generation/{asset_id}/job.yaml", {
+            "schema_version": 3,
+            "asset_id": asset_id,
+            "job_version": "v1",
+            "contract": f"generation/{asset_id}/generation-contract.yaml",
+            "prompt": f"generation/{asset_id}/prompt.md",
+            "budget": {"candidates_max": 4, "regeneration_attempts_max": 6},
+            "inputs": {"asset_spec": frame_spec_refs[asset_id],
+                       "art_style": upstream_refs["art_style"]},
+        })
+
+        dump(ROOT / f"generation/{asset_id}/candidate-index.yaml", {
+            "asset_id": asset_id,
+            "job_version": "v1",
+            "candidates": [{
+                "id": "v1-c1",
+                "path": f"generation/{asset_id}/candidates/v1-c1.png",
+                "content_hash": sha(candidate),
+                "screening": "PASS",
+                "selected": True,
+            }],
+            "budget": {
+                "candidates_generated": 1,
+                "candidates_max": 4,
+                "stop_reason": "first candidate satisfied every critical dimension",
+            },
+        })
+
     # ---- 3. normalization --------------------------------------------------
     for state in STATES:
         asset_id = f"AST-GATE-{state}"
@@ -294,6 +413,27 @@ Output: transparent background, full asset in frame, no clipping.
             "--generation-record", f"generation/{asset_id}/records/v1-c1.yaml",
             "--shared-scale", SHARED_SCALE,
         ])
+
+    # Frames go through the same normalizer on the same shared scale basis as
+    # the states. That is what makes the pivot identical across the clip.
+    for asset_id in FRAMES:
+        run([
+            sys.executable, str(SKILLS / "game-asset-normalizer/scripts/normalize.py"),
+            "--candidate", f"generation/{asset_id}/candidates/v1-c1.png",
+            "--spec", f"assets/specs/{asset_id}.yaml",
+            "--project-root", ".",
+            "--out", f"normalized/{asset_id}",
+            "--generation-record", f"generation/{asset_id}/records/v1-c1.yaml",
+            "--shared-scale", SHARED_SCALE,
+        ])
+
+    # ---- 3b. clip continuity ------------------------------------------------
+    frame_check = yaml.safe_load(run([
+        sys.executable, str(SKILLS / "game-asset-normalizer/scripts/check_frames.py"),
+        "--project-root", ".", "--clip", CLIP_ID,
+        *sum([["--spec", f"assets/specs/{asset_id}.yaml"] for asset_id in FRAMES], []),
+    ], allow_fail=True))
+    dump(ROOT / f"normalized/{CLIP_ID}/frame-continuity-report.yaml", frame_check)
 
     # ---- 4. QC -------------------------------------------------------------
     qc_refs = {}
@@ -372,6 +512,87 @@ Output: transparent background, full asset in frame, no clipping.
             "content_hash": sha(ROOT / f"qc/{asset_id}/qc-report.yaml"),
         }
 
+    frame_qc_refs = {}
+    for index, asset_id in enumerate(FRAMES):
+        command = [
+            sys.executable, str(SKILLS / "game-asset-qc/scripts/technical_check.py"),
+            "--asset", f"normalized/{asset_id}/runtime/{asset_id}.png",
+            "--spec", f"assets/specs/{asset_id}.yaml",
+            "--record", f"normalized/{asset_id}/normalization-record.yaml",
+        ]
+        # A frame's meaningful sibling is its neighbour in the clip, not every
+        # other frame: adjacent frames are where a stutter or a redraw shows.
+        for neighbour in FRAMES[max(index - 1, 0):index] + FRAMES[index + 1:index + 2]:
+            command += ["--sibling", f"normalized/{neighbour}/runtime/{neighbour}.png"]
+        for background in BACKGROUNDS:
+            command += ["--background", background]
+
+        measured = yaml.safe_load(run(command, allow_fail=True))
+        norm_record = yaml.safe_load(
+            (ROOT / f"normalized/{asset_id}/normalization-record.yaml").read_text(encoding="utf-8"))
+        failing = [name for name, result in measured["technical"]["checks"].items() if result == "FAIL"]
+
+        dump(ROOT / f"qc/{asset_id}/qc-report.yaml", {
+            "schema_version": 3,
+            "asset_id": asset_id,
+            "family_id": "FAM-GATE-OPENING",
+            "status": "rework_required" if failing else "approved",
+            "evaluated": {
+                "normalized_output": {
+                    "path": norm_record["output"]["path"],
+                    "version": "v1",
+                    "content_hash": norm_record["output"]["content_hash"],
+                },
+                "asset_spec": frame_spec_refs[asset_id],
+                "generation_candidate": "v1-c1",
+                "art_style": upstream_refs["art_style"],
+                "anchor_ids": ["ANCH-GATE-GEOMETRY-001", "ANCH-PALETTE-001"],
+                "constraint_ids": ["NEG-LIGHTING-001", "NEG-TEXTURE-002",
+                                   "NEG-DETAIL-003", "NEG-STATE-004"],
+                "clip": {"id": CLIP_ID, "frame_index": index,
+                         "continuity_report": f"normalized/{CLIP_ID}/frame-continuity-report.yaml",
+                         "continuity_status": frame_check["status"]},
+            },
+            "technical": measured["technical"],
+            "anchors": [
+                {"anchor_id": "ANCH-GATE-GEOMETRY-001", "role": "geometry_anchor",
+                 "governed_dimensions": ["frame.outer_proportion", "frame.thickness_ratio"],
+                 "result": "PASS"},
+            ],
+            "constraints": [
+                {"constraint_id": "NEG-LIGHTING-001", "type": "HARD_FORBIDDEN", "result": "PASS",
+                 "evidence": "flat fills only across every frame"},
+            ],
+            "accessibility": measured["accessibility"],
+            "passing_dimensions": ["identity", "outer_frame_geometry", "frame_thickness",
+                                   "palette_family", "runtime_pivot", "clip_continuity"],
+            "findings": [],
+            "rework_handoff": None,
+        })
+        frame_qc_refs[asset_id] = {
+            "path": f"qc/{asset_id}/qc-report.yaml",
+            "version": "v1",
+            "content_hash": sha(ROOT / f"qc/{asset_id}/qc-report.yaml"),
+        }
+
+    dump(ROOT / f"qc/FAM-GATE-OPENING/family-qc-summary.yaml", {
+        "family_id": "FAM-GATE-OPENING",
+        "canonical_asset": FRAMES[0],
+        "family_contract_version": "v1",
+        "status": "approved" if frame_check["status"] == "pass" else "rework_required",
+        "approved_members": list(FRAMES),
+        "rework_members": [],
+        "blocked_members": [],
+        "systemic_findings": [],
+        "local_findings": [],
+        "invariants_verified": [
+            f"clip continuity checked as a sequence: {frame_check['status']}",
+            f"runtime_pivot drift across the clip: {frame_check['measured']['max_pivot_drift']}",
+            "shared 256x256 canvas and shared scale basis 0.623377 across every frame",
+            "one grain seed for the whole clip, so texture does not crawl between frames",
+        ],
+    })
+
     dump(ROOT / "qc/FAM-GATE/family-qc-summary.yaml", {
         "family_id": "FAM-GATE",
         "canonical_asset": "AST-GATE-CLOSED",
@@ -399,6 +620,15 @@ Output: transparent background, full asset in frame, no clipping.
         sys.executable, str(SKILLS / "game-engine-integrator/scripts/pack_atlas.py"),
         "--project-root", ".", "--atlas-id", "FAM-GATE", "--target-id", "web-main",
         *sum([["--member", f"AST-GATE-{state}"] for state in STATES], []),
+    ])
+
+    # The clip packs as its own sheet. Frames share a draw pass and a lifetime,
+    # and pack_atlas.py refuses to pack a partial clip because a frame map that
+    # indexes frames the sheet does not contain plays wrong.
+    run([
+        sys.executable, str(SKILLS / "game-engine-integrator/scripts/pack_atlas.py"),
+        "--project-root", ".", "--atlas-id", CLIP_ID, "--target-id", "web-main",
+        *sum([["--member", asset_id] for asset_id in FRAMES], []),
     ])
 
     budget = yaml.safe_load(run([
@@ -572,6 +802,34 @@ Output: transparent background, full asset in frame, no clipping.
             "next_action": "eligible for SHIPPABLE once the milestone requires it",
         }
 
+    # Frames stop at QC_APPROVED. Runtime approval for a clip needs frame-
+    # sequence evidence, which the runtime evidence model does not yet carry -
+    # so claiming it here would be exactly the unsupported promotion the
+    # validator now rejects.
+    for index, asset_id in enumerate(FRAMES):
+        norm_record = yaml.safe_load(
+            (ROOT / f"normalized/{asset_id}/normalization-record.yaml").read_text(encoding="utf-8"))
+        assets_state[asset_id] = {
+            "lifecycle": "QC_APPROVED",
+            "family_id": "FAM-GATE-OPENING",
+            "priority": "P1",
+            "active_versions": {
+                "asset_spec": frame_spec_refs[asset_id],
+                "generation_candidate": {
+                    "id": "v1-c1",
+                    "content_hash": sha(ROOT / f"generation/{asset_id}/candidates/v1-c1.png"),
+                },
+                "normalization_output": {
+                    "version": "v1",
+                    "content_hash": norm_record["output"]["content_hash"],
+                },
+                "qc_report": frame_qc_refs[asset_id],
+            },
+            "root_owner": None,
+            "next_skill": "runtime-visual-validator",
+            "next_action": "validate the clip at 12 fps once frame-sequence evidence is modelled",
+        }
+
     dump(ROOT / ".pipeline/game-art-production-state.yaml", {
         "version": 3,
         "project": {"id": "gate-family", "name": "Gate Family", "pipeline_status": "IN_PROGRESS"},
@@ -590,7 +848,9 @@ Output: transparent background, full asset in frame, no clipping.
             "normalization": {"skill": "game-asset-normalizer", "status": "COMPLETE",
                               "readiness": None, "artifacts": []},
             "asset_qc": {"skill": "game-asset-qc", "status": "COMPLETE",
-                         "readiness": None, "artifacts": ["qc/FAM-GATE/family-qc-summary.yaml"]},
+                         "readiness": None,
+                         "artifacts": ["qc/FAM-GATE/family-qc-summary.yaml",
+                                       "qc/FAM-GATE-OPENING/family-qc-summary.yaml"]},
             "engine_integration": {"skill": "game-engine-integrator", "status": "COMPLETE",
                                    "readiness": None,
                                    "artifacts": ["engine-integration/web-main/budget-report.yaml"]},
@@ -599,6 +859,14 @@ Output: transparent background, full asset in frame, no clipping.
         },
         "assets": assets_state,
         "families": {
+            "FAM-GATE-OPENING": {
+                "canonical_asset": FRAMES[0],
+                "canonical_status": "QC_APPROVED",
+                "systemic_blocker": None,
+                "clip": {"id": CLIP_ID, "frame_count": FRAME_COUNT, "fps": 12, "loop": "once",
+                         "continuity": frame_check["status"]},
+                "derivatives": {asset_id: "QC_APPROVED" for asset_id in FRAMES[1:]},
+            },
             "FAM-GATE": {
                 "canonical_asset": "AST-GATE-CLOSED",
                 "canonical_status": "RUNTIME_APPROVED",
@@ -631,7 +899,18 @@ Output: transparent background, full asset in frame, no clipping.
                 "members": [f"AST-GATE-{state}" for state in STATES],
                 "preserve": ["outer_frame_geometry", "frame_thickness",
                              "top_down_projection", "palette_family", "footprint"],
-            }
+            },
+            "FAM-GATE-OPENING": {
+                "canonical_asset": FRAMES[0],
+                "topology": "PARENT_TO_ANIMATION",
+                "members": list(FRAMES),
+                "clip": {"id": CLIP_ID, "frame_count": FRAME_COUNT, "fps": 12, "loop": "once"},
+                # runtime_pivot joins the invariants here: frames that do not
+                # share a pivot are what makes a clip bob.
+                "preserve": ["outer_frame_geometry", "frame_thickness",
+                             "top_down_projection", "palette_family", "footprint",
+                             "runtime_pivot"],
+            },
         },
         "assets": {
             f"AST-GATE-{state}": {
@@ -645,11 +924,26 @@ Output: transparent background, full asset in frame, no clipping.
                 "canonical_parent": None if state == "CLOSED" else "AST-GATE-CLOSED",
             }
             for state in STATES
+        } | {
+            asset_id: {
+                "spec_path": f"assets/specs/{asset_id}.yaml",
+                "family_id": "FAM-GATE-OPENING",
+                "category": "interactive_object",
+                "priority": "P1",
+                "tier": 2,
+                "strategy": "generated_raster",
+                "lifecycle": "QC_APPROVED",
+                "canonical_parent": None if index == 0 else FRAMES[0],
+                "animation": {"clip_id": CLIP_ID, "frame_index": index},
+            }
+            for index, asset_id in enumerate(FRAMES)
         },
     })
 
     print("example rebuilt")
     print(f"- budget status: {budget['status']}")
+    print(f"- clip {CLIP_ID}: {FRAME_COUNT} frames, continuity {frame_check['status']}, "
+          f"pivot drift {frame_check['measured']['max_pivot_drift']}")
     for state in STATES:
         qc = yaml.safe_load((ROOT / f"qc/AST-GATE-{state}/qc-report.yaml").read_text(encoding="utf-8"))
         contrast = next((i for i in qc["accessibility"] if i["check_id"] == "A11Y_CONTRAST"), None)

@@ -23,6 +23,26 @@ families:
     - top_down_projection
     - palette_family
     - footprint
+  FAM-GATE-OPENING:
+    canonical_asset: AST-GATE-OPENING-000
+    topology: PARENT_TO_ANIMATION
+    members:
+    - AST-GATE-OPENING-000
+    - AST-GATE-OPENING-001
+    - AST-GATE-OPENING-002
+    - AST-GATE-OPENING-003
+    clip:
+      id: CLIP-GATE-OPENING
+      frame_count: 4
+      fps: 12
+      loop: once
+    preserve:
+    - outer_frame_geometry
+    - frame_thickness
+    - top_down_projection
+    - palette_family
+    - footprint
+    - runtime_pivot
 assets:
   AST-GATE-CLOSED:
     spec_path: assets/specs/AST-GATE-CLOSED.yaml
@@ -51,3 +71,51 @@ assets:
     strategy: generated_raster
     lifecycle: RUNTIME_APPROVED
     canonical_parent: AST-GATE-CLOSED
+  AST-GATE-OPENING-000:
+    spec_path: assets/specs/AST-GATE-OPENING-000.yaml
+    family_id: FAM-GATE-OPENING
+    category: interactive_object
+    priority: P1
+    tier: 2
+    strategy: generated_raster
+    lifecycle: QC_APPROVED
+    canonical_parent: null
+    animation:
+      clip_id: CLIP-GATE-OPENING
+      frame_index: 0
+  AST-GATE-OPENING-001:
+    spec_path: assets/specs/AST-GATE-OPENING-001.yaml
+    family_id: FAM-GATE-OPENING
+    category: interactive_object
+    priority: P1
+    tier: 2
+    strategy: generated_raster
+    lifecycle: QC_APPROVED
+    canonical_parent: AST-GATE-OPENING-000
+    animation:
+      clip_id: CLIP-GATE-OPENING
+      frame_index: 1
+  AST-GATE-OPENING-002:
+    spec_path: assets/specs/AST-GATE-OPENING-002.yaml
+    family_id: FAM-GATE-OPENING
+    category: interactive_object
+    priority: P1
+    tier: 2
+    strategy: generated_raster
+    lifecycle: QC_APPROVED
+    canonical_parent: AST-GATE-OPENING-000
+    animation:
+      clip_id: CLIP-GATE-OPENING
+      frame_index: 2
+  AST-GATE-OPENING-003:
+    spec_path: assets/specs/AST-GATE-OPENING-003.yaml
+    family_id: FAM-GATE-OPENING
+    category: interactive_object
+    priority: P1
+    tier: 2
+    strategy: generated_raster
+    lifecycle: QC_APPROVED
+    canonical_parent: AST-GATE-OPENING-000
+    animation:
+      clip_id: CLIP-GATE-OPENING
+      frame_index: 3

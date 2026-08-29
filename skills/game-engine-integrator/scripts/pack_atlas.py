@@ -144,13 +144,24 @@ def main() -> None:
 
         with Image.open(source) as image:
             width, height = image.size
-        members.append({
+        member = {
             "asset_id": asset_id,
             "source": str(source.relative_to(root)),
             "content_hash": source_hash,
             "width": width,
             "height": height,
-        })
+        }
+
+        # An animation frame carries its ordering in the AssetSpec. Without it
+        # the manifest is a bag of rects and the engine has no way to know which
+        # rect is frame 0 - which is the difference between an atlas and a
+        # usable sprite sheet.
+        spec_path = root / f"{paths.get('asset_specs', 'assets/specs/')}{asset_id}.yaml"
+        if spec_path.exists():
+            animation = (yaml.safe_load(spec_path.read_text(encoding="utf-8")) or {}).get("animation")
+            if animation:
+                member["animation"] = animation
+        members.append(member)
 
     # ---- packing ----------------------------------------------------------
     # Tallest first is what makes shelf packing tight; the id breaks ties so the
@@ -220,6 +231,49 @@ def main() -> None:
         member["rect"] = {"x": x, "y": y, "width": width, "height": height}
     members.sort(key=lambda m: m["asset_id"])
 
+    # Group animation frames into ordered clips with their timing. This is what
+    # makes the manifest a frame map rather than a packing report: engine-target
+    # policy already describes the atlas manifest as "a single sprite sheet plus
+    # a JSON frame map", and until now it was only the first half.
+    clips = {}
+    for member in members:
+        animation = member.get("animation")
+        if not animation:
+            continue
+        clip = clips.setdefault(animation["clip_id"], {
+            "clip_id": animation["clip_id"],
+            "frame_count": animation["frame_count"],
+            "fps": animation.get("fps"),
+            "loop": animation.get("loop", "once"),
+            "canonical_frame": animation.get("canonical_frame"),
+            "frames": [],
+        })
+        clip["frames"].append({
+            "index": animation["frame_index"],
+            "asset_id": member["asset_id"],
+            "rect": member["rect"],
+            "hold_frames": animation.get("hold_frames", 1),
+        })
+
+    for clip in clips.values():
+        clip["frames"].sort(key=lambda frame: frame["index"])
+        declared = clip["frame_count"]
+        present = [frame["index"] for frame in clip["frames"]]
+        if present != list(range(declared)):
+            # Packing an incomplete clip produces a sheet that plays wrong, so
+            # it fails here rather than being discovered in the game.
+            print(
+                f"ATLAS PACK FAILED for {args.atlas_id}: clip {clip['clip_id']} declares "
+                f"{declared} frames but the atlas contains {present}.\n"
+                f"# Pack every frame of a clip together, or the frame map indexes frames "
+                f"that are not in this sheet.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        if clip["fps"]:
+            clip["duration_ms"] = round(
+                sum(frame["hold_frames"] for frame in clip["frames"]) * 1000 / clip["fps"], 3)
+
     manifest = {
         "schema_version": 3,
         "atlas_id": args.atlas_id,
@@ -234,6 +288,7 @@ def main() -> None:
         "padding_px": args.padding,
         "power_of_two": args.power_of_two,
         "members": members,
+        "clips": list(clips.values()),
         "packer": {
             "algorithm": "shelf, tallest-first, id-stable",
             "tool": "skills/game-engine-integrator/scripts/pack_atlas.py",
@@ -262,6 +317,9 @@ def main() -> None:
     occupied = sum(m["width"] * m["height"] for m in members)
     print(f"packed {args.atlas_id}: {len(members)} members  {atlas_w}x{atlas_h}  "
           f"padding {args.padding}px  fill {occupied / (atlas_w * atlas_h):.0%}")
+    for clip in clips.values():
+        print(f"- clip     {clip['clip_id']}  {len(clip['frames'])} frames  "
+              f"{clip['fps']} fps  {clip['loop']}")
     print(f"- atlas    {manifest['atlas']['path']}  {manifest['atlas']['content_hash'][:12]}")
     print(f"- manifest {(out_dir / 'atlas-manifest.yaml').relative_to(root)}")
     for note in notes:

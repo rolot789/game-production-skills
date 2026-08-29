@@ -1,0 +1,79 @@
+schema_version: 3
+asset_id: AST-GATE-OPENING-000
+family_id: FAM-GATE-OPENING
+status: approved
+evaluated:
+  normalized_output:
+    path: normalized/AST-GATE-OPENING-000/runtime/AST-GATE-OPENING-000.png
+    version: v1
+    content_hash: a8b60a2f9e6f17389914f968c5e4f5b296e18a3227bea074ff453551a7d9bdc9
+  asset_spec:
+    path: assets/specs/AST-GATE-OPENING-000.yaml
+    version: v1
+    content_hash: 859b000b1e161f2d4a63cc950c03f6b416250f7b6204d1eaa20bdbf5cc0a8542
+  generation_candidate: v1-c1
+  art_style:
+    path: art/art-style.yaml
+    version: v2
+    content_hash: cab11ef384ce40c151c7ee3f6ed93e6cb2af14a2e31eed28c945e0b01ce3ea12
+  anchor_ids:
+  - ANCH-GATE-GEOMETRY-001
+  - ANCH-PALETTE-001
+  constraint_ids:
+  - NEG-LIGHTING-001
+  - NEG-TEXTURE-002
+  - NEG-DETAIL-003
+  - NEG-STATE-004
+  clip:
+    id: CLIP-GATE-OPENING
+    frame_index: 0
+    continuity_report: normalized/CLIP-GATE-OPENING/frame-continuity-report.yaml
+    continuity_status: pass
+technical:
+  tool: skills/game-asset-qc/scripts/technical_check.py
+  status: pass
+  checks:
+    canvas_dimensions: PASS
+    alpha_mode: PASS
+    has_transparency: PASS
+    content_present: PASS
+    no_edge_clipping: PASS
+    padding_respected: PASS
+    lineage_hash_matches: PASS
+    normalization_validation_passed: PASS
+anchors:
+- anchor_id: ANCH-GATE-GEOMETRY-001
+  role: geometry_anchor
+  governed_dimensions:
+  - frame.outer_proportion
+  - frame.thickness_ratio
+  result: PASS
+constraints:
+- constraint_id: NEG-LIGHTING-001
+  type: HARD_FORBIDDEN
+  result: PASS
+  evidence: flat fills only across every frame
+accessibility:
+- check_id: A11Y_CONTRAST
+  result: PASS
+  measured: 4.23
+  evidence: alpha-weighted mean (194, 160, 122) against 2 declared background(s),
+    floor 3.0
+- check_id: A11Y_COLOR_VISION
+  result: PASS
+  measured: 37.83
+  evidence: 'RMS luminance separation from AST-GATE-OPENING-001 at 64x64 under protanopia
+    simulation over #3A4149, floor 8.0'
+- check_id: A11Y_NON_COLOR_CHANNEL
+  result: PASS
+  measured: shape,motion
+  evidence: state.encoding_channels declares a non-hue channel
+passing_dimensions:
+- identity
+- outer_frame_geometry
+- frame_thickness
+- palette_family
+- runtime_pivot
+- clip_continuity
+findings: []
+rework_handoff: null

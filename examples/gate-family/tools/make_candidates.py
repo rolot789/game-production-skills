@@ -55,7 +55,13 @@ def grain(image: Image.Image, seed: int, amount: int = 7) -> None:
             )
 
 
-def gate(state: str, seed: int) -> Image.Image:
+# The opening clip, as panel-travel fractions. Frame 0 is the canonical pose:
+# identity drift inside the clip is measured against it, not against a
+# neighbour, so one bad in-between cannot drag the reference with it.
+OPENING_FRACTIONS = [0.92, 0.66, 0.39, 0.14]
+
+
+def gate(state: str, seed: int, fraction: float | None = None) -> Image.Image:
     size = 512
     image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
@@ -75,7 +81,11 @@ def gate(state: str, seed: int) -> Image.Image:
     opening_height = opening[3] - opening[1]
 
     # State is carried by panel geometry - a shape channel, not a hue channel.
-    if state == "closed":
+    if fraction is not None:
+        # An animation frame is the same drawing posed differently: identical
+        # frame, identical bolts, only the panel travels.
+        panel_bottom = opening[1] + int(opening_height * fraction)
+    elif state == "closed":
         panel_bottom = opening[3]
     elif state == "transition":
         panel_bottom = opening[1] + int(opening_height * 0.45)
@@ -103,6 +113,17 @@ def main() -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / "v1-c1.png"
         gate(state, seed=index).save(path, format="PNG", optimize=True)
+        print(f"wrote {path.relative_to(ROOT)}")
+
+    # The opening clip. Every frame shares the seed, because a per-frame grain
+    # seed would make the texture crawl - which check_frames.py would then
+    # report as an inter-frame delta with no pose behind it.
+    for index, fraction in enumerate(OPENING_FRACTIONS):
+        asset_id = f"AST-GATE-OPENING-{index:03d}"
+        out_dir = ROOT / "generation" / asset_id / "candidates"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / "v1-c1.png"
+        gate("opening", seed=7, fraction=fraction).save(path, format="PNG", optimize=True)
         print(f"wrote {path.relative_to(ROOT)}")
 
 

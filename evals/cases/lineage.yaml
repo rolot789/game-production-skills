@@ -214,3 +214,65 @@ cases:
       pruning is allowed to lose candidate pixels, never the ones something
       still depends on. The selected candidate and anything a normalization
       record consumed are exactly what retention must keep.
+
+  # --- animation clips ------------------------------------------------------
+
+  - id: LIN-015
+    executable: true
+    mutation:
+      type: set_field
+      target: normalized/AST-GATE-OPENING-002/normalization-record.yaml
+      path: [output, content_hash]
+      value: "0000000000000000000000000000000000000000000000000000000000000000"
+    expect:
+      validator: FAIL
+      message_contains: content_hash mismatch
+    rationale: >-
+      a clip frame is an asset like any other. Nothing about being frame 2 of 4
+      exempts it from the lineage rules, which is the point of modelling a clip
+      as an ordered family rather than as a new kind of thing.
+
+  - id: LIN-016
+    executable: true
+    mutation:
+      type: set_field
+      target: qc/AST-GATE-OPENING-001/qc-report.yaml
+      path: [status]
+      value: rework_required
+    expect:
+      validator: FAIL
+      message_contains: does not promote
+    rationale: >-
+      the pipeline state has every frame at QC_APPROVED. One frame failing QC
+      breaks that claim for that frame, and a clip is only as approved as its
+      worst frame.
+
+  - id: LIN-017
+    executable: false
+    input: >-
+      The walk cycle looks like the character is bobbing up and down. Fix it.
+    expect:
+      runs: check_frames.py
+      diagnoses: pivot drift across frames
+      reason_code: FAMILY_ALIGNMENT_DEFECT
+      root_owner: game-asset-normalizer
+      not_skills: [game-asset-generator]
+    rationale: >-
+      bobbing is the canonical symptom of a pivot that moves between frames. It
+      looks like an art problem and is a normalization problem; routing it to
+      the generator produces regenerations that cannot fix it.
+
+  - id: LIN-018
+    executable: false
+    input: >-
+      check_frames says poses_share_a_subject is INSUFFICIENT_EVIDENCE. Is the
+      clip fine?
+    expect:
+      treats_as: undecided, not passing
+      compares_against: family.must_preserve
+      invents_threshold: false
+    rationale: >-
+      silhouette distance cannot separate a far pose from a redraw - on this
+      example a legitimate end-of-travel frame is further from the canonical
+      pose than a frame replaced with a different shape. The verdict belongs to
+      whoever can look at the frames, and INSUFFICIENT_EVIDENCE is never a pass.

@@ -1,0 +1,30 @@
+asset_id: AST-GATE-OPENING-003
+source_size:
+- 512
+- 512
+alpha_bbox:
+- 96
+- 64
+- 417
+- 449
+trimmed_size:
+- 321
+- 385
+scale_factor: 0.623377
+placed_size:
+- 200
+- 240
+placement_offset:
+- 28
+- 8
+canvas:
+- 256
+- 256
+padding: 8
+visual_anchor:
+- 0.5
+- 0.5
+runtime_pivot:
+- 0.5
+- 1.0
+collision_origin: null
