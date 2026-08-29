@@ -65,6 +65,11 @@ paths:
   engine_integration: engine-integration/
   runtime_validation: runtime-validation/
 
+  # Superseded artifacts are archived here before being overwritten, which is
+  # what makes append-only provenance true. Optional: omit it and archiving is
+  # simply not used. See contracts/toolkit-contract.yaml -> retention.
+  history: .pipeline/history/
+
   pipeline_state: .pipeline/game-art-production-state.yaml
   handoffs: .pipeline/handoffs/
   invalidation_ledger: .pipeline/invalidation-ledger.yaml

@@ -197,3 +197,20 @@ cases:
       selection, and every visual screening verdict, has to come from actually
       looking - a record that says identity PASSED because a script wrote it is
       a fabricated verdict that QC will later trust.
+
+  # --- retention ----------------------------------------------------------
+
+  - id: LIN-014
+    executable: true
+    mutation:
+      type: set_field
+      target: generation/AST-GATE-OPEN/records/v1-c1.yaml
+      path: [candidate, pruned]
+      value: true
+    expect:
+      validator: FAIL
+      message_contains: pruned and selected
+    rationale: >-
+      pruning is allowed to lose candidate pixels, never the ones something
+      still depends on. The selected candidate and anything a normalization
+      record consumed are exactly what retention must keep.

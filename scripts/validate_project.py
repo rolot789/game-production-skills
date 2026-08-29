@@ -305,6 +305,7 @@ def main() -> None:
 
     # --- generation records -------------------------------------------------
     generation_root = resolve(project_dir, paths, "generation")
+    pruned_candidates: dict[str, tuple[str, str]] = {}
     for record in collect(generation_root, "*.yaml"):
         if record.parent.name != "records":
             continue
@@ -312,7 +313,18 @@ def main() -> None:
         doc = load_yaml(record)
         if check_schema(report, store, doc, "generation-record.schema.json", label):
             candidate = doc["candidate"]
-            verify_hash(report, project_dir, candidate["path"], candidate["content_hash"], label)
+            if candidate.get("pruned"):
+                # The record outlives the pixels on purpose, so the bytes are not
+                # required - but pruning something still in use would silently
+                # break the lineage the record claims.
+                if candidate.get("selected"):
+                    report.error(
+                        f"{label}: candidate {candidate['id']} is marked pruned and selected; "
+                        f"the selected candidate's bytes must be retained"
+                    )
+                pruned_candidates[candidate["content_hash"]] = (label, candidate["id"])
+            else:
+                verify_hash(report, project_dir, candidate["path"], candidate["content_hash"], label)
 
     # --- normalization records ---------------------------------------------
     normalized_root = resolve(project_dir, paths, "normalized")
@@ -323,11 +335,19 @@ def main() -> None:
         if check_schema(report, store, doc, "normalization-record.schema.json", label):
             normalized_by_asset[doc["asset_id"]] = doc
             verify_hash(report, project_dir, doc["output"]["path"], doc["output"]["content_hash"], label)
-            verify_hash(
-                report, project_dir,
-                doc["input_candidate"]["path"], doc["input_candidate"]["content_hash"],
-                f"{label} (input candidate)",
-            )
+            candidate_hash = doc["input_candidate"]["content_hash"]
+            if candidate_hash in pruned_candidates:
+                origin, candidate_id = pruned_candidates[candidate_hash]
+                report.error(
+                    f"{label}: consumes candidate {candidate_id}, which {origin} marks as pruned. "
+                    f"A candidate a normalization record depends on must be retained"
+                )
+            else:
+                verify_hash(
+                    report, project_dir,
+                    doc["input_candidate"]["path"], doc["input_candidate"]["content_hash"],
+                    f"{label} (input candidate)",
+                )
             if doc["validation"]["status"] != "pass":
                 report.warn(f"{label}: normalization validation status is {doc['validation']['status']}")
 
@@ -474,6 +494,19 @@ def main() -> None:
                 f"    active output     {norm['output']['content_hash']}\n"
                 f"    → this runtime approval does not apply to the current asset"
             )
+
+    # --- history ledger -----------------------------------------------------
+    # Append-only provenance is only provenance if the archived bytes are still
+    # the bytes that were archived.
+    history = project_dir / paths.get("history", ".pipeline/history/")
+    ledger_path = history / "ledger.yaml"
+    archived = 0
+    if ledger_path.exists():
+        ledger = load_yaml(ledger_path) or {}
+        for entry in ledger.get("entries") or []:
+            archived += 1
+            verify_hash(report, project_dir, entry["archive_path"], entry["superseded_hash"],
+                        f"history ledger entry for {entry['artifact']}")
 
     # --- lifecycle promotion evidence --------------------------------------
     profile_doc = load_profile(profile)
@@ -656,6 +689,10 @@ def main() -> None:
     print(f"- normalized assets: {len(normalized_by_asset)}")
     print(f"- qc reports: {len(qc_by_asset)}")
     print(f"- runtime reports: {len(runtime_by_asset)}")
+    if pruned_candidates:
+        print(f"- pruned candidates: {len(pruned_candidates)} (records retained)")
+    if archived:
+        print(f"- archived supersessions: {archived}")
     for warning in report.warnings:
         print(f"! {warning}")
 

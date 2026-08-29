@@ -564,6 +564,53 @@ rework_budget:
     - same_route_repeats is exhausted for one subject and reason_code
   recorded_in: .pipeline/game-art-production-state.yaml -> assets.<id>.rework_attempts
 
+# ---------------------------------------------------------------------------
+# Retention. What is kept, what is superseded, and what may be deleted.
+#
+# This section exists because the toolkit's stated principle - provenance is
+# append-only even when artifacts are superseded - and its file layout pointed
+# in opposite directions. Normalization records, QC reports, and runtime
+# reports live at fixed per-asset paths and are overwritten on rework, while
+# generation candidates accumulated forever with no policy at all.
+#
+# Both halves of that are now explicit rather than accidental.
+# ---------------------------------------------------------------------------
+retention:
+  active_artifact:
+    rule: >-
+      Exactly one active version of each derived artifact exists, at the path
+      the project registry resolves. This is deliberate: every stage resolves
+      artifacts by logical name, and a versioned filename would make "the
+      current QC report" a search rather than a lookup.
+  superseded_artifact:
+    rule: >-
+      An artifact about to be overwritten by different content is archived
+      first. Append-only provenance is satisfied by the history ledger, not by
+      the active path.
+    archived_to: .pipeline/history/
+    ledger: .pipeline/history/ledger.yaml
+    tool: skills/game-art-production-orchestrator/scripts/retain.py
+    rule_detail: >-
+      Archiving is triggered by a content change, not by every write. Rewriting
+      an artifact with identical bytes supersedes nothing and archives nothing.
+  generation_candidates:
+    keep_always:
+      - the selected candidate for the active job version
+      - any candidate a normalization record names as its input
+    keep_recent_per_job: 2
+    prunable: >-
+      Every other candidate image. The generation record is never pruned - it
+      is the provenance - so a pruned candidate keeps its id, hash, screening
+      result, and rejection reason after the pixels are gone.
+    marking: >-
+      A pruned candidate's record sets candidate.pruned true. validate_project
+      then stops requiring the bytes on disk, and rejects any record that is
+      both pruned and selected or still referenced downstream.
+    rationale: >-
+      At the default budget one asset can produce 24 candidate images across
+      its rework transactions. Nothing referenced them and nothing removed
+      them, so a 40-asset project accumulated roughly a thousand dead files.
+
 accessibility:
   required_checks:
     - id: A11Y_CONTRAST

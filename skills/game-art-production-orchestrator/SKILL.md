@@ -51,7 +51,7 @@ If `project.yaml` exists, its `paths` registry is the canonical artifact path ma
 5. Symptom location, root ownership, invalidation scope, and revalidation scope are separate decisions.
 6. Invalidate the smallest descendant surface that can no longer be trusted.
 7. `partial_validation_only` never promotes runtime readiness.
-8. Provenance/history is append-only even when artifacts are superseded.
+8. Provenance/history is append-only even when artifacts are superseded — which the *active* path cannot provide, because exactly one version of each derived artifact lives where the registry resolves it. Archive to `.pipeline/history/` with `scripts/retain.py` **before** overwriting, and prune candidate images with the same tool; see `references/toolkit-contract.yaml` → `retention`.
 9. Descendant approvals cannot survive changed upstream identity unless effective input equivalence is proven.
 
 ## Source-of-truth hierarchy
