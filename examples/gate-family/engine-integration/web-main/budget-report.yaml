@@ -8,9 +8,11 @@ measured:
   total_asset_bytes: 110140
   largest_asset_bytes: 47936
   largest_asset_id: AST-GATE-CLOSED
-  atlas_count: 0
-  max_atlas_dimension: 256
-  estimated_texture_memory_mb: 0.75
+  max_sprite_dimension: 256
+  atlas_count: 1
+  atlased_asset_count: 3
+  max_atlas_dimension: 780
+  estimated_texture_memory_mb: 0.774
 budgets:
   max_atlas_dimension: 2048
   max_texture_memory_mb: 64

@@ -57,8 +57,8 @@ def main() -> None:
 
     total_bytes = 0
     largest_bytes, largest_id = 0, None
-    max_dimension = 0
-    texture_bytes = 0
+    max_sprite_dimension = 0
+    sprite_texture_bytes = {}
 
     for asset in assets:
         size = asset.stat().st_size
@@ -67,16 +67,43 @@ def main() -> None:
             largest_bytes, largest_id = size, asset.stem
         with Image.open(asset) as image:
             width, height = image.size
-        max_dimension = max(max_dimension, width, height)
-        texture_bytes += width * height * 4
+        max_sprite_dimension = max(max_sprite_dimension, width, height)
+        sprite_texture_bytes[asset.stem] = width * height * 4
+
+    # Real atlases, measured from the manifests pack_atlas.py wrote.
+    #
+    # This field used to hold the largest single *sprite* dimension while being
+    # compared against the atlas budget, so it passed for a reason unrelated to
+    # the risk it names. A budget check that reads green for the wrong reason is
+    # worse than no check, so an absent atlas is now INSUFFICIENT_EVIDENCE.
+    integration_root = root / paths.get("engine_integration", "engine-integration/")
+    atlases = []
+    atlased_members: set[str] = set()
+    if integration_root.exists():
+        for manifest_path in sorted(integration_root.rglob("atlas-manifest.yaml")):
+            manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+            atlases.append(manifest)
+            atlased_members.update(m["asset_id"] for m in manifest.get("members") or [])
+
+    max_atlas_dimension = max(
+        (max(a["atlas"]["width"], a["atlas"]["height"]) for a in atlases), default=None)
+
+    # A member that is packed is resident as part of its atlas, not separately.
+    # Counting both would double-charge exactly the assets atlasing exists to
+    # make cheaper.
+    texture_bytes = sum(a["atlas"]["width"] * a["atlas"]["height"] * 4 for a in atlases)
+    texture_bytes += sum(size for asset_id, size in sprite_texture_bytes.items()
+                         if asset_id not in atlased_members)
 
     measured = {
         "asset_count": len(assets),
         "total_asset_bytes": total_bytes,
         "largest_asset_bytes": largest_bytes,
         "largest_asset_id": largest_id,
-        "atlas_count": 0,
-        "max_atlas_dimension": max_dimension,
+        "max_sprite_dimension": max_sprite_dimension,
+        "atlas_count": len(atlases),
+        "atlased_asset_count": len(atlased_members),
+        "max_atlas_dimension": max_atlas_dimension,
         "estimated_texture_memory_mb": round(texture_bytes / (1024 * 1024), 3),
     }
 
@@ -84,7 +111,9 @@ def main() -> None:
     findings: list[dict] = []
 
     def compare(check_id: str, actual, limit, label: str, reason_code: str) -> None:
-        if limit is None:
+        if limit is None or actual is None:
+            # Either the budget was never declared or nothing was measured
+            # against it. Both are missing evidence, and neither is a pass.
             checks[check_id] = "INSUFFICIENT_EVIDENCE"
             return
         if actual <= limit:

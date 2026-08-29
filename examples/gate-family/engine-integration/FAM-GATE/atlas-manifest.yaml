@@ -1,0 +1,48 @@
+schema_version: 3
+atlas_id: FAM-GATE
+target:
+  id: web-main
+  engine: web-canvas
+atlas:
+  path: engine-integration/FAM-GATE/FAM-GATE.png
+  width: 260
+  height: 780
+  content_hash: cf5e2035036f91844627cf194cdc1716b2a2474de3d47a5afb21620880553cdc
+  estimated_texture_memory_bytes: 811200
+padding_px: 2
+power_of_two: false
+members:
+- asset_id: AST-GATE-CLOSED
+  source: normalized/AST-GATE-CLOSED/runtime/AST-GATE-CLOSED.png
+  content_hash: 00b392e4898137ed16f77013583506f8ab2ea9f48c3e04d555de63bb5b98543e
+  width: 256
+  height: 256
+  rect:
+    x: 2
+    y: 2
+    width: 256
+    height: 256
+- asset_id: AST-GATE-OPEN
+  source: normalized/AST-GATE-OPEN/runtime/AST-GATE-OPEN.png
+  content_hash: f99f385bb8578a47132870166286448555465e59e2d740f1e973b9f320c7a403
+  width: 256
+  height: 256
+  rect:
+    x: 2
+    y: 262
+    width: 256
+    height: 256
+- asset_id: AST-GATE-TRANSITION
+  source: normalized/AST-GATE-TRANSITION/runtime/AST-GATE-TRANSITION.png
+  content_hash: 8a77e22e0cb95352193bf45e0ba97ba84f63a5ab65be3614f35ff9d64bec5112
+  width: 256
+  height: 256
+  rect:
+    x: 2
+    y: 522
+    width: 256
+    height: 256
+packer:
+  algorithm: shelf, tallest-first, id-stable
+  tool: skills/game-engine-integrator/scripts/pack_atlas.py
+notes: []

@@ -100,9 +100,21 @@ Group by:
 
 Do not group by category name alone. "All the icons" is a filing decision, not a rendering decision.
 
-Emit `atlas-manifest.yaml` recording members, their placement, the atlas dimension, and the `content_hash` of every source asset so a changed asset invalidates the atlas.
+Decide membership, then run the packer. Placement, dimensions, padding, and hashing are arithmetic:
 
-Padding between atlas members must be at least 2 px when the engine filters bilinearly, or neighbouring pixels bleed at non-integer scales. This is the single most common atlas defect.
+```bash
+python3 skills/game-engine-integrator/scripts/pack_atlas.py \
+    --project-root . --atlas-id FAM-GATE \
+    --member AST-GATE-CLOSED --member AST-GATE-TRANSITION --member AST-GATE-OPEN
+```
+
+It refuses any member whose QC report does not promote, or whose QC report evaluated a different `content_hash` than the file on disk — an atlas built from assets QC never described is an atlas of unverified pixels. It emits `atlas-manifest.yaml` with each member's placement rect and source `content_hash`, so a changed asset invalidates the atlas that contains it.
+
+Padding defaults to 2 px and should not go below it: under bilinear filtering at non-integer scale, neighbouring members bleed. This is the single most common atlas defect.
+
+Dimensions are packed tight by default. Pass `--power-of-two` only when the target needs it — compressed texture formats and older GL do; a modern 2D web target does not, and rounding up can more than double the sheet.
+
+**The atlas is what is resident at runtime, not the loose sprites.** Pack before measuring: `budget_check.py` counts an atlased member as part of its atlas rather than charging for both, and reports `max_atlas_dimension` as `INSUFFICIENT_EVIDENCE` when no atlas has been packed. It does not substitute the largest sprite dimension for an atlas dimension — that reads green for a reason unrelated to the risk.
 
 ## Budgets
 

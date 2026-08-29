@@ -372,6 +372,32 @@ def main() -> None:
             scan_aliases(report, doc.get("rework_handoff"), label)
             budget_reports.append(doc)
 
+    # An atlas is a derived artifact whose inputs are the normalized outputs it
+    # packed. A member whose bytes have changed since packing means the atlas
+    # ships pixels that no longer exist upstream.
+    for record in collect(integration_root, "atlas-manifest.yaml"):
+        label = str(record.relative_to(project_dir))
+        doc = load_yaml(record)
+        if not check_schema(report, store, doc, "atlas-manifest.schema.json", label):
+            continue
+        verify_hash(report, project_dir, doc["atlas"]["path"], doc["atlas"]["content_hash"], label)
+        for member in doc["members"]:
+            verify_hash(report, project_dir, member["source"], member["content_hash"],
+                        f"{label} (member {member['asset_id']})")
+            norm = normalized_by_asset.get(member["asset_id"])
+            if norm and member["content_hash"] != norm["output"]["content_hash"]:
+                report.error(
+                    f"{label}: member {member['asset_id']} was packed from a normalized output "
+                    f"that is no longer active\n"
+                    f"    packed {member['content_hash']}\n"
+                    f"    active {norm['output']['content_hash']}"
+                )
+        if doc["padding_px"] < 2:
+            report.warn(
+                f"{label}: padding is {doc['padding_px']} px; below 2 px neighbouring members "
+                f"bleed under bilinear filtering at non-integer scale"
+            )
+
     integration_plans: list[dict] = []
     for record in collect(integration_root, "integration-plan.yaml"):
         label = str(record.relative_to(project_dir))
@@ -559,10 +585,11 @@ def main() -> None:
     # per-stage status to gate on. They become required once the project has
     # actually begun: any planned asset, or any stage reported finished.
     started = bool(asset_lifecycles) or "COMPLETE" in stage_status.values()
-    target_ids = sorted(
-        p.name for p in (integration_root.iterdir() if integration_root and integration_root.exists() else [])
-        if p.is_dir()
-    )
+    # Engine targets come from project.yaml, not from listing the integration
+    # directory: atlases live there too, under their own ids, and a directory
+    # listing cannot tell an atlas apart from a target.
+    declared_target = (project.get("engine") or {}).get("id")
+    target_ids = [declared_target] if declared_target else []
 
     for stage, artifacts in profile_artifacts(profile_doc).items():
         if stage != "*" and stage not in required_stages:

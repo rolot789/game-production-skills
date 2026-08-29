@@ -168,3 +168,16 @@ cases:
       the mixed-version case. QC and runtime can each be internally consistent
       while describing different generations of the same asset, so the runtime
       binding needs checking independently of the QC binding.
+
+  - id: LIN-012
+    executable: true
+    mutation:
+      type: tamper_asset
+      target: engine-integration/FAM-GATE/FAM-GATE.png
+    expect:
+      validator: FAIL
+      message_contains: content_hash mismatch
+    rationale: >-
+      an atlas is a derived artifact like any other. If its bytes can drift from
+      the manifest that describes it, the region rects the engine imports may
+      not point at what the manifest says they do.

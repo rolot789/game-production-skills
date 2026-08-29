@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas-manifest.schema.json",
+  "title": "engine-integration/<atlas-id>/atlas-manifest.yaml",
+  "description": "A packed texture atlas: its dimensions, its padding, and the exact source asset each member was packed from. Produced by skills/game-engine-integrator/scripts/pack_atlas.py. Every member is pinned by content_hash so a changed normalized output invalidates the atlas that contains it.",
+  "type": "object",
+  "required": ["schema_version", "atlas_id", "target", "atlas", "padding_px", "members"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 3 },
+    "atlas_id": { "$ref": "_defs.json#/$defs/id" },
+    "target": {
+      "type": "object",
+      "required": ["id", "engine"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "_defs.json#/$defs/id" },
+        "engine": { "type": "string", "enum": ["unity", "unreal", "godot", "web-canvas", "web-dom", "custom"] }
+      }
+    },
+    "atlas": {
+      "type": "object",
+      "required": ["path", "width", "height", "content_hash"],
+      "additionalProperties": true,
+      "properties": {
+        "path": { "type": "string" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "content_hash": { "$ref": "_defs.json#/$defs/contentHash" },
+        "estimated_texture_memory_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "padding_px": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Gap reserved around every member. Below 2 px, bilinear filtering samples a neighbour at non-integer scale and members bleed."
+    },
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "source", "content_hash", "rect"],
+        "additionalProperties": true,
+        "properties": {
+          "asset_id": { "$ref": "_defs.json#/$defs/id" },
+          "source": { "type": "string" },
+          "content_hash": { "$ref": "_defs.json#/$defs/contentHash" },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "rect": {
+            "type": "object",
+            "required": ["x", "y", "width", "height"],
+            "additionalProperties": false,
+            "properties": {
+              "x": { "type": "integer", "minimum": 0 },
+              "y": { "type": "integer", "minimum": 0 },
+              "width": { "type": "integer", "minimum": 1 },
+              "height": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "packer": { "type": "object", "additionalProperties": true },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

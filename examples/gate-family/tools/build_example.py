@@ -391,6 +391,16 @@ Output: transparent background, full asset in frame, no clipping.
     })
 
     # ---- 5. engine integration --------------------------------------------
+    # The atlas is packed before the budget is measured, because the atlas is
+    # what is actually resident at runtime. Measuring the loose sprites instead
+    # under-reports texture memory and leaves max_atlas_dimension describing
+    # nothing.
+    run([
+        sys.executable, str(SKILLS / "game-engine-integrator/scripts/pack_atlas.py"),
+        "--project-root", ".", "--atlas-id", "FAM-GATE", "--target-id", "web-main",
+        *sum([["--member", f"AST-GATE-{state}"] for state in STATES], []),
+    ])
+
     budget = yaml.safe_load(run([
         sys.executable, str(SKILLS / "game-engine-integrator/scripts/budget_check.py"),
         "--project-root", ".", "--target-id", "web-main",
