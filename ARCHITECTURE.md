@@ -35,13 +35,19 @@ Each stage narrows ambiguity, and each one refuses to invent what an earlier sta
 
 ## 3. Deterministic work belongs in code
 
-Three stages carry scripts, because their core work is arithmetic:
+Five stages carry scripts, because their core work is arithmetic:
 
 | Stage | Script | Computes |
 |---|---|---|
+| generation | `check_alpha.py` | alpha channel, transparent corners, transparent area |
+| generation | `check_provider.py` | whether the declared provider can execute the planned derivation modes |
+| generation | `import_candidates.py` | hashes and binds images produced by an external tool |
 | normalization | `normalize.py` | alpha bounds, trim, scale, canvas, anchor, pivot, hashes |
+| normalization | `check_frames.py` | pivot drift, canvas and bbox consistency, duplicate frames, loop closure |
 | asset QC | `technical_check.py` | dimensions, alpha, clipping, padding, lineage, contrast, colour-vision separation |
+| engine integration | `pack_atlas.py` | atlas placement, padding, dimensions, ordered frame maps |
 | engine integration | `budget_check.py` | file size, atlas dimension, texture memory against declared budgets |
+| orchestration | `retain.py` | archives superseded artifacts, prunes unreferenced candidates |
 
 The agent runs the tool and judges the result. It does not re-derive the numbers by eye — a measurement that cannot be reproduced is not evidence, and `content_hash` has to be a real digest for anything downstream to mean anything.
 

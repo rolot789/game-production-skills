@@ -68,7 +68,7 @@ runtime-visual-validator   → does it work in the game
 
 ## What makes this different from a prompt library
 
-**Deterministic work runs in code, not prose.** Trimming, scaling, canvas placement, hashing, contrast measurement, colour-vision simulation, atlas packing, and budget accounting are arithmetic. Four stages ship scripts that do them; the agent reads the output and makes the judgment calls the script cannot.
+**Deterministic work runs in code, not prose.** Trimming, scaling, canvas placement, hashing, contrast measurement, colour-vision simulation, atlas packing, and budget accounting are arithmetic. Five stages ship scripts that do them; the agent reads the output and makes the judgment calls the script cannot.
 
 **Identity is computed, not asserted.** Every record names its inputs by `content_hash`. `validate_project.py` verifies each one against the bytes on disk, so a QC approval bound to a file that has since changed is *detected* rather than quietly trusted. Without that, dependency-aware invalidation is a slogan.
 
