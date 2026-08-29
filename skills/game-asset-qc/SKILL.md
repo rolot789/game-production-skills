@@ -185,7 +185,7 @@ Status:
 
 ## Root-cause routing
 
-Root ownership follows `references/routing.yaml` — the single source of truth for symptom class, root owner, invalidation scope, and revalidation scope. Do not restate it from memory; use `decision_procedure` in that file to pick the class, then take the owner and scopes from the row.
+Root ownership follows `references/routing-index.yaml` for the lookup, with the full `references/routing.yaml` as the single source of truth behind it. Do not restate either from memory; use `decision_procedure` in the index to pick the class, then take the owner and scopes from the row.
 
 Every `BLOCKER` and `MAJOR` finding carries a `reason_code` naming its symptom class. An unknown reason code is a malformed report and `validate_project.py` rejects it.
 

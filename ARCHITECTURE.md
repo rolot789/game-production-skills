@@ -118,6 +118,15 @@ Routine routing that the contracts already determine does not interrupt anyone.
 
 ## 10. What is not yet measured
 
-The routing table, handoff envelopes, and lineage negative cases are executable evals (`scripts/run_evals.py`). Skill triggering and gate-holding under pressure are specified as cases but need a model harness to run.
+The routing table, handoff envelopes, and lineage negative cases are executable evals (`scripts/run_evals.py`). Skill triggering and gate-holding under pressure need a model, and `scripts/run_model_evals.py` runs them against one:
 
-That gap is stated rather than hidden: until those run, the claim that the rewritten trigger-shaped descriptions actually improve skill selection is a hypothesis, not a result.
+```bash
+python3 scripts/run_model_evals.py --backend anthropic
+python3 scripts/run_model_evals.py --backend command --command "<your cli>"
+```
+
+Scoring is deterministic — each case asks for a small JSON object and compares fields, because a harness that greps prose for encouraging words reports a score the skills did not earn. Without a backend the harness exits `2` and says `SKIPPED`, never `PASS`.
+
+CI cannot run a model, so it runs the next best thing: `run_evals.py` self-tests the harness against two fixtures, one matching every expectation and one with three deliberately wrong answers. A scorer that would accept the wrong run fails the build.
+
+What is still true: **nobody has published a score.** The harness exists, its scoring is verified, and the claim that the trigger-shaped descriptions improve skill selection remains a hypothesis until someone runs it with a model and reports the number.

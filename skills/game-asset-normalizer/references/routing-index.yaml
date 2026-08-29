@@ -1,0 +1,143 @@
+# GENERATED MIRROR - DO NOT EDIT
+# source: contracts/routing-index.yaml
+# regenerate: python3 scripts/sync_contracts.py
+# GENERATED - DO NOT EDIT
+# source: contracts/routing.yaml
+# regenerate: python3 scripts/sync_contracts.py
+#
+# Compact lookup for failure routing. Resolve the symptom class with
+# `decision_procedure`, then take the owner and both scopes from `classes`.
+#
+# Read contracts/routing.yaml itself when you need a class's full
+# description or its note, when two classes look equally applicable, or
+# when escalating scope - systemic_escalation, multi_owner, and qc_escape
+# live there and are not summarized here.
+version: 3
+name: failure-routing-index
+
+decision_procedure:
+  - 1. Is the expected player-visible behavior defined and internally consistent?
+    if_no: SEMANTIC_UNDEFINED or STYLE_AUTHORITY_CONFLICT or DECOMPOSITION_DEFECT by requirement type
+  - 2. Did the defect exist in the generated candidate before normalization?
+    if_yes: a game-asset-generator class
+  - 3. Was the candidate correct and processing introduced the defect?
+    if_yes: a game-asset-normalizer class
+  - 4. Was the normalized asset correct and engine packaging introduced the defect?
+    if_yes: a game-engine-integrator class
+  - 5. Does the same asset work correctly in another valid runtime context?
+    if_yes: INTEGRATION_LOCAL
+  - 6. Does the failure correlate with a shared runtime rule across contexts?
+    if_yes: INTEGRATION_SYSTEMIC
+  - 7. Would fixing runtime integration require violating locked asset or style behavior?
+    if_yes: CONTEXT_SENSITIVE_ASSET_FAILURE
+  - 8. Is the requirement now rejected by the user rather than incorrectly implemented?
+    if_yes: STYLE_AUTHORITY_CONFLICT or SEMANTIC_UNDEFINED; never blame the generator
+
+# id: root_owner | invalidation_scope | revalidation_scope | default_status
+classes:
+  SEMANTIC_UNDEFINED:
+    owner: game-spec-builder
+    invalidation: CATEGORY_SYSTEMIC
+    revalidation: [asset_planning, generation, normalization, asset_qc, runtime_validation]
+    status: blocked
+  STYLE_AUTHORITY_CONFLICT:
+    owner: art-style-builder
+    invalidation: CATEGORY_SYSTEMIC
+    revalidation: [generation, normalization, asset_qc, runtime_validation]
+    status: blocked
+  DECOMPOSITION_DEFECT:
+    owner: game-asset-planner
+    invalidation: FAMILY_SYSTEMIC
+    revalidation: [generation, normalization, asset_qc, runtime_validation]
+    status: rework_required
+  REPRESENTATION_STRATEGY_DEFECT:
+    owner: game-asset-planner
+    invalidation: LOCAL_ASSET
+    revalidation: [generation, normalization, asset_qc]
+    status: rework_required
+  CONTENT_ERROR:
+    owner: game-asset-generator
+    invalidation: LOCAL_ASSET
+    revalidation: [normalization, asset_qc, affected_runtime_contexts]
+    status: rework_required
+  IDENTITY_DRIFT:
+    owner: game-asset-generator
+    invalidation: LOCAL_ASSET
+    revalidation: [normalization, asset_qc, affected_runtime_contexts]
+    status: rework_required
+  STYLE_DIMENSION_DRIFT:
+    owner: game-asset-generator
+    invalidation: LOCAL_ASSET
+    revalidation: [normalization, asset_qc, affected_runtime_contexts]
+    status: rework_required
+  NEGATIVE_CONSTRAINT_VIOLATION:
+    owner: game-asset-generator
+    invalidation: LOCAL_ASSET
+    revalidation: [normalization, asset_qc, affected_runtime_contexts]
+    status: rework_required
+  FAMILY_DRIFT:
+    owner: game-asset-generator
+    invalidation: LOCAL_DERIVATIVE
+    revalidation: [normalization, asset_qc, affected_runtime_contexts]
+    status: rework_required
+    has_note: true
+  STATE_READABILITY_FAILURE:
+    owner: game-asset-generator
+    invalidation: LOCAL_ASSET
+    revalidation: [asset_qc, affected_runtime_contexts]
+    status: rework_required
+    has_note: true
+  MECHANICAL_PROCESSING_DEFECT:
+    owner: game-asset-normalizer
+    invalidation: LOCAL_ASSET
+    revalidation: [asset_qc, engine_integration, affected_runtime_contexts]
+    status: rework_required
+  FAMILY_ALIGNMENT_DEFECT:
+    owner: game-asset-normalizer
+    invalidation: FAMILY_SYSTEMIC
+    revalidation: [asset_qc, engine_integration, affected_runtime_contexts]
+    status: rework_required
+  QC_CLASSIFICATION_DEFECT:
+    owner: game-asset-qc
+    invalidation: LOCAL_ASSET
+    revalidation: [asset_qc]
+    status: rework_required
+    has_note: true
+  BUDGET_VIOLATION:
+    owner: game-engine-integrator
+    invalidation: CATEGORY_SYSTEMIC
+    revalidation: [engine_integration, affected_runtime_contexts]
+    status: integration_rework_required
+    has_note: true
+  IMPORT_SETTING_DEFECT:
+    owner: game-engine-integrator
+    invalidation: LOCAL_ASSET
+    revalidation: [engine_integration, affected_runtime_contexts]
+    status: integration_rework_required
+  INTEGRATION_LOCAL:
+    owner: runtime_integration
+    invalidation: SCENE_LOCAL
+    revalidation: [affected_runtime_contexts]
+    status: runtime_rework_required
+  INTEGRATION_SYSTEMIC:
+    owner: runtime_integration
+    invalidation: RUNTIME_SYSTEMIC
+    revalidation: [affected_runtime_contexts]
+    status: runtime_rework_required
+  CONTEXT_SENSITIVE_ASSET_FAILURE:
+    owner: NONE - do not auto-route; candidates: art-style-builder, game-asset-planner, game-asset-generator
+    invalidation: CATEGORY_SYSTEMIC
+    revalidation: [generation, normalization, asset_qc, affected_runtime_contexts]
+    status: runtime_blocked
+    has_note: true
+  VALIDATION_COVERAGE_DEFECT:
+    owner: runtime-visual-validator
+    invalidation: SCENE_LOCAL
+    revalidation: [affected_runtime_contexts]
+    status: partial_validation_only
+  ACCESSIBILITY_FAILURE:
+    owner: NONE - do not auto-route; candidates: art-style-builder, game-asset-planner, game-asset-generator
+    invalidation: CATEGORY_SYSTEMIC
+    revalidation: [generation, normalization, asset_qc, affected_runtime_contexts]
+    status: rework_required
+    has_note: true

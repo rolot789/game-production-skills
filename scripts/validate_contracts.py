@@ -296,6 +296,44 @@ def main() -> None:
             elif source.read_text(encoding="utf-8") not in mirrored.read_text(encoding="utf-8"):
                 errors.append(f"stale mirror {mirrored.relative_to(ROOT)}; run scripts/sync_contracts.py")
 
+    # Schemas are mirrored per skill rather than wholesale, so the manifest's
+    # per-skill list has to keep up with what the skill's documents actually
+    # name. A skill that names a schema it does not carry is the install defect
+    # this whole mirroring mechanism exists to prevent, one level down.
+    schema_mirrors = mirrors.get("schema_mirrors") or {}
+    if schema_mirrors:
+        always = set(schema_mirrors.get("always", []))
+        declared = {skill: set(names) | always
+                    for skill, names in schema_mirrors["targets"].items()}
+        for skill, names in declared.items():
+            if skill not in skill_names:
+                errors.append(f"schema_mirrors targets unknown skill: {skill}")
+                continue
+            for name in names:
+                if not (ROOT / schema_mirrors["source_dir"] / name).exists():
+                    errors.append(f"schema_mirrors[{skill}] names a schema that does not exist: {name}")
+                mirrored = ROOT / "skills" / skill / "references" / "schemas" / name
+                if not mirrored.exists():
+                    errors.append(f"missing schema mirror {mirrored.relative_to(ROOT)}; "
+                                  f"run scripts/sync_contracts.py")
+
+        schema_pattern = re.compile(r"([a-z0-9_-]+\.schema\.json)")
+        for skill_dir in sorted((ROOT / "skills").iterdir()):
+            if not skill_dir.is_dir() or skill_dir.name not in declared:
+                continue
+            documents = [skill_dir / "SKILL.md"] + sorted((skill_dir / "references").glob("*.md")) \
+                + sorted((skill_dir / "references").glob("*.yaml"))
+            named = set()
+            for document in documents:
+                if document.exists():
+                    named |= set(schema_pattern.findall(document.read_text(encoding="utf-8")))
+            missing = named - declared[skill_dir.name]
+            for name in sorted(missing):
+                errors.append(
+                    f"{skill_dir.name} names {name} but contracts/mirror-manifest.yaml does not "
+                    f"mirror it into that skill; add it to schema_mirrors.targets"
+                )
+
     # ---- 12. skills are well formed ---------------------------------------
     for skill_dir in sorted((ROOT / "skills").iterdir()):
         if not skill_dir.is_dir():

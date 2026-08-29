@@ -46,6 +46,19 @@ mirrors:
       - runtime-visual-validator
       - game-art-production-orchestrator
 
+  - source: contracts/routing-index.yaml
+    reason: >-
+      the compact lookup is the default read; the full routing.yaml is 279 lines
+      and seven skills were each told to read all of it to resolve one row
+    targets:
+      - game-asset-planner
+      - game-asset-generator
+      - game-asset-normalizer
+      - game-asset-qc
+      - game-engine-integrator
+      - runtime-visual-validator
+      - game-art-production-orchestrator
+
   - source: contracts/toolkit-contract.yaml
     reason: the orchestrator enforces stage order, enums, lifecycle transitions, lineage, and budgets
     targets:
@@ -57,18 +70,46 @@ mirrors:
 # JSON schemas are mirrored byte-identically - JSON has no comment syntax, so
 # the generated-mirror header cannot be embedded. This manifest is the record
 # that they are generated; never hand-edit them either.
-directory_mirrors:
-  - source_dir: contracts/schemas
-    glob: "*.json"
-    into: schemas
-    reason: >-
-      every stage that writes an artifact names its schema, and an installed
-      skill cannot reach a repository-root contracts/ directory
-    targets:
-      - game-asset-planner
-      - game-asset-generator
-      - game-asset-normalizer
-      - game-asset-qc
-      - game-engine-integrator
-      - runtime-visual-validator
-      - game-art-production-orchestrator
+# Per-skill schema mirrors.
+#
+# Every skill used to carry all 11 schemas - 42 KB, roughly 10,000 tokens - while
+# naming exactly one. An agent that globs `references/` paid for ten schemas it
+# had no use for.
+#
+# A skill gets the schemas for the artifacts it WRITES, plus the handoff
+# envelope when it routes rework, plus `_defs.json`, which every other schema
+# $refs. Reading an upstream artifact does not require its schema; validating
+# your own output does.
+#
+# validate_contracts.py checks that every schema a skill's documents name is in
+# its list here, so the two cannot drift apart.
+schema_mirrors:
+  into: schemas
+  source_dir: contracts/schemas
+  always:
+    - _defs.json          # $ref'd by every other schema
+  targets:
+    game-asset-planner:
+      - asset-spec.schema.json
+      - asset-manifest.schema.json
+      - rework-handoff.schema.json
+    game-asset-generator:
+      - generation-record.schema.json
+      - rework-handoff.schema.json
+    game-asset-normalizer:
+      - normalization-record.schema.json
+      - rework-handoff.schema.json
+    game-asset-qc:
+      - qc-report.schema.json
+      - rework-handoff.schema.json
+    game-engine-integrator:
+      - budget-report.schema.json
+      - atlas-manifest.schema.json
+      - rework-handoff.schema.json
+    runtime-visual-validator:
+      - runtime-report.schema.json
+      - rework-handoff.schema.json
+    game-art-production-orchestrator:
+      - pipeline-state.schema.json
+      - project.schema.json
+      - rework-handoff.schema.json

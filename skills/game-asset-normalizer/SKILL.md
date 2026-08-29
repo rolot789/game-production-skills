@@ -252,7 +252,7 @@ Before promotion to QC verify:
 
 ## Failure routing
 
-Root ownership follows `references/routing.yaml`; do not restate the table from memory. The classes this stage owns are `MECHANICAL_PROCESSING_DEFECT` and `FAMILY_ALIGNMENT_DEFECT`.
+Root ownership follows `references/routing-index.yaml`; the full `references/routing.yaml` stays authoritative for descriptions, notes, and escalation. Do not restate either from memory. The classes this stage owns are `MECHANICAL_PROCESSING_DEFECT` and `FAMILY_ALIGNMENT_DEFECT`.
 
 The failures that surface here but belong elsewhere:
 

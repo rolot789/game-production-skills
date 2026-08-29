@@ -1,0 +1,109 @@
+# Canned answers matching every expectation. Proves the harness accepts a
+# correct run - it is a test of the harness, never a result about the skills.
+GAT-001:
+  cites:
+  - fixture citation
+  escalates_to: null
+  missing_evidence:
+  - 'fixture: the evidence this case says is missing'
+  refuses: true
+  status: partial_validation_only
+GAT-002:
+  cites:
+  - fixture citation
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: null
+GAT-003:
+  cites:
+  - content_hash
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: null
+GAT-004:
+  cites:
+  - fixture citation
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: null
+GAT-005:
+  cites:
+  - fixture citation
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: integration_blocked
+GAT-006:
+  cites:
+  - coherent lineage
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: null
+GAT-007:
+  cites:
+  - fixture citation
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: partial_validation_only
+GAT-008:
+  cites:
+  - fixture citation
+  escalates_to: G4_ESCALATE_UPSTREAM
+  missing_evidence: []
+  refuses: true
+  status: null
+GAT-009:
+  cites:
+  - fixture citation
+  escalates_to: null
+  missing_evidence: []
+  refuses: true
+  status: null
+GAT-010:
+  cites:
+  - fixture citation
+  escalates_to: G3_CHANGE_GENERATION_STRATEGY
+  missing_evidence: []
+  refuses: true
+  status: null
+TRG-001:
+  skill: game-spec-builder
+  why: fixture answer
+TRG-002:
+  skill: art-style-builder
+  why: fixture answer
+TRG-003:
+  skill: game-asset-planner
+  why: fixture answer
+TRG-004:
+  skill: game-asset-generator
+  why: fixture answer
+TRG-005:
+  skill: game-asset-normalizer
+  why: fixture answer
+TRG-006:
+  skill: game-asset-qc
+  why: fixture answer
+TRG-007:
+  skill: runtime-visual-validator
+  why: fixture answer
+TRG-008:
+  skill: game-engine-integrator
+  why: fixture answer
+TRG-009:
+  skill: game-engine-integrator
+  why: fixture answer
+TRG-010:
+  skill: game-art-production-orchestrator
+  why: fixture answer
+TRG-011:
+  skill: art-style-builder
+  why: fixture answer
+TRG-012:
+  skill: game-asset-generator
+  why: fixture answer

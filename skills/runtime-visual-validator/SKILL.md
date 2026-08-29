@@ -140,7 +140,7 @@ Specialist-local diagnostic fields such as `change` or `preserve` may exist in t
 
 ## Root-cause routing
 
-Root ownership follows `references/routing.yaml` — the single source of truth for symptom class, root owner, invalidation scope, and revalidation scope. Work its `decision_procedure` in order, then take the owner and both scopes from the matching row rather than deciding them independently.
+Root ownership follows `references/routing-index.yaml` for the lookup, with the full `references/routing.yaml` as the single source of truth behind it. Work the index's `decision_procedure` in order, then take the owner and both scopes from the matching row rather than deciding them independently.
 
 Every `BLOCKER` and `MAJOR` finding carries a `reason_code` naming its class. An unknown code is a malformed report.
 

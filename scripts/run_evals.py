@@ -8,9 +8,12 @@ Three of the five suites are deterministic:
   lineage   negative cases, checked by mutating a copy of the worked example and
             asserting validate_project.py rejects it
 
-The other two (triggering, gates) need a model harness. This script validates
-their structure so the suite cannot rot into referencing skills, reason codes,
-or lifecycle states that no longer exist, and reports them as pending.
+The other two (triggering, gates) need a model. `scripts/run_model_evals.py`
+runs them against one; this script validates their structure so the suite
+cannot rot into referencing skills, reason codes, or lifecycle states that no
+longer exist, and self-tests that harness's scorer against canned answers - a
+scorer that would pass a deliberately wrong run is the failure mode a green
+eval suite hides best.
 
     python3 scripts/run_evals.py
     python3 scripts/run_evals.py --suite routing
@@ -172,6 +175,41 @@ def run_lineage(results: Results) -> None:
             shutil.rmtree(workdir, ignore_errors=True)
 
 
+def check_harness(results: Results) -> None:
+    """Prove the model harness actually scores, without needing a model.
+
+    Two fixtures: one matching every expectation, one with three deliberately
+    wrong answers. The harness must accept the first and reject exactly the
+    second, or it is reporting a number nobody earned.
+    """
+    harness = ROOT / "scripts" / "run_model_evals.py"
+    fixtures = ROOT / "evals" / "fixtures"
+    for fixture, expect_pass, expect_failures in (
+        ("all-correct.yaml", True, 0),
+        ("known-failures.yaml", False, 3),
+    ):
+        path = fixtures / fixture
+        if not path.exists():
+            results.fail("HARNESS", f"missing fixture {path.relative_to(ROOT)}")
+            continue
+        outcome = subprocess.run(
+            [sys.executable, str(harness), "--backend", "stub", "--fixture", str(path)],
+            capture_output=True, text=True,
+        )
+        passed = outcome.returncode == 0
+        if passed != expect_pass:
+            results.fail("HARNESS", f"{fixture}: expected {'PASS' if expect_pass else 'FAIL'}, "
+                                    f"harness returned {'PASS' if passed else 'FAIL'}")
+            continue
+        reported = next((line for line in outcome.stdout.splitlines()
+                         if line.startswith("- passed:")), "")
+        if f"failed: {expect_failures}" not in reported:
+            results.fail("HARNESS", f"{fixture}: expected {expect_failures} scored failures, "
+                                    f"harness reported {reported.strip()!r}")
+            continue
+        results.ok()
+
+
 def check_structure(results: Results) -> None:
     """Non-executable suites still have to reference things that exist."""
     available = {p.name for p in (ROOT / "skills").iterdir() if p.is_dir()}
@@ -200,11 +238,12 @@ def check_structure(results: Results) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--suite", choices=["routing", "handoff", "lineage", "structure"], default=None)
+    parser.add_argument("--suite", choices=["routing", "handoff", "lineage", "structure", "harness"],
+                        default=None)
     args = parser.parse_args()
 
     results = Results()
-    suites = [args.suite] if args.suite else ["routing", "handoff", "lineage", "structure"]
+    suites = [args.suite] if args.suite else ["routing", "handoff", "lineage", "structure", "harness"]
 
     if "routing" in suites:
         run_routing(results)
@@ -214,6 +253,8 @@ def main() -> None:
         run_lineage(results)
     if "structure" in suites:
         check_structure(results)
+    if "harness" in suites:
+        check_harness(results)
 
     if results.failed:
         print("EVALS: FAIL")
@@ -224,8 +265,10 @@ def main() -> None:
 
     print("EVALS: PASS")
     print(f"- executed: {results.passed}")
-    print(f"- pending a model harness: {results.pending}")
-    print("- suites: routing (deterministic), handoff (schema), lineage (negative), structure")
+    print(f"- needing a model: {results.pending}  "
+          f"(run: python3 scripts/run_model_evals.py --backend anthropic)")
+    print("- suites: routing (deterministic), handoff (schema), lineage (negative), "
+          "structure, harness (scorer self-test)")
 
 
 if __name__ == "__main__":

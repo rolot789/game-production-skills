@@ -124,7 +124,8 @@ python3 scripts/sync_contracts.py --check # mirrored contracts are current
 python3 scripts/validate_contracts.py    # the toolkit agrees with itself
 python3 scripts/test_install.py          # a real install resolves every documented path
 python3 scripts/validate_project.py DIR  # your project is consistent
-python3 scripts/run_evals.py             # routing, handoff, and lineage evals
+python3 scripts/run_evals.py             # routing, handoff, lineage, harness self-test
+python3 scripts/run_model_evals.py       # triggering and gates; needs a model backend
 ```
 
 Requires Python 3 with `pyyaml`; the image scripts also need `Pillow`. The npm package itself has no runtime dependencies.

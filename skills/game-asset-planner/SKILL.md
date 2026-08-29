@@ -54,7 +54,7 @@ When no project registry exists, use the current repository/toolkit convention c
 
 - `references/mrau-decomposition-policy.md` — how to find the seam between one asset and two, and the failure modes on each side of it.
 - `references/representation-strategy-policy.md` — choosing between generated raster, procedural, runtime primitive, shader, and reuse, and what each choice costs downstream.
-- `references/routing.yaml` — the canonical failure routing table.
+- `references/routing-index.yaml` — the compact lookup: decision procedure, then symptom class to root owner, invalidation scope, and revalidation scope. Read this first. `references/routing.yaml` is the full table and stays authoritative; open it when a row needs its description or note, when two classes look equally applicable, or when scope escalation, multi-owner, or `qc_escape` is involved.
 - `references/rework-handoff-contract.yaml` — the canonical rework envelope.
 
 ## Required inputs

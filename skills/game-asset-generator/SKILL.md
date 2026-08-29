@@ -315,7 +315,7 @@ Family outputs may additionally include `family-contract.yaml`, `parent-lineage.
 
 If generation hands rework onward or escalates upstream, external routing data must serialize through `references/rework-handoff-contract.yaml`, and `reason_codes` must resolve against `references/routing.yaml`. Specialist-local aliases such as `change_dimensions` are allowed only inside internal reports, never in a routed handoff.
 
-Root ownership follows `references/routing.yaml`. Do not restate the routing table from memory; the classes this stage owns are `CONTENT_ERROR`, `IDENTITY_DRIFT`, `STYLE_DIMENSION_DRIFT`, `NEGATIVE_CONSTRAINT_VIOLATION`, `FAMILY_DRIFT`, and `STATE_READABILITY_FAILURE`.
+Root ownership follows `references/routing-index.yaml`, with the full `references/routing.yaml` behind it. Do not restate either from memory; the classes this stage owns are `CONTENT_ERROR`, `IDENTITY_DRIFT`, `STYLE_DIMENSION_DRIFT`, `NEGATIVE_CONSTRAINT_VIOLATION`, `FAMILY_DRIFT`, and `STATE_READABILITY_FAILURE`.
 
 ## Completion criteria
 

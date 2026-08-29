@@ -27,7 +27,7 @@ The orchestrator does not redesign art, write provider prompts, normalize pixels
 Read these rather than restating them from memory. They are mirrored into this skill so they resolve from any install location.
 
 - `references/toolkit-contract.yaml` — stage order, enums, **legal lifecycle transitions**, lineage rules, generation budget, accessibility checks.
-- `references/routing.yaml` — symptom class to root owner, invalidation scope, revalidation scope.
+- `references/routing-index.yaml` — the compact lookup: decision procedure, then symptom class to root owner, invalidation scope, and revalidation scope. Read this first. `references/routing.yaml` is the full table and stays authoritative; open it when a row needs its description or note, when two classes look equally applicable, or when scope escalation, multi-owner, or `qc_escape` is involved.
 - `references/rework-handoff-contract.yaml` — the canonical handoff envelope.
 
 When this document and a contract disagree, the contract wins and the document is a bug.

@@ -140,7 +140,7 @@ Use `references/budget-policy.md` for how to choose budgets and what to do when 
 
 ## Failure routing
 
-Root ownership follows `references/routing.yaml`. The classes this stage owns:
+Root ownership follows `references/routing-index.yaml`, with the full `references/routing.yaml` behind it for descriptions, notes, and escalation. The classes this stage owns:
 
 - `BUDGET_VIOLATION` — a measured budget is exceeded,
 - `IMPORT_SETTING_DEFECT` — wrong pivot mapping, filter mode, compression, or pixels-per-unit.
