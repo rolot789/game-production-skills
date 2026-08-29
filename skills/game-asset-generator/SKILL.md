@@ -197,6 +197,27 @@ The value is in *when* this runs, not in how clever it is. The same defect is al
 
 **A transparency failure is `G3_CHANGE_GENERATION_STRATEGY`, not `G1`.** Re-rolling the prompt is the trap here: a target that drew a background will draw one again, and the retry budget is gone before anyone questions the approach. Change how transparency is requested, or change the output strategy.
 
+## When generation happens outside this pipeline
+
+This toolkit ships no image provider. If the runtime has an image capability, use it. If it does not, the honest path is a complete external job — and that path only works if the results can come back.
+
+```bash
+python3 skills/game-asset-generator/scripts/import_candidates.py \
+    --project-root . --asset-id AST-GATE-CLOSED \
+    --image ~/out/gate_a.png --image ~/out/gate_b.png \
+    --capability external-tool --model "<the model that actually ran>" \
+    --seed not_exposed
+```
+
+It refuses to import against a missing `generation-contract.yaml`, because an image with no contract cannot be screened against anything. It continues the candidate ordinal rather than restarting it, hashes the bytes, binds the record to the AssetSpec and ArtStyle it was made from, runs `check_alpha.py`, and records provenance as `source: external_import` with the capability and model you name.
+
+Two things it deliberately leaves to you:
+
+- **It never marks a candidate `selected`.** Selection is a judgment about whether the image satisfies the contract.
+- **It records only the `output` dimension in `screening`.** Every visual dimension is left out rather than guessed, so a `PASS` on identity or palette in that block means someone actually looked. A script that filled them in would be writing a fabricated verdict that QC later trusts.
+
+`provenance.external_job: true` remains correct for a record that describes a job with no candidate behind it yet. Once an image exists and is imported, the candidate is real and the flag is false.
+
 ## Candidate screening
 
 Run `check_alpha.py` first — it is deterministic and costs nothing. Then reject obvious failures involving:

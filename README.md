@@ -53,13 +53,13 @@ art-style-builder          → what it looks like
    ↓
 game-asset-planner         → which assets exist
    ↓
-game-asset-generator       → image candidates
+game-asset-generator       → image candidates        [scripts/check_alpha.py, import_candidates.py]
    ↓
 game-asset-normalizer      → engine-ready geometry     [scripts/normalize.py]
    ↓
 game-asset-qc              → contract conformance      [scripts/technical_check.py]
    ↓
-game-engine-integrator     → atlases, imports, budgets [scripts/budget_check.py]
+game-engine-integrator     → atlases, imports, budgets [scripts/pack_atlas.py, budget_check.py]
    ↓
 runtime-visual-validator   → does it work in the game
 ```
@@ -68,7 +68,7 @@ runtime-visual-validator   → does it work in the game
 
 ## What makes this different from a prompt library
 
-**Deterministic work runs in code, not prose.** Trimming, scaling, canvas placement, hashing, contrast measurement, colour-vision simulation, and budget accounting are arithmetic. Three stages ship scripts that do them; the agent reads the output and makes the judgment calls the script cannot.
+**Deterministic work runs in code, not prose.** Trimming, scaling, canvas placement, hashing, contrast measurement, colour-vision simulation, atlas packing, and budget accounting are arithmetic. Four stages ship scripts that do them; the agent reads the output and makes the judgment calls the script cannot.
 
 **Identity is computed, not asserted.** Every record names its inputs by `content_hash`. `validate_project.py` verifies each one against the bytes on disk, so a QC approval bound to a file that has since changed is *detected* rather than quietly trusted. Without that, dependency-aware invalidation is a slogan.
 
@@ -77,6 +77,28 @@ runtime-visual-validator   → does it work in the game
 **Rejection becomes durable knowledge.** "This looks too AI-generated" is a diagnostic trigger, not a rule. It gets decomposed into observable constraints with positive counterparts, which persist in a ledger instead of evaporating into one prompt.
 
 **Partial evidence never promotes.** Supplied screenshots are not runtime approval. A high-risk untested context forces `partial_validation_only`. The validator enforces both mechanically.
+
+## What this does not do
+
+**It ships no image generator.** There is no provider integration here, and there is no plan to hide that behind one. `game-asset-generator` compiles a `generation-contract.yaml` and a provider-facing `prompt.md`; the image itself comes from whatever image capability the runtime has, or from a tool you run yourself.
+
+That second path is a first-class one, not a fallback with a dead end at the far side:
+
+```bash
+npx game-production-skills install                # contracts and prompts
+# ... produce the images with your own tool ...
+python3 skills/game-asset-generator/scripts/import_candidates.py \
+    --project-root . --asset-id AST-GATE-CLOSED --image ~/out/gate_a.png \
+    --capability external-tool --model "<what actually ran>" --seed not_exposed
+```
+
+The imported candidate is hashed, bound to the contract it was made from, alpha-screened, and consumable by normalization like any other. It is *not* marked selected and its visual dimensions are *not* scored, because those are judgments.
+
+So the honest description is that this is a production-management and failure-routing system for game art. It makes a good image model's output traceable, verifiable, and reworkable without collateral regeneration. It will not, by itself, draw anything.
+
+**The anti-drift machinery is specified but not yet measured.** Scoped anchors, the negative-constraint ledger, and the `G0`–`G4` escalation levels are the reason to use this over a prompt file, and they are the part with no executable evidence behind them. `evals/` runs 30 deterministic cases; 23 more are written and need a model harness. See ARCHITECTURE.md §10.
+
+**Coverage is single-frame 2D raster.** The deterministic layer reads and writes PNG. `generated_vector`, `generated_3d`, `procedural`, and `shader_or_particle` are valid planning strategies with no downstream tooling, and there is no animation, spritesheet, tileset, or nine-slice model. Specification, art direction, planning, and failure routing are genre-neutral; the executable layer is not.
 
 ## Profiles
 
